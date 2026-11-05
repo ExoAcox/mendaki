@@ -1,0 +1,395 @@
+import 'dart:io';
+import 'dart:math' as math;
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:xml/xml.dart';
+import 'package:mendaki/models/route.dart';
+import 'package:mendaki/models/mountain.dart';
+import 'package:mendaki/models/waypoint.dart';
+
+/// Representasi data hasil parsing GPX secara umum (agnostik terhadap nama gunung).
+class GpxData {
+  final String name;
+  final String? description;
+  final List<Waypoint> waypoints;
+  final List<HikingRoute> tracks;
+  final double totalDistanceKm;
+  final double minElevation;
+  final double maxElevation;
+  final double totalElevationGain;
+
+  const GpxData({
+    required this.name,
+    this.description,
+    required this.waypoints,
+    required this.tracks,
+    this.totalDistanceKm = 0.0,
+    this.minElevation = 0.0,
+    this.maxElevation = 0.0,
+    this.totalElevationGain = 0.0,
+  });
+
+  /// Helper untuk mengonversi data GPX umum ke model Mountain
+  Mountain toMountain({
+    required String id,
+    String? name,
+    String location = '',
+    String province = '',
+    String difficulty = '',
+    String estimatedTime = '',
+    String status = '',
+    String? gpxAssetPath,
+  }) {
+    final highestElevation = maxElevation > 0
+        ? maxElevation.toInt()
+        : (waypoints.isNotEmpty
+              ? waypoints
+                    .map((w) => w.elevation ?? 0.0)
+                    .reduce(math.max)
+                    .toInt()
+              : 0);
+
+    return Mountain(
+      id: id,
+      name: name ?? this.name,
+      elevation: highestElevation,
+      location: location,
+      province: province,
+      difficulty: difficulty,
+      estimatedTime: estimatedTime,
+      routes: tracks,
+      assetUrl: gpxAssetPath,
+      isOfflineReady: true,
+      status: status,
+      allWaypoints: waypoints,
+    );
+  }
+}
+
+/// Service Parser GPX yang bersifat umum (General GPX Parser).
+/// Dapat memproses file GPX dari aset, string mentah (dari API/Network), maupun file lokal.
+class GpxParserService {
+  /// Parse file GPX dari aset aplikasi
+  static Future<GpxData> parseAsset(
+    String assetPath, {
+    String? defaultName,
+  }) async {
+    final gpxString = await rootBundle.loadString(assetPath);
+    final fallbackName =
+        defaultName ??
+        assetPath
+            .split('/')
+            .last
+            .replaceAll('.gpx', '')
+            .replaceAll('_', ' ')
+            .toUpperCase();
+    return parseString(gpxString, defaultName: fallbackName);
+  }
+
+  /// Parse file GPX dari penyimpanan lokal (File)
+  static Future<GpxData> parseFile(
+    File file, {
+    String? defaultName,
+  }) async {
+    final gpxString = await file.readAsString();
+    final fallbackName =
+        defaultName ??
+        file.uri.pathSegments.last
+            .replaceAll('.gpx', '')
+            .replaceAll('_', ' ')
+            .toUpperCase();
+    return parseString(gpxString, defaultName: fallbackName);
+  }
+
+  /// Parse string XML GPX mentah (dapat digunakan untuk respon API / server / file)
+  static GpxData parseString(
+    String gpxString, {
+    String defaultName = 'Jalur Pendakian',
+  }) {
+    final document = XmlDocument.parse(gpxString);
+
+    // 1. Ambil Nama & Metadata Dokumen
+    final metadataName = document
+        .findAllElements('metadata')
+        .firstOrNull
+        ?.findElements('name')
+        .firstOrNull
+        ?.innerText
+        .trim();
+    final documentName = metadataName ?? defaultName;
+
+    // 2. Parse Waypoints (<wpt>)
+    final wptElements = document.findAllElements('wpt');
+    final List<Waypoint> waypoints = [];
+
+    double minEle = double.infinity;
+    double maxEle = -double.infinity;
+
+    for (final wpt in wptElements) {
+      final lat = double.tryParse(wpt.getAttribute('lat') ?? '') ?? 0.0;
+      final lon = double.tryParse(wpt.getAttribute('lon') ?? '') ?? 0.0;
+      final name =
+          wpt.findElements('name').firstOrNull?.innerText.trim() ?? 'Waypoint';
+      final desc = wpt.findElements('desc').firstOrNull?.innerText.trim();
+      final cmt = wpt.findElements('cmt').firstOrNull?.innerText.trim();
+
+      final eleElem = wpt.findElements('ele').firstOrNull;
+      final elevation = eleElem != null
+          ? double.tryParse(eleElem.innerText.trim())
+          : null;
+
+      if (elevation != null) {
+        if (elevation < minEle) minEle = elevation;
+        if (elevation > maxEle) maxEle = elevation;
+      }
+
+      // Klasifikasi jenis waypoint: utamakan tag <cmt>, lalu fallback ke nama/deskripsi
+      final type = _classifyWaypointType(name, desc, cmt);
+      final hasWater = _checkWaterAvailable(name, desc, cmt);
+      final tentCapacity = _extractTentCapacity(name, desc);
+      final signalInfo = _extractSignalInfo(name, desc);
+
+      waypoints.add(
+        Waypoint(
+          name: name,
+          latitude: lat,
+          longitude: lon,
+          elevation: elevation,
+          type: type,
+          description: desc,
+          comment: cmt,
+          hasWater: hasWater,
+          tentCapacity: tentCapacity,
+          signalInfo: signalInfo,
+        ),
+      );
+    }
+
+    // 3. Parse Tracks (<trk>)
+    final trkElements = document.findAllElements('trk');
+    final List<HikingRoute> routes = [];
+    double totalDistanceKm = 0.0;
+    double totalElevationGain = 0.0;
+
+    int routeCounter = 1;
+    for (final trk in trkElements) {
+      final trackName =
+          trk.findElements('name').firstOrNull?.innerText.trim() ??
+          'Rute $routeCounter';
+      final trkpts = trk.findAllElements('trkpt');
+      final List<LatLngPoint> trackCoords = [];
+
+      double routeDistance = 0.0;
+      double routeElevationGain = 0.0;
+      LatLngPoint? prevPoint;
+
+      for (final pt in trkpts) {
+        final lat = double.tryParse(pt.getAttribute('lat') ?? '') ?? 0.0;
+        final lon = double.tryParse(pt.getAttribute('lon') ?? '') ?? 0.0;
+        final ele = double.tryParse(
+          pt.findElements('ele').firstOrNull?.innerText.trim() ?? '',
+        );
+
+        if (ele != null) {
+          if (ele < minEle) minEle = ele;
+          if (ele > maxEle) maxEle = ele;
+        }
+
+        final currentPoint = LatLngPoint(
+          latitude: lat,
+          longitude: lon,
+          elevation: ele,
+        );
+        trackCoords.add(currentPoint);
+
+        if (prevPoint != null) {
+          routeDistance += _calculateHaversineDistanceKm(
+            prevPoint.latitude,
+            prevPoint.longitude,
+            currentPoint.latitude,
+            currentPoint.longitude,
+          );
+
+          if (prevPoint.elevation != null && currentPoint.elevation != null) {
+            final diff = currentPoint.elevation! - prevPoint.elevation!;
+            if (diff > 0) routeElevationGain += diff;
+          }
+        }
+        prevPoint = currentPoint;
+      }
+
+      totalDistanceKm += routeDistance;
+      totalElevationGain += routeElevationGain;
+
+      // Cari pos yang berada di dekat rute track ini (radius 500 meter)
+      final matchingWaypoints = waypoints.where((wpt) {
+        if (trackCoords.isEmpty) return true;
+        return trackCoords.any(
+          (coord) =>
+              _calculateHaversineDistanceKm(
+                wpt.latitude,
+                wpt.longitude,
+                coord.latitude,
+                coord.longitude,
+              ) <=
+              0.5,
+        );
+      }).toList();
+
+      final basecampWpt = matchingWaypoints.firstWhere(
+        (w) => w.type == 'basecamp',
+        orElse: () => WaypointsFallback.defaultBasecamp,
+      );
+
+      final roundedDistance = double.parse(
+        (routeDistance > 0 ? routeDistance : 5.0).toStringAsFixed(1),
+      );
+      final roundedGain = routeElevationGain.toInt();
+      final estHours = math.max(2, (roundedDistance / 1.5).round());
+
+      routes.add(
+        HikingRoute(
+          id: 'route_$routeCounter',
+          name: trackName,
+          basecampName: basecampWpt.name,
+          distanceKm: roundedDistance,
+          estimatedDuration: '$estHours - ${estHours + 2} Jam',
+          elevationGainMeters: roundedGain > 0 ? roundedGain : 1000,
+          difficulty: roundedGain > 1500 ? 'Sangat Curam' : 'Sedang',
+          waypoints: matchingWaypoints.isNotEmpty
+              ? matchingWaypoints
+              : waypoints,
+          trackPoints: trackCoords,
+        ),
+      );
+
+      routeCounter++;
+    }
+
+    return GpxData(
+      name: documentName,
+      waypoints: waypoints,
+      tracks: routes,
+      totalDistanceKm: double.parse(totalDistanceKm.toStringAsFixed(2)),
+      minElevation: minEle.isFinite ? minEle : 0.0,
+      maxElevation: maxEle.isFinite ? maxEle : 0.0,
+      totalElevationGain: totalElevationGain,
+    );
+  }
+
+  // --- Helper Klasifikasi Umum ---
+
+  static String _classifyWaypointType(
+    String name,
+    String? desc, [
+    String? cmt,
+  ]) {
+    final comment = (cmt ?? '').trim().toLowerCase();
+    if (comment == 'summit' || comment == 'peak') {
+      return 'summit';
+    } else if (comment == 'basecamp') {
+      return 'basecamp';
+    } else if (comment == 'water' || comment == 'air') {
+      return 'water';
+    } else if (comment == 'camp') {
+      return 'camp';
+    }
+
+    final text = '${name.toUpperCase()} ${(desc ?? '').toUpperCase()}';
+    if (text.contains('BASECAMP') ||
+        text.startsWith('BC ') ||
+        text.contains(' BC')) {
+      return 'basecamp';
+    } else if (text.contains('AIR') ||
+        text.contains('WATER') ||
+        text.contains('SPRING') ||
+        text.contains('SUMBER')) {
+      return 'water';
+    } else if (text.contains('PUNCAK') ||
+        text.contains('SUMMIT') ||
+        text.contains('PEAK')) {
+      return 'summit';
+    } else if (text.contains('CAMP') ||
+        text.contains('SABANA') ||
+        text.contains('SHELTER') ||
+        text.contains('TENDA')) {
+      return 'camp';
+    } else if (text.contains('BAHAYA') ||
+        text.contains('JURANG') ||
+        text.contains('WASPADAI')) {
+      return 'warning';
+    } else if (text.contains('PINTU RIMBA') || text.contains('GERBANG')) {
+      return 'gate';
+    } else if (text.contains('POS') || text.contains('CHECKPOINT')) {
+      return 'post';
+    }
+    return 'post';
+  }
+
+  static bool _checkWaterAvailable(
+    String name,
+    String? desc, [
+    String? cmt,
+  ]) {
+    final comment = (cmt ?? '').trim().toLowerCase();
+    if (comment == 'water' || comment == 'air') return true;
+
+    final text = '${name.toUpperCase()} ${(desc ?? '').toUpperCase()}';
+    return text.contains('AIR') ||
+        text.contains('WATER') ||
+        text.contains('SPRING') ||
+        text.contains('SUMBER') ||
+        text.contains('BASECAMP');
+  }
+
+  static int? _extractTentCapacity(String name, String? desc) {
+    final text = '${name.toUpperCase()} ${(desc ?? '').toUpperCase()}';
+    if (text.contains('SABANA') || text.contains('CAMP UTAMA')) return 50;
+    if (text.contains('CAMP')) return 20;
+    if (text.contains('POS 1')) return 3;
+    if (text.contains('POS 2')) return 6;
+    return null;
+  }
+
+  static String? _extractSignalInfo(String name, String? desc) {
+    final text = '${name.toUpperCase()} ${(desc ?? '').toUpperCase()}';
+    if (text.contains('BASECAMP')) return 'Telkomsel 4G, Indosat, XL';
+    if (text.contains('POS 1')) return 'Telkomsel 2 Bar';
+    if (text.contains('POS 2') || text.contains('POS 3')) {
+      return 'Telkomsel 1 Bar';
+    }
+    return null;
+  }
+
+  static double _calculateHaversineDistanceKm(
+    double lat1,
+    double lon1,
+    double lat2,
+    double lon2,
+  ) {
+    const earthRadiusKm = 6371.0;
+    final dLat = _degreesToRadians(lat2 - lat1);
+    final dLon = _degreesToRadians(lon2 - lon1);
+
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(_degreesToRadians(lat1)) *
+            math.cos(_degreesToRadians(lat2)) *
+            math.sin(dLon / 2) *
+            math.sin(dLon / 2);
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    return earthRadiusKm * c;
+  }
+
+  static double _degreesToRadians(double degrees) {
+    return degrees * (math.pi / 180.0);
+  }
+}
+
+class WaypointsFallback {
+  static const defaultBasecamp = Waypoint(
+    name: 'Basecamp',
+    latitude: 0,
+    longitude: 0,
+    type: 'basecamp',
+  );
+}
