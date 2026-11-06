@@ -122,8 +122,14 @@ class _DetailScreenState extends State<DetailScreen> {
       if (mounted) {
         setState(() {
           _isOfflineReady = true;
+          _mountain = _mountain.copyWith(
+            isGpxReady: true,
+            isMapReady: true,
+          );
         });
+        await GpxStorageService.saveDownloadedMountain(_mountain);
 
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: const Color(0xFF0F5238),

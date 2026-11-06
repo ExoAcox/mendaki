@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final bool isShowingDownloaded;
   final int downloadedCount;
+  final VoidCallback? onLibraryTap;
   final VoidCallback? onDownloadedTap;
+  final bool isShowingDownloaded;
 
   const HomeAppBar({
     super.key,
-    this.isShowingDownloaded = false,
     this.downloadedCount = 0,
+    this.onLibraryTap,
     this.onDownloadedTap,
+    this.isShowingDownloaded = false,
   });
 
   @override
@@ -18,6 +20,8 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveOnTap = onLibraryTap ?? onDownloadedTap;
+
     return AppBar(
       titleSpacing: 16,
       title: Row(
@@ -64,11 +68,9 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         Padding(
           padding: const EdgeInsets.only(right: 12.0),
           child: Tooltip(
-            message: isShowingDownloaded
-                ? 'Tampilkan Semua Gunung'
-                : 'Tampilkan Gunung Tersimpan Offline',
+            message: 'Library Offline',
             child: InkWell(
-              onTap: onDownloadedTap,
+              onTap: effectiveOnTap,
               borderRadius: BorderRadius.circular(12),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
@@ -81,7 +83,9 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                   border: Border.all(
                     color: isShowingDownloaded
                         ? const Color(0xFF89EDBA)
-                        : Colors.transparent,
+                        : downloadedCount > 0
+                            ? AppTheme.primary.withValues(alpha: 0.25)
+                            : Colors.transparent,
                     width: 1.5,
                   ),
                 ),
@@ -89,7 +93,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      isShowingDownloaded
+                      isShowingDownloaded || downloadedCount > 0
                           ? Icons.offline_pin_rounded
                           : Icons.download_done_rounded,
                       color: isShowingDownloaded

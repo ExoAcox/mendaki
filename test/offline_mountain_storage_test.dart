@@ -53,11 +53,23 @@ void main() {
       expect(json['id'], 'prau');
       expect(json['name'], 'Gunung Prau');
       expect(json['routes'], isNotEmpty);
+      expect(json['isGpxReady'], isFalse);
+      expect(json['isMapReady'], isFalse);
 
       final decoded = Mountain.fromJson(json);
       expect(decoded.id, 'prau');
       expect(decoded.name, 'Gunung Prau');
       expect(decoded.routes.length, 1);
+      expect(decoded.isGpxReady, isFalse);
+      expect(decoded.isMapReady, isFalse);
+
+      final updated = decoded.copyWith(isGpxReady: true, isMapReady: true);
+      expect(updated.isGpxReady, isTrue);
+      expect(updated.isMapReady, isTrue);
+
+      final partial = decoded.copyWith(isGpxReady: true, isMapReady: false);
+      expect(partial.isGpxReady, isTrue);
+      expect(partial.isMapReady, isFalse);
 
       final decodedRoute = decoded.routes.first;
       expect(decodedRoute.id, 'prau-patakbanteng');
@@ -141,6 +153,21 @@ void main() {
 
       await tester.tap(find.byType(InkWell));
       expect(tapped, isTrue);
+    });
+
+    test('Library filtering requires both isGpxReady and isMapReady to be true', () {
+      final mountainBoth = testMountain.copyWith(isGpxReady: true, isMapReady: true);
+      final mountainOnlyGpx = testMountain.copyWith(isGpxReady: true, isMapReady: false);
+      final mountainOnlyMap = testMountain.copyWith(isGpxReady: false, isMapReady: true);
+      final mountainNone = testMountain.copyWith(isGpxReady: false, isMapReady: false);
+
+      final list = [mountainBoth, mountainOnlyGpx, mountainOnlyMap, mountainNone];
+      final libraryReadyList = list.where((m) => m.isGpxReady && m.isMapReady).toList();
+
+      expect(libraryReadyList.length, 1);
+      expect(libraryReadyList.first.id, mountainBoth.id);
+      expect(libraryReadyList.first.isGpxReady, isTrue);
+      expect(libraryReadyList.first.isMapReady, isTrue);
     });
   });
 }

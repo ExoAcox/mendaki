@@ -4,13 +4,17 @@ import 'package:mendaki/core/theme/app_theme.dart';
 class HomeSearchBar extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String>? onSubmitted;
+  final ValueChanged<String>? onChanged;
   final VoidCallback? onClear;
+  final String hintText;
 
   const HomeSearchBar({
     super.key,
     required this.controller,
     this.onSubmitted,
+    this.onChanged,
     this.onClear,
+    this.hintText = 'Cari gunung...',
   });
 
   @override
@@ -33,8 +37,9 @@ class HomeSearchBar extends StatelessWidget {
       child: TextField(
         controller: controller,
         onSubmitted: onSubmitted,
+        onChanged: onChanged,
         decoration: InputDecoration(
-          hintText: 'Cari gunung...',
+          hintText: hintText,
           hintStyle: TextStyle(
             color: AppTheme.outline.withValues(alpha: 0.8),
             fontSize: 14,

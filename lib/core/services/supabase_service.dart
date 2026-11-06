@@ -281,7 +281,8 @@ class SupabaseService {
       latitude: latitude,
       longitude: longitude,
       cities: cities,
-      isOfflineReady: json['asset_url'] != null,
+      isGpxReady: false,
+      isMapReady: false,
       assetUrl: json['asset_url'],
       allWaypoints: const [],
     );

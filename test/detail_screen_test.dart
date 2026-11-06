@@ -48,8 +48,8 @@ void main() {
       expect(find.text('Gunung Merbabu'), findsWidgets);
       expect(find.text('3145'), findsOneWidget);
       expect(find.textContaining('Selo'), findsWidgets);
-      // Belum terunduh offline -> Menampilkan tombol Download Peta Offline
-      expect(find.text('Download Peta Offline'), findsOneWidget);
+      // Belum terunduh offline -> Menampilkan tombol Download Map Offline
+      expect(find.text('Download Map Offline'), findsOneWidget);
     },
   );
 

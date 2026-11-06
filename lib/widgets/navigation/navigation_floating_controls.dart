@@ -1,84 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
+import 'package:mendaki/widgets/navigation/navigation_floating_button.dart';
+import 'package:mendaki/widgets/navigation/navigation_markers.dart';
 
 class NavigationFloatingControls extends StatelessWidget {
-  final VoidCallback onLayerTap;
+  final double currentRotation;
   final VoidCallback onCompassTap;
-  final VoidCallback onWaypointsTap;
-  final VoidCallback onRecenterTap;
+  final VoidCallback onFindMeTap;
 
   const NavigationFloatingControls({
     super.key,
-    required this.onLayerTap,
+    required this.currentRotation,
     required this.onCompassTap,
-    required this.onWaypointsTap,
-    required this.onRecenterTap,
+    required this.onFindMeTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      top: 14,
-      right: 14,
-      child: Column(
-        children: [
-          _buildTacticalButton(
-            icon: Icons.layers_outlined,
-            color: AppTheme.onSurface,
-            tooltip: 'Tipe Peta',
-            onTap: onLayerTap,
-          ),
-          const SizedBox(height: 10),
-          _buildTacticalButton(
-            icon: Icons.explore_rounded,
-            color: AppTheme.primary,
-            tooltip: 'Arah Kompas / Reset Orientasi',
-            onTap: onCompassTap,
-          ),
-          const SizedBox(height: 10),
-          _buildTacticalButton(
-            icon: Icons.alt_route_rounded,
-            color: const Color(0xFFA33D23),
-            tooltip: 'Daftar Pos & Waypoint',
-            onTap: onWaypointsTap,
-          ),
-          const SizedBox(height: 10),
-          _buildTacticalButton(
-            icon: Icons.my_location_rounded,
-            color: AppTheme.primary,
-            tooltip: 'Pusatkan ke Lokasi Saya',
-            onTap: onRecenterTap,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTacticalButton({
-    required IconData icon,
-    required Color color,
-    required String tooltip,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.95),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Floating Compass Button
+        NavigationFloatingButton(
+          customChild: CompassNeedle(rotationDegrees: currentRotation),
+          onTap: onCompassTap,
         ),
-        child: Icon(icon, size: 20, color: color),
-      ),
+        const SizedBox(height: 10),
+        // Floating Find Me Button
+        NavigationFloatingButton(
+          icon: Icons.my_location_rounded,
+          color: AppTheme.primary,
+          onTap: onFindMeTap,
+        ),
+      ],
     );
   }
 }

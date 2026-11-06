@@ -93,6 +93,7 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
 
       // Jika ada versi baru yang diunduh dari Supabase
       if (updatedFile != null && mounted) {
+        await GpxStorageService.saveDownloadedMountain(widget.mountain);
         final newGpxData = await GpxParserService.parseFile(updatedFile);
         if (!mounted) return;
         _buildMapElements(newGpxData);

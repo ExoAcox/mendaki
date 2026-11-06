@@ -158,7 +158,7 @@ class DetailBottomBar extends StatelessWidget {
             Icon(Icons.file_download_outlined, size: 22),
             SizedBox(width: 10),
             Text(
-              'Download Peta Offline',
+              'Download Map Offline',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
             ),
           ],

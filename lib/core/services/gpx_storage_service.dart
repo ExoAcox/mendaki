@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:mendaki/core/config/supabase_config.dart';
+import 'package:mendaki/core/services/gpx_parser_service.dart';
+import 'package:mendaki/core/services/offline_map_service.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -79,8 +81,12 @@ class GpxStorageService {
         }
       }
 
+      final isMap = await OfflineMapService.isOfflineMapDownloaded(mountain.id);
+      final isGpx = await isGpxDownloaded(mountain.id);
+
       final mountainToSave = mountain.copyWith(
-        isOfflineReady: true,
+        isGpxReady: isGpx || mountain.isGpxReady,
+        isMapReady: isMap || mountain.isMapReady,
         localImagePath: localImagePath ?? mountain.localImagePath,
       );
 
@@ -108,7 +114,9 @@ class GpxStorageService {
         if (await File(imgPath).exists()) {
           m = m.copyWith(localImagePath: imgPath);
         }
-        return m.copyWith(isOfflineReady: true);
+        final isGpx = await isGpxDownloaded(mountainId);
+        final isMap = await OfflineMapService.isOfflineMapDownloaded(mountainId);
+        return m.copyWith(isGpxReady: isGpx, isMapReady: isMap);
       }
     } catch (e) {
       debugPrint('Error membaca data gunung offline untuk $mountainId: $e');
@@ -116,15 +124,23 @@ class GpxStorageService {
     return null;
   }
 
-  /// Mengambil semua daftar Mountain yang sudah tersimpan offline di perangkat
-  static Future<List<Mountain>> getDownloadedMountains() async {
+  /// Mengambil semua daftar Mountain yang sudah tersimpan offline di perangkat.
+  /// Jika [onlyFullyReady] bernilai true, hanya mengembalikan gunung yang kedua-duanya
+  /// (berkas GPX dan paket peta offline) sudah siap di perangkat.
+  static Future<List<Mountain>> getDownloadedMountains({
+    bool onlyFullyReady = true,
+  }) async {
     final List<Mountain> list = [];
+    final Set<String> processedIds = {};
+
     try {
       final dirPath = await getGpxDirectoryPath();
       final dir = Directory(dirPath);
       if (!await dir.exists()) return [];
 
       final files = dir.listSync();
+
+      // 1. Baca semua file .mountain.json
       for (final entity in files) {
         if (entity is File && entity.path.endsWith('.mountain.json')) {
           try {
@@ -135,9 +151,53 @@ class GpxStorageService {
             if (await File(imgPath).exists()) {
               m = m.copyWith(localImagePath: imgPath);
             }
-            list.add(m.copyWith(isOfflineReady: true));
+            final isGpx = await isGpxDownloaded(m.id);
+            final isMap = await OfflineMapService.isOfflineMapDownloaded(m.id);
+
+            if (onlyFullyReady && (!isGpx || !isMap)) {
+              continue;
+            }
+
+            list.add(m.copyWith(isGpxReady: isGpx, isMapReady: isMap));
+            processedIds.add(m.id);
           } catch (e) {
             debugPrint('Error parse ${entity.path}: $e');
+          }
+        }
+      }
+
+      // 2. Pemulihan otomatis: jika file .gpx ada di disk tapi belum ada file .mountain.json
+      for (final entity in files) {
+        if (entity is File && entity.path.endsWith('.gpx')) {
+          final fileName = entity.uri.pathSegments.last;
+          final mountainId = fileName.substring(0, fileName.length - 4);
+          if (!processedIds.contains(mountainId) && await entity.length() > 0) {
+            try {
+              final isMap =
+                  await OfflineMapService.isOfflineMapDownloaded(mountainId);
+              if (onlyFullyReady && !isMap) {
+                continue;
+              }
+              final gpxData = await GpxParserService.parseFile(entity);
+              final m = Mountain(
+                id: mountainId,
+                name: gpxData.name.isNotEmpty
+                    ? gpxData.name
+                    : Mountain.formatRouteName(mountainId),
+                elevation: 0,
+                location: '',
+                province: '',
+                difficulty: 'Sedang',
+                estimatedTime: '',
+                isGpxReady: true,
+                isMapReady: isMap,
+              );
+              list.add(m);
+              processedIds.add(mountainId);
+              saveDownloadedMountain(m);
+            } catch (e) {
+              debugPrint('Error recovering mountain from gpx $fileName: $e');
+            }
           }
         }
       }
@@ -147,9 +207,11 @@ class GpxStorageService {
     return list;
   }
 
-  /// Menghitung total gunung yang sudah tersimpan offline
-  static Future<int> getDownloadedMountainsCount() async {
-    final list = await getDownloadedMountains();
+  /// Menghitung total gunung yang sudah tersimpan offline lengkap di perangkat
+  static Future<int> getDownloadedMountainsCount({
+    bool onlyFullyReady = true,
+  }) async {
+    final list = await getDownloadedMountains(onlyFullyReady: onlyFullyReady);
     return list.length;
   }
 

@@ -15,7 +15,7 @@ token.txt
 .swiftpm/
 migrate_working_dir/
 
-# Environment Variables & Secrets (JANGAN PERNAH DI-COMMIT)
+# Environment Variables & Secrets
 .env
 .env.*
 !.env.example

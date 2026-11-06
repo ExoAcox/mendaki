@@ -58,7 +58,8 @@ class GpxData {
       estimatedTime: estimatedTime,
       routes: tracks,
       assetUrl: gpxAssetPath,
-      isOfflineReady: true,
+      isGpxReady: true,
+      isMapReady: false,
       status: status,
       allWaypoints: waypoints,
     );

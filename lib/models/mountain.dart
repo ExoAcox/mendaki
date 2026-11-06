@@ -11,7 +11,8 @@ class Mountain {
   final String estimatedTime;
   final String? assetUrl;
   final String? imageUrl;
-  final bool isOfflineReady;
+  final bool isGpxReady;
+  final bool isMapReady;
   final String status;
   final double? latitude;
   final double? longitude;
@@ -97,7 +98,8 @@ class Mountain {
     this.rawRoutes = const [],
     this.assetUrl,
     this.imageUrl,
-    this.isOfflineReady = false,
+    this.isGpxReady = false,
+    this.isMapReady = false,
     this.status = 'Buka (Aman)',
     this.latitude,
     this.longitude,
@@ -118,7 +120,8 @@ class Mountain {
     List<String>? rawRoutes,
     String? assetUrl,
     String? imageUrl,
-    bool? isOfflineReady,
+    bool? isGpxReady,
+    bool? isMapReady,
     String? status,
     double? latitude,
     double? longitude,
@@ -138,7 +141,8 @@ class Mountain {
       rawRoutes: rawRoutes ?? this.rawRoutes,
       assetUrl: assetUrl ?? this.assetUrl,
       imageUrl: imageUrl ?? this.imageUrl,
-      isOfflineReady: isOfflineReady ?? this.isOfflineReady,
+      isGpxReady: isGpxReady ?? this.isGpxReady,
+      isMapReady: isMapReady ?? this.isMapReady,
       status: status ?? this.status,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
@@ -159,7 +163,8 @@ class Mountain {
       'estimatedTime': estimatedTime,
       'assetUrl': assetUrl,
       'imageUrl': imageUrl,
-      'isOfflineReady': isOfflineReady,
+      'isGpxReady': isGpxReady,
+      'isMapReady': isMapReady,
       'status': status,
       'latitude': latitude,
       'longitude': longitude,
@@ -182,7 +187,8 @@ class Mountain {
       estimatedTime: json['estimatedTime'] as String? ?? '',
       assetUrl: json['assetUrl'] as String?,
       imageUrl: json['imageUrl'] as String?,
-      isOfflineReady: json['isOfflineReady'] as bool? ?? false,
+      isGpxReady: json['isGpxReady'] as bool? ?? false,
+      isMapReady: json['isMapReady'] as bool? ?? false,
       status: json['status'] as String? ?? 'Buka (Aman)',
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
