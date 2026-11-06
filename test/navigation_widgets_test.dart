@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mendaki/models/mountain.dart';
+import 'package:mendaki/models/route.dart';
+import 'package:mendaki/widgets/navigation/finish_hike_dialog.dart';
 import 'package:mendaki/widgets/navigation/navigation_far_notice.dart';
+import 'package:mendaki/widgets/navigation/navigation_finish_button.dart';
 import 'package:mendaki/widgets/navigation/navigation_floating_button.dart';
 import 'package:mendaki/widgets/navigation/navigation_floating_controls.dart';
 import 'package:mendaki/widgets/navigation/navigation_markers.dart';
+import 'package:mendaki/widgets/navigation/navigation_top_bar.dart';
 
 void main() {
   group('Navigation Modular Widgets Tests', () {
@@ -76,11 +81,132 @@ void main() {
       expect(find.byType(CompassNeedle), findsOneWidget);
       expect(find.byIcon(Icons.my_location_rounded), findsOneWidget);
 
-      await tester.tap(find.byType(NavigationFloatingButton).first);
+      await tester.tap(find.byType(NavigationFloatingButton).at(1));
       expect(compassTapped, isTrue);
 
       await tester.tap(find.byIcon(Icons.my_location_rounded));
       expect(findMeTapped, isTrue);
+    });
+
+    testWidgets('NavigationFinishButton renders and fires onTap', (tester) async {
+      bool finishTapped = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: NavigationFinishButton(
+              onTap: () {
+                finishTapped = true;
+              },
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Finish'), findsOneWidget);
+      expect(find.byIcon(Icons.flag_rounded), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('finish_button')));
+      expect(finishTapped, isTrue);
+    });
+
+    testWidgets('NavigationFloatingControls renders Find Me, Compass, Altitude, and Elapsed Duration', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: NavigationFloatingControls(
+              currentRotation: 45.0,
+              onCompassTap: () {},
+              onFindMeTap: () {},
+              altitude: 2150.4,
+              elapsedDuration: const Duration(hours: 1, minutes: 23, seconds: 45),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.my_location_rounded), findsOneWidget);
+      expect(find.byType(CompassNeedle), findsOneWidget);
+      expect(find.text('2150 mdpl'), findsOneWidget);
+      expect(find.byIcon(Icons.landscape_rounded), findsOneWidget);
+      expect(find.text('01:23:45'), findsOneWidget);
+      expect(find.byIcon(Icons.timer_outlined), findsOneWidget);
+    });
+
+    testWidgets('NavigationTopBar renders formatted elapsed duration and fires finish callback', (tester) async {
+      bool finishTapped = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: NavigationTopBar(
+              elapsedDuration: const Duration(hours: 1, minutes: 23, seconds: 45),
+              altitude: 2150.4,
+              onFinishTap: () {
+                finishTapped = true;
+              },
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('01:23:45'), findsOneWidget);
+      expect(find.text('2150 mdpl'), findsOneWidget);
+      expect(find.byIcon(Icons.landscape_rounded), findsOneWidget);
+      expect(find.text('Finish'), findsOneWidget);
+      expect(find.byIcon(Icons.timer_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.flag_rounded), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('finish_button')));
+      expect(finishTapped, isTrue);
+    });
+
+    testWidgets('FinishHikeDialog displays confirmation details and actions', (tester) async {
+      bool finishConfirmed = false;
+
+      const testMountain = Mountain(
+        id: 'merbabu',
+        name: 'Gunung Merbabu',
+        elevation: 3145,
+        location: 'Boyolali',
+        province: 'Jawa Tengah',
+        difficulty: 'Sedang',
+        estimatedTime: '2D1N',
+      );
+
+      const testRoute = HikingRoute(
+        id: 'merbabu_selo',
+        name: 'Selo',
+        basecampName: 'Basecamp Selo',
+        distanceKm: 6.2,
+        estimatedDuration: '6 Jam',
+        elevationGainMeters: 1800,
+        difficulty: 'Sedang',
+        hasWater: true,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: FinishHikeDialog(
+              mountain: testMountain,
+              route: testRoute,
+              elapsed: const Duration(hours: 2, minutes: 15, seconds: 30),
+              onFinish: () {
+                finishConfirmed = true;
+              },
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Selesaikan Navigasi?'), findsOneWidget);
+      expect(find.textContaining('Gunung Merbabu'), findsOneWidget);
+      expect(find.text('02:15:30'), findsOneWidget);
+      expect(find.text('6.2 km'), findsOneWidget);
+
+      await tester.tap(find.text('Selesai'));
+      expect(finishConfirmed, isTrue);
     });
   });
 }

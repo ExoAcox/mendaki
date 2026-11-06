@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 class NavigationFarNotice extends StatelessWidget {
   final double? distanceKm;
 
-  const NavigationFarNotice({
-    super.key,
-    this.distanceKm,
-  });
+  const NavigationFarNotice({super.key, this.distanceKm});
 
   @override
   Widget build(BuildContext context) {
@@ -15,12 +12,9 @@ class NavigationFarNotice extends StatelessWidget {
         : 'Lokasi Anda terlalu jauh';
 
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: Alignment.center,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 10,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: const Color(0xFF1E293B).withValues(alpha: 0.94),
           borderRadius: BorderRadius.circular(24),
@@ -64,4 +58,3 @@ class NavigationFarNotice extends StatelessWidget {
     );
   }
 }
-

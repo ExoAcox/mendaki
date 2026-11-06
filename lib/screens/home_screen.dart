@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
+import 'package:mendaki/core/services/navigation_session_service.dart';
 import 'package:mendaki/core/services/supabase_service.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/screens/detail_screen.dart';
 import 'package:mendaki/screens/library_screen.dart';
+import 'package:mendaki/screens/navigation_screen.dart';
 import 'package:mendaki/widgets/home/empty_mountain_view.dart';
 import 'package:mendaki/widgets/home/home_app_bar.dart';
 import 'package:mendaki/widgets/home/home_filter_chips.dart';
@@ -43,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _checkActiveNavigationSession();
     _checkDownloadedCount();
     _loadMountains();
   }
@@ -52,6 +55,26 @@ class _HomeScreenState extends State<HomeScreen> {
     _scrollController.dispose();
     searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkActiveNavigationSession() async {
+    final session = await NavigationSessionService.getActiveSession();
+    if (session != null && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => NavigationScreen(
+                mountain: session.mountain,
+                selectedRoute: session.selectedRoute,
+                initialStartTime: session.startTime,
+                initialTraveledPath: session.traveledPath,
+              ),
+            ),
+          );
+        }
+      });
+    }
   }
 
   Future<void> _checkDownloadedCount() async {

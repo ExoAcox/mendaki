@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/models/route.dart';
 import 'package:mendaki/models/waypoint.dart';
@@ -45,8 +47,12 @@ void main() {
           ),
         );
 
-        // Verify map is rendered immediately with floating controls
-        expect(find.byIcon(Icons.arrow_back_rounded), findsOneWidget);
+        // Verify back button is removed, and time info & finish button are rendered
+        expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
+        expect(find.byIcon(Icons.timer_outlined), findsOneWidget);
+        expect(find.text('00:00:00'), findsOneWidget);
+        expect(find.text('Finish'), findsOneWidget);
+        expect(find.byKey(const Key('finish_button')), findsOneWidget);
         expect(find.byType(CompassNeedle), findsOneWidget);
         expect(find.byIcon(Icons.my_location_rounded), findsOneWidget);
 
@@ -74,8 +80,12 @@ void main() {
           ),
         );
 
-        // Verify map is rendered
-        expect(find.byIcon(Icons.arrow_back_rounded), findsOneWidget);
+        // Verify back button is removed, and time info & finish button are rendered
+        expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
+        expect(find.byIcon(Icons.timer_outlined), findsOneWidget);
+        expect(find.text('00:00:00'), findsOneWidget);
+        expect(find.text('Finish'), findsOneWidget);
+        expect(find.byKey(const Key('finish_button')), findsOneWidget);
         expect(find.byType(CompassNeedle), findsOneWidget);
         expect(find.byIcon(Icons.my_location_rounded), findsOneWidget);
 
@@ -135,6 +145,160 @@ void main() {
         // No label displayed, only the tent icon
         expect(find.text('POS 3'), findsNothing);
         expect(find.byType(TentIcon), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Tapping finish button displays confirmation dialog, Batal keeps on page, Selesai pops',
+      (tester) async {
+        bool popped = false;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) {
+                return ElevatedButton(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const NavigationScreen(
+                          mountain: testMountain,
+                          selectedRoute: testRoute,
+                          mockDistanceKm: 2.0,
+                        ),
+                      ),
+                    );
+                    popped = true;
+                  },
+                  child: const Text('Go Nav'),
+                );
+              },
+            ),
+          ),
+        );
+
+        // Navigate to NavigationScreen
+        await tester.tap(find.text('Go Nav'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        expect(find.byType(NavigationScreen), findsOneWidget);
+        expect(find.byKey(const Key('finish_button')), findsOneWidget);
+
+        // Tap Finish button -> modal konfirmasi should appear
+        await tester.tap(find.byKey(const Key('finish_button')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        expect(find.text('Selesaikan Navigasi?'), findsOneWidget);
+        expect(
+          find.text('Apakah Anda yakin ingin menyelesaikan sesi navigasi di Gunung Merbabu?'),
+          findsOneWidget,
+        );
+        expect(find.text('Batal'), findsOneWidget);
+        expect(find.text('Selesai'), findsOneWidget);
+
+        // Tap Batal -> Dialog should close, but user stays on NavigationScreen
+        await tester.tap(find.text('Batal'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        expect(find.text('Selesaikan Navigasi?'), findsNothing);
+        expect(find.byType(NavigationScreen), findsOneWidget);
+        expect(popped, isFalse);
+
+        // Tap Finish button again and confirm with Selesai
+        await tester.tap(find.byKey(const Key('finish_button')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        await tester.tap(find.text('Selesai'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        // User should now have exited NavigationScreen
+        expect(find.byType(NavigationScreen), findsNothing);
+        expect(popped, isTrue);
+      },
+    );
+
+    testWidgets(
+      'PopScope intercepts system back and triggers finish confirmation modal',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: NavigationScreen(
+              mountain: testMountain,
+              selectedRoute: testRoute,
+              mockDistanceKm: 2.0,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        // Simulate system back button / gesture
+        final dynamic widgetsAppState = tester.state(find.byType(WidgetsApp));
+        await widgetsAppState.didPopRoute();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        // Verify confirmation dialog appears instead of instantly popping
+        expect(find.text('Selesaikan Navigasi?'), findsOneWidget);
+        expect(find.byType(NavigationScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Renders altitude meter when hardware GPS altitude is available',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: NavigationScreen(
+              mountain: testMountain,
+              selectedRoute: testRoute,
+              mockDistanceKm: 2.0,
+              mockAltitude: 2840.0,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.text('2840 mdpl'), findsOneWidget);
+        expect(find.byIcon(Icons.landscape_rounded), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Renders trace path polyline with secondary color Color(0xFFA33D23)',
+      (tester) async {
+        final mockPath = [
+          const LatLng(-7.4542, 110.4397),
+          const LatLng(-7.4530, 110.4405),
+          const LatLng(-7.4520, 110.4415),
+        ];
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: NavigationScreen(
+              mountain: testMountain,
+              selectedRoute: testRoute,
+              mockDistanceKm: 2.0,
+              mockTraveledPath: mockPath,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final polylineLayerFinder = find.byType(PolylineLayer);
+        expect(polylineLayerFinder, findsOneWidget);
+
+        final PolylineLayer polylineLayer = tester.widget(polylineLayerFinder);
+        final tracePolylines = polylineLayer.polylines
+            .where((p) => p.color == const Color(0xFFA33D23))
+            .toList();
+
+        expect(tracePolylines, hasLength(1));
+        expect(tracePolylines.first.points, equals(mockPath));
       },
     );
   });

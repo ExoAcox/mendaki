@@ -6,12 +6,13 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'package:mendaki/core/services/gpx_parser_service.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
-import 'package:mendaki/core/theme/app_theme.dart';
+import 'package:mendaki/core/services/navigation_session_service.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/models/route.dart';
 import 'package:mendaki/models/waypoint.dart';
+import 'package:mendaki/widgets/navigation/finish_hike_dialog.dart';
 import 'package:mendaki/widgets/navigation/navigation_far_notice.dart';
-import 'package:mendaki/widgets/navigation/navigation_floating_button.dart';
+import 'package:mendaki/widgets/navigation/navigation_finish_button.dart';
 import 'package:mendaki/widgets/navigation/navigation_floating_controls.dart';
 import 'package:mendaki/widgets/navigation/navigation_map_viewport.dart';
 import 'package:mendaki/widgets/navigation/navigation_markers.dart';
@@ -22,6 +23,10 @@ class NavigationScreen extends StatefulWidget {
   final HikingRoute? selectedRoute;
   final double? mockDistanceKm;
   final LatLng? mockUserLocation;
+  final double? mockAltitude;
+  final List<LatLng>? mockTraveledPath;
+  final DateTime? initialStartTime;
+  final List<LatLng>? initialTraveledPath;
 
   const NavigationScreen({
     super.key,
@@ -29,6 +34,10 @@ class NavigationScreen extends StatefulWidget {
     this.selectedRoute,
     this.mockDistanceKm,
     this.mockUserLocation,
+    this.mockAltitude,
+    this.mockTraveledPath,
+    this.initialStartTime,
+    this.initialTraveledPath,
   });
 
   @override
@@ -36,7 +45,7 @@ class NavigationScreen extends StatefulWidget {
 }
 
 class _NavigationScreenState extends State<NavigationScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final MapController _mapController = MapController();
 
   // Lokasi & Jarak ke Gunung
@@ -50,7 +59,9 @@ class _NavigationScreenState extends State<NavigationScreen>
 
   // GPX Data, Polylines & Markers
   GpxData? _gpxData;
+  List<Polyline> _baseGpxPolylines = [];
   List<Polyline> _polylines = [];
+  final List<LatLng> _breadcrumbPath = [];
   List<Marker> _markers = [];
   Waypoint? _selectedWaypoint;
 
@@ -63,10 +74,37 @@ class _NavigationScreenState extends State<NavigationScreen>
   late LatLng _mapCenter;
   double _currentRotation = 0.0;
   double? _userHeading;
+  double? _currentAltitude;
+
+  // Tracking Durasi Navigasi
+  late final DateTime _startTime;
+  Duration _elapsedDuration = Duration.zero;
+  Timer? _durationTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _currentAltitude = widget.mockAltitude;
+    if (widget.initialTraveledPath != null) {
+      _breadcrumbPath.addAll(widget.initialTraveledPath!);
+    }
+    if (widget.mockTraveledPath != null) {
+      _breadcrumbPath.addAll(widget.mockTraveledPath!);
+    }
+    _rebuildPolylines();
+    _startTime = widget.initialStartTime ?? DateTime.now();
+    _elapsedDuration = DateTime.now().difference(_startTime);
+    _saveSession();
+
+    _durationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _elapsedDuration = DateTime.now().difference(_startTime);
+        });
+      }
+    });
+
     _mountainCenter = LatLng(
       widget.mountain.latitude ?? -7.4542,
       widget.mountain.longitude ?? 110.4397,
@@ -150,6 +188,32 @@ class _NavigationScreenState extends State<NavigationScreen>
     }
   }
 
+  void _rebuildPolylines() {
+    final combined = List<Polyline>.from(_baseGpxPolylines);
+
+    if (_breadcrumbPath.length >= 2) {
+      // 1. Background casing putih untuk trace path
+      combined.add(
+        Polyline(
+          points: List<LatLng>.from(_breadcrumbPath),
+          strokeWidth: 6.0,
+          color: Colors.white.withValues(alpha: 0.9),
+        ),
+      );
+
+      // 2. Foreground trace path warna secondary Color(0xFFA33D23)
+      combined.add(
+        Polyline(
+          points: List<LatLng>.from(_breadcrumbPath),
+          strokeWidth: 4.0,
+          color: const Color(0xFFA33D23),
+        ),
+      );
+    }
+
+    _polylines = combined;
+  }
+
   void _updateUserPosition(Position pos) {
     if (!mounted) return;
 
@@ -164,14 +228,34 @@ class _NavigationScreenState extends State<NavigationScreen>
     final distKm = distMeters / 1000.0;
     final isFar = distKm > 15.0;
 
+    // Rekam titik koordinat jejak langkah (breadcrumb trace path)
+    if (_breadcrumbPath.isEmpty) {
+      _breadcrumbPath.add(userLoc);
+      _saveSession();
+    } else {
+      final last = _breadcrumbPath.last;
+      final dist = Geolocator.distanceBetween(
+        last.latitude,
+        last.longitude,
+        userLoc.latitude,
+        userLoc.longitude,
+      );
+      if (dist >= 3.0) {
+        _breadcrumbPath.add(userLoc);
+        _saveSession();
+      }
+    }
+
     setState(() {
       _currentPosition = userLoc;
       _distanceToMountainKm = distKm;
       _isFarFromMountain = isFar;
       _hasUserPosition = true;
+      _currentAltitude = pos.altitude;
       if (pos.heading >= 0) {
         _userHeading = pos.heading;
       }
+      _rebuildPolylines();
       _rebuildMarkers();
     });
 
@@ -184,17 +268,15 @@ class _NavigationScreenState extends State<NavigationScreen>
 
   void _startLocationStream() {
     _positionStreamSub?.cancel();
-    _positionStreamSub = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
-      ),
-    ).listen(
-      (pos) {
-        _updateUserPosition(pos);
-      },
-      onError: (err) => debugPrint('Error GPS stream: $err'),
-    );
+    _positionStreamSub =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 10,
+          ),
+        ).listen((pos) {
+          _updateUserPosition(pos);
+        }, onError: (err) => debugPrint('Error GPS stream: $err'));
   }
 
   /// Memuat GPX dan menyusun polyline & marker peta
@@ -271,7 +353,8 @@ class _NavigationScreenState extends State<NavigationScreen>
 
     if (mounted) {
       setState(() {
-        _polylines = polylines;
+        _baseGpxPolylines = polylines;
+        _rebuildPolylines();
         _mapCenter = calculatedCenter;
         _rebuildMarkers();
       });
@@ -284,7 +367,8 @@ class _NavigationScreenState extends State<NavigationScreen>
         }
       });
     } else {
-      _polylines = polylines;
+      _baseGpxPolylines = polylines;
+      _rebuildPolylines();
       _mapCenter = calculatedCenter;
       _rebuildMarkers();
     }
@@ -499,11 +583,48 @@ class _NavigationScreenState extends State<NavigationScreen>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _durationTimer?.cancel();
     _positionStreamSub?.cancel();
     _mapEventSub?.cancel();
     _pulseController.dispose();
     _mapController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      _saveSession();
+    }
+  }
+
+  void _saveSession() {
+    NavigationSessionService.saveActiveSession(
+      ActiveNavigationSession(
+        mountain: widget.mountain,
+        selectedRoute: widget.selectedRoute,
+        startTime: _startTime,
+        traveledPath: _breadcrumbPath,
+      ),
+    );
+  }
+
+  void _finishNavigation() {
+    NavigationSessionService.clearActiveSession();
+    Navigator.of(context).pop();
+  }
+
+  void _showFinishConfirmationDialog() {
+    FinishHikeDialog.show(
+      context,
+      mountain: widget.mountain,
+      route: widget.selectedRoute,
+      elapsed: _elapsedDuration,
+      onFinish: _finishNavigation,
+    );
   }
 
   void _handleFindMeTap() {
@@ -528,79 +649,84 @@ class _NavigationScreenState extends State<NavigationScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // 1. Clean Fullscreen Interactive Map Viewport
-          Positioned.fill(
-            child: NavigationMapViewport(
-              mapController: _mapController,
-              initialCenter: _mapCenter,
-              initialZoom: 14.0,
-              initialRotation: _isFarFromMountain
-                  ? 0.0
-                  : _calculateSummitUpRotation(),
-              offlineBasePath: _offlineBasePath,
-              mountainId: widget.mountain.id,
-              polylines: _polylines,
-              markers: _markers,
-              onTap: (tapPosition, point) {
-                if (_selectedWaypoint != null) {
-                  setState(() {
-                    _selectedWaypoint = null;
-                    _rebuildMarkers();
-                  });
-                }
-              },
-              onPositionChanged: (camera, hasGesture) {
-                if (camera.rotation != _currentRotation) {
-                  setState(() {
-                    _currentRotation = camera.rotation;
-                  });
-                }
-              },
-            ),
-          ),
-
-          // 2. Minimal Floating Back Button (Pojok Kiri Atas)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 12,
-            left: 16,
-            child: NavigationFloatingButton(
-              icon: Icons.arrow_back_rounded,
-              color: AppTheme.onSurface,
-              onTap: () => Navigator.of(context).pop(),
-            ),
-          ),
-
-          // 3. Floating Message: "Lokasi Anda terlalu jauh" jika di luar radius gunung
-          if (_isFarFromMountain)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 12,
-              left: 72,
-              right: 16,
-              child: NavigationFarNotice(
-                distanceKm: _distanceToMountainKm,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _showFinishConfirmationDialog();
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            // 1. Clean Fullscreen Interactive Map Viewport
+            Positioned.fill(
+              child: NavigationMapViewport(
+                mapController: _mapController,
+                initialCenter: _mapCenter,
+                initialZoom: 14.0,
+                initialRotation: _isFarFromMountain
+                    ? 0.0
+                    : _calculateSummitUpRotation(),
+                offlineBasePath: _offlineBasePath,
+                mountainId: widget.mountain.id,
+                polylines: _polylines,
+                markers: _markers,
+                onTap: (tapPosition, point) {
+                  if (_selectedWaypoint != null) {
+                    setState(() {
+                      _selectedWaypoint = null;
+                      _rebuildMarkers();
+                    });
+                  }
+                },
+                onPositionChanged: (camera, hasGesture) {
+                  if (camera.rotation != _currentRotation) {
+                    setState(() {
+                      _currentRotation = camera.rotation;
+                    });
+                  }
+                },
               ),
             ),
 
-          // 4. Floating Compass & Find Me Buttons (Pojok Kanan Bawah)
-          Positioned(
-            bottom: 16,
-            right: 16,
-            child: NavigationFloatingControls(
-              currentRotation: _currentRotation,
-              onCompassTap: () {
-                setState(() {
-                  _currentRotation = 0.0;
-                });
-                _mapController.rotate(0.0);
-              },
-              onFindMeTap: _handleFindMeTap,
+            // Floating Far Notice jika jauh
+            if (_isFarFromMountain)
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 24,
+                left: 16,
+                right: 16,
+                child: NavigationFarNotice(distanceKm: _distanceToMountainKm),
+              ),
+
+            // Kiri Bawah: Button Finish
+            Positioned(
+              left: 16,
+              bottom: 16,
+              child: NavigationFinishButton(
+                onTap: _showFinishConfirmationDialog,
+              ),
             ),
-          ),
-        ],
+
+            // Kanan Bawah: Elapse Duration, Altitude, Compass, Find Me (dari bawah ke atas)
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: NavigationFloatingControls(
+                currentRotation: _currentRotation,
+                onCompassTap: () {
+                  setState(() {
+                    _currentRotation = 0.0;
+                  });
+                  _mapController.rotate(0.0);
+                },
+                onFindMeTap: _handleFindMeTap,
+                elapsedDuration: _elapsedDuration,
+                altitude: _currentAltitude,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
