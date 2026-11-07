@@ -5,6 +5,7 @@ import 'package:mendaki/core/services/gpx_parser_service.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/models/waypoint.dart';
+import 'package:mendaki/widgets/map/map_attribution_badge.dart';
 import 'package:mendaki/widgets/navigation/navigation_markers.dart';
 
 class DetailMapHeader extends StatefulWidget {
@@ -299,6 +300,31 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
     });
   }
 
+  LatLngBounds _calculateBounds() {
+    // 15 km buffer ≈ 0.135 derajat
+    const buffer = 0.135;
+    double minLat = _mapCenter.latitude;
+    double maxLat = _mapCenter.latitude;
+    double minLng = _mapCenter.longitude;
+    double maxLng = _mapCenter.longitude;
+
+    if (_gpxData != null) {
+      for (final track in _gpxData!.tracks) {
+        for (final pt in track.trackPoints) {
+          if (pt.latitude < minLat) minLat = pt.latitude;
+          if (pt.latitude > maxLat) maxLat = pt.latitude;
+          if (pt.longitude < minLng) minLng = pt.longitude;
+          if (pt.longitude > maxLng) maxLng = pt.longitude;
+        }
+      }
+    }
+
+    return LatLngBounds(
+      LatLng(minLat - buffer, minLng - buffer),
+      LatLng(maxLat + buffer, maxLng + buffer),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
@@ -323,6 +349,9 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
               initialZoom: 12.0,
               minZoom: 12.0,
               maxZoom: 16.5,
+              cameraConstraint: CameraConstraint.containCenter(
+                bounds: _calculateBounds(),
+              ),
               onTap: (tapPosition, point) {
                 if (_selectedWaypoint != null) {
                   setState(() {
@@ -337,11 +366,11 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
             ),
             children: [
               TileLayer(
-                urlTemplate:
-                    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+                urlTemplate: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+                subdomains: const ['a', 'b', 'c'],
                 userAgentPackageName: 'ayo.mendaki.bersama',
-                maxNativeZoom: 16,
-                maxZoom: 17,
+                maxNativeZoom: 17,
+                maxZoom: 18,
               ),
               if (_polylines.isNotEmpty) PolylineLayer(polylines: _polylines),
               if (_markers.isNotEmpty) MarkerLayer(markers: _markers),
@@ -572,6 +601,13 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
             ),
           ),
 
+          // Map Attribution Badge (Kanan Atas, persis di bawah tombol aksi Pusatkan & Perbesar)
+          Positioned(
+            top: topPadding + 48,
+            right: 12,
+            child: const MapAttributionBadge(),
+          ),
+
           // Bottom Content Overlay (Swipe Up to Expand, Swipe Down to Collapse)
           Positioned(
             left: 0,
@@ -654,7 +690,7 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
                                 '${widget.mountain.elevation}',
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w800,
                                   fontFamily: 'monospace',
                                 ),

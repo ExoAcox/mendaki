@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
 import 'package:mendaki/core/services/navigation_session_service.dart';
+import 'package:mendaki/core/services/network_service.dart';
 import 'package:mendaki/core/services/supabase_service.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/models/mountain.dart';
@@ -9,6 +10,7 @@ import 'package:mendaki/screens/library_screen.dart';
 import 'package:mendaki/screens/navigation_screen.dart';
 import 'package:mendaki/widgets/home/empty_mountain_view.dart';
 import 'package:mendaki/widgets/home/home_app_bar.dart';
+import 'package:mendaki/widgets/home/home_error_view.dart';
 import 'package:mendaki/widgets/home/home_filter_chips.dart';
 import 'package:mendaki/widgets/home/home_search_bar.dart';
 import 'package:mendaki/widgets/home/mountain_card.dart';
@@ -29,6 +31,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isLoading = true;
   bool _isLoadingMore = false;
   bool _hasMore = true;
+  bool _hasError = false;
+  bool _isOffline = false;
   int _currentPage = 1;
   static const int _pageSize = 10;
   int _downloadedCount = 0;
@@ -110,10 +114,28 @@ class _HomeScreenState extends State<HomeScreen> {
       isLoading = true;
       _currentPage = 1;
       _hasMore = true;
+      _hasError = false;
+      _isOffline = false;
     });
+
+    // 1. Pengecekan device offline: jika tidak ada sinyal/internet, langsung tampilkan global error
+    final isOnline = await NetworkService.isOnline();
+    if (!isOnline) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+          _hasError = true;
+          _isOffline = true;
+          mountains = [];
+        });
+      }
+      _checkDownloadedCount();
+      return;
+    }
 
     await _checkDownloadedCount();
 
+    // 2. Jika online, ambil daftar gunung dari server
     try {
       final data = await SupabaseService.getMountains(
         province: selectedFilter == 'Semua' ? null : selectedFilter,
@@ -128,19 +150,19 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           mountains = data;
           isLoading = false;
+          _hasError = false;
+          _isOffline = false;
           _hasMore = data.length >= _pageSize;
         });
       }
     } catch (e) {
-      debugPrint(
-        'Error loading mountains from Supabase, fallback to offline cache: $e',
-      );
-      final offline = await GpxStorageService.getDownloadedMountains();
+      debugPrint('Error loading mountains from Supabase: $e');
       if (mounted) {
         setState(() {
-          mountains = offline;
           isLoading = false;
-          _hasMore = false;
+          _hasError = true;
+          _isOffline = false;
+          mountains = [];
         });
       }
     }
@@ -219,47 +241,59 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                _buildSectionHeader(),
-                const SizedBox(height: 12),
-                if (isLoading)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40.0),
-                      child: CircularProgressIndicator(color: AppTheme.primary),
-                    ),
+                if (_hasError)
+                  HomeErrorView(
+                    isOffline: _isOffline,
+                    downloadedCount: _downloadedCount,
+                    onOpenLibrary: _openLibrary,
+                    onRetry: _loadMountains,
                   )
-                else if (mountains.isEmpty)
-                  const EmptyMountainView()
                 else ...[
-                  for (final mountain in mountains) ...[
-                    MountainCard(
-                      mountain: mountain,
-                      onDetailTap: () async {
-                        await Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => DetailScreen(mountain: mountain),
-                          ),
-                        );
-                        _checkDownloadedCount();
-                      },
-                      onDownloaded: _checkDownloadedCount,
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  if (_isLoadingMore)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: AppTheme.primary,
+                  _buildSectionHeader(),
+                  const SizedBox(height: 12),
+                  if (isLoading)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40.0),
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    )
+                  else if (mountains.isEmpty)
+                    const EmptyMountainView()
+                  else ...[
+                    for (final mountain in mountains) ...[
+                      MountainCard(
+                        mountain: mountain,
+                        onDetailTap: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  DetailScreen(mountain: mountain),
+                            ),
+                          );
+                          _checkDownloadedCount();
+                        },
+                        onDownloaded: _checkDownloadedCount,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    if (_isLoadingMore)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: AppTheme.primary,
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                  ],
                 ],
                 const SizedBox(height: 80),
               ],

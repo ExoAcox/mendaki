@@ -34,13 +34,20 @@ void main() {
     routes: [testRoute],
   );
 
+  late Directory tempDir;
+
   setUp(() async {
-    NavigationSessionService.customSessionDirectoryPath = Directory.systemTemp.path;
+    tempDir = Directory.systemTemp.createTempSync('nav_test_');
+    NavigationSessionService.customSessionDirectoryPath = tempDir.path;
     await NavigationSessionService.clearActiveSession();
   });
 
   tearDown(() async {
     await NavigationSessionService.clearActiveSession();
+    NavigationSessionService.customSessionDirectoryPath = null;
+    try {
+      tempDir.deleteSync(recursive: true);
+    } catch (_) {}
   });
 
   group('NavigationSessionService CRUD Tests', () {

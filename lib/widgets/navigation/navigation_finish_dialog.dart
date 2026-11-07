@@ -3,17 +3,19 @@ import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/models/route.dart';
 
-class FinishHikeDialog extends StatelessWidget {
+class NavigationFinishDialog extends StatelessWidget {
   final Mountain mountain;
   final HikingRoute? route;
   final Duration elapsed;
+  final double? distanceTraveledKm;
   final VoidCallback onFinish;
 
-  const FinishHikeDialog({
+  const NavigationFinishDialog({
     super.key,
     required this.mountain,
     this.route,
     required this.elapsed,
+    this.distanceTraveledKm,
     required this.onFinish,
   });
 
@@ -22,15 +24,17 @@ class FinishHikeDialog extends StatelessWidget {
     required Mountain mountain,
     HikingRoute? route,
     required Duration elapsed,
+    double? distanceTraveledKm,
     required VoidCallback onFinish,
   }) {
     return showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (ctx) => FinishHikeDialog(
+      builder: (ctx) => NavigationFinishDialog(
         mountain: mountain,
         route: route,
         elapsed: elapsed,
+        distanceTraveledKm: distanceTraveledKm,
         onFinish: onFinish,
       ),
     );
@@ -42,6 +46,13 @@ class FinishHikeDialog extends StatelessWidget {
     final minutes = twoDigits(duration.inMinutes.remainder(60));
     final seconds = twoDigits(duration.inSeconds.remainder(60));
     return '$hours:$minutes:$seconds';
+  }
+
+  String _formatDistance(double km) {
+    if (km < 1.0) {
+      return '${(km * 1000).round()} m';
+    }
+    return '${km.toStringAsFixed(1)} km';
   }
 
   @override
@@ -105,7 +116,7 @@ class FinishHikeDialog extends StatelessWidget {
                 Column(
                   children: [
                     const Text(
-                      'WAKTU BERJALAN',
+                      'WAKTU DILALUI',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -124,7 +135,7 @@ class FinishHikeDialog extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (route != null) ...[
+                if (distanceTraveledKm != null || route != null) ...[
                   Container(
                     width: 1,
                     height: 28,
@@ -133,7 +144,7 @@ class FinishHikeDialog extends StatelessWidget {
                   Column(
                     children: [
                       const Text(
-                        'JARAK RUTE',
+                        'JARAK DITEMPUH',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -143,7 +154,7 @@ class FinishHikeDialog extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${route!.distanceKm.toStringAsFixed(1)} km',
+                        _formatDistance(distanceTraveledKm ?? route?.distanceKm ?? 0.0),
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
@@ -200,9 +211,7 @@ class FinishHikeDialog extends StatelessWidget {
                 ),
                 child: const Text(
                   'Selesai',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -213,3 +222,4 @@ class FinishHikeDialog extends StatelessWidget {
   }
 }
 
+typedef FinishHikeDialog = NavigationFinishDialog;

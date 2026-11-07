@@ -29,6 +29,29 @@ class NavigationMapViewport extends StatelessWidget {
     this.onPositionChanged,
   });
 
+  LatLngBounds _calculateBounds() {
+    // 15 km buffer ≈ 0.135 derajat
+    const buffer = 0.135;
+    double minLat = initialCenter.latitude;
+    double maxLat = initialCenter.latitude;
+    double minLng = initialCenter.longitude;
+    double maxLng = initialCenter.longitude;
+
+    for (final poly in polylines) {
+      for (final pt in poly.points) {
+        if (pt.latitude < minLat) minLat = pt.latitude;
+        if (pt.latitude > maxLat) maxLat = pt.latitude;
+        if (pt.longitude < minLng) minLng = pt.longitude;
+        if (pt.longitude > maxLng) maxLng = pt.longitude;
+      }
+    }
+
+    return LatLngBounds(
+      LatLng(minLat - buffer, minLng - buffer),
+      LatLng(maxLat + buffer, maxLng + buffer),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return FlutterMap(
@@ -37,8 +60,11 @@ class NavigationMapViewport extends StatelessWidget {
         initialCenter: initialCenter,
         initialZoom: initialZoom,
         initialRotation: initialRotation,
-        minZoom: 10.0,
-        maxZoom: 18.0,
+        minZoom: 12.0,
+        maxZoom: 16.5,
+        cameraConstraint: CameraConstraint.containCenter(
+          bounds: _calculateBounds(),
+        ),
         onTap: onTap,
         onPositionChanged: onPositionChanged,
         interactionOptions: const InteractionOptions(
@@ -47,8 +73,8 @@ class NavigationMapViewport extends StatelessWidget {
       ),
       children: [
         TileLayer(
-          urlTemplate:
-              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+          urlTemplate: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+          subdomains: const ['a', 'b', 'c'],
           tileProvider: offlineBasePath != null
               ? OfflineFirstTileProvider(
                   mountainId: mountainId,
@@ -56,7 +82,7 @@ class NavigationMapViewport extends StatelessWidget {
                 )
               : null,
           userAgentPackageName: 'ayo.mendaki.bersama',
-          maxNativeZoom: 16,
+          maxNativeZoom: 17,
           maxZoom: 18,
         ),
         if (polylines.isNotEmpty) PolylineLayer(polylines: polylines),
@@ -65,4 +91,3 @@ class NavigationMapViewport extends StatelessWidget {
     );
   }
 }
-

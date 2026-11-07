@@ -48,7 +48,11 @@ class SupabaseService {
     int page = 1,
     int pageSize = 10,
   }) async {
-    if (!isReady) return [];
+    if (!isReady) {
+      throw StateError(
+        'Supabase belum diinisialisasi atau belum dikonfigurasi.',
+      );
+    }
 
     try {
       final from = (page - 1) * pageSize;
@@ -82,12 +86,8 @@ class SupabaseService {
           .map((mData) => _mapJsonToMountain(mData as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      debugPrint('Error fetching mountains from Supabase (offline fallback): $e');
-      final offline = await GpxStorageService.getDownloadedMountains();
-      if (offline.isNotEmpty) {
-        return offline;
-      }
-      return [];
+      debugPrint('Error fetching mountains from Supabase: $e');
+      rethrow;
     }
   }
 

@@ -70,7 +70,6 @@ class DetailBottomBar extends StatelessWidget {
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
-                      value: progress > 0 ? progress : null,
                       strokeWidth: 2.2,
                       color: AppTheme.primary,
                     ),
@@ -111,8 +110,8 @@ class DetailBottomBar extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.explore_rounded, size: 24),
-              const SizedBox(width: 10),
+              const Icon(Icons.hiking_rounded, size: 22),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -121,7 +120,7 @@ class DetailBottomBar extends StatelessWidget {
                     const Text(
                       'Mulai Mendaki',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         height: 1.2,
                       ),

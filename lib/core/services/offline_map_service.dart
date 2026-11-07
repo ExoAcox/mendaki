@@ -78,9 +78,23 @@ class OfflineMapService {
         .floor();
   }
 
+  @visibleForTesting
+  static String? customOfflineBasePath;
+
   /// Mendapatkan direktori folder ubin offline untuk gunung tertentu
   static Future<Directory> getOfflineTilesDir(String mountainId) async {
-    final appDir = await getApplicationDocumentsDirectory();
+    if (customOfflineBasePath != null) {
+      return Directory('$customOfflineBasePath/offline_tiles/$mountainId');
+    }
+    if (Platform.environment.containsKey('FLUTTER_TEST')) {
+      return Directory('${Directory.systemTemp.path}/offline_tiles/$mountainId');
+    }
+    Directory appDir;
+    try {
+      appDir = await getApplicationDocumentsDirectory();
+    } catch (_) {
+      appDir = Directory.systemTemp;
+    }
     final dir = Directory('${appDir.path}/offline_tiles/$mountainId');
     return dir;
   }
@@ -118,7 +132,7 @@ class OfflineMapService {
     }
   }
 
-  /// Mengunduh seluruh ubin peta OpenStreetMap di sekitar area gunung
+  /// Mengunduh seluruh ubin peta OpenTopoMap di sekitar area gunung
   /// untuk rentang zoom level 11 (tinjauan makro) sampai 15 (jalur rinci).
   static Future<void> downloadOfflineMap({
     required String mountainId,
@@ -210,7 +224,7 @@ class OfflineMapService {
 
           try {
             final uri = Uri.parse(
-              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/${tile.z}/${tile.y}/${tile.x}',
+              'https://tile.opentopomap.org/${tile.z}/${tile.x}/${tile.y}.png',
             );
             final request = await client.getUrl(uri);
             final response = await request.close();
@@ -246,6 +260,8 @@ class OfflineMapService {
         'minZoom': minZoom,
         'maxZoom': maxZoom,
         'downloadedAt': DateTime.now().toIso8601String(),
+        'attribution':
+            'Kartendaten: © OpenStreetMap-Mitwirkende, SRTM | Kartendarstellung: © OpenTopoMap (CC-BY-SA)',
       }),
     );
   }

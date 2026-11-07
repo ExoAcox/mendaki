@@ -322,7 +322,7 @@ class _MountainCardState extends State<MountainCard> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.offline_pin_rounded,
+                                  Icons.map_rounded,
                                   color: Color(0xFF89EDBA),
                                   size: 12,
                                 ),
@@ -552,7 +552,6 @@ class _MountainCardState extends State<MountainCard> {
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
-                      value: _downloadProgress > 0 ? _downloadProgress : null,
                       strokeWidth: 2.2,
                       color: AppTheme.primary,
                     ),

@@ -10,7 +10,8 @@ import 'package:mendaki/core/services/navigation_session_service.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/models/route.dart';
 import 'package:mendaki/models/waypoint.dart';
-import 'package:mendaki/widgets/navigation/finish_hike_dialog.dart';
+import 'package:mendaki/widgets/map/map_attribution_badge.dart';
+import 'package:mendaki/widgets/navigation/navigation_finish_dialog.dart';
 import 'package:mendaki/widgets/navigation/navigation_far_notice.dart';
 import 'package:mendaki/widgets/navigation/navigation_finish_button.dart';
 import 'package:mendaki/widgets/navigation/navigation_floating_controls.dart';
@@ -618,10 +619,11 @@ class _NavigationScreenState extends State<NavigationScreen>
   }
 
   void _showFinishConfirmationDialog() {
-    FinishHikeDialog.show(
+    NavigationFinishDialog.show(
       context,
       mountain: widget.mountain,
       route: widget.selectedRoute,
+      distanceTraveledKm: _calculateTraveledDistanceKm(),
       elapsed: _elapsedDuration,
       onFinish: _finishNavigation,
     );
@@ -647,8 +649,23 @@ class _NavigationScreenState extends State<NavigationScreen>
     }
   }
 
+  double _calculateTraveledDistanceKm() {
+    if (_breadcrumbPath.length < 2) return 0.0;
+    double totalMeters = 0.0;
+    for (int i = 0; i < _breadcrumbPath.length - 1; i++) {
+      totalMeters += Geolocator.distanceBetween(
+        _breadcrumbPath[i].latitude,
+        _breadcrumbPath[i].longitude,
+        _breadcrumbPath[i + 1].latitude,
+        _breadcrumbPath[i + 1].longitude,
+      );
+    }
+    return totalMeters / 1000.0;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -699,19 +716,46 @@ class _NavigationScreenState extends State<NavigationScreen>
                 child: NavigationFarNotice(distanceKm: _distanceToMountainKm),
               ),
 
-            // Kiri Bawah: Button Finish
+            // Credit Atribusi Peta (Di Atas Tengah)
+            Positioned(
+              top:
+                  MediaQuery.of(context).padding.top +
+                  (_isFarFromMountain ? 76 : 12),
+              left: 16,
+              right: 16,
+              child: Align(
+                alignment: _isFarFromMountain
+                    ? Alignment.topCenter
+                    : Alignment.topRight,
+                child: MapAttributionBadge(),
+              ),
+            ),
+
+            // Paling Bawah: Chip gabungan 3 Info Full Width (Elapsed Time, Altitude, Jarak yang dilalui)
             Positioned(
               left: 16,
-              bottom: 16,
+              right: 16,
+              bottom: bottomPadding + 16,
+              child: NavigationMetricsChip(
+                elapsedDuration: _elapsedDuration,
+                altitude: _currentAltitude,
+                distanceKm: _calculateTraveledDistanceKm(),
+              ),
+            ),
+
+            // Di Atas Chip - Sebelah Kiri: Button Finish
+            Positioned(
+              left: 16,
+              bottom: bottomPadding + 68,
               child: NavigationFinishButton(
                 onTap: _showFinishConfirmationDialog,
               ),
             ),
 
-            // Kanan Bawah: Elapse Duration, Altitude, Compass, Find Me (dari bawah ke atas)
+            // Di Atas Chip - Sebelah Kanan: Button Find Me & Button Compass (di atasnya)
             Positioned(
               right: 16,
-              bottom: 16,
+              bottom: bottomPadding + 68,
               child: NavigationFloatingControls(
                 currentRotation: _currentRotation,
                 onCompassTap: () {
@@ -721,8 +765,6 @@ class _NavigationScreenState extends State<NavigationScreen>
                   _mapController.rotate(0.0);
                 },
                 onFindMeTap: _handleFindMeTap,
-                elapsedDuration: _elapsedDuration,
-                altitude: _currentAltitude,
               ),
             ),
           ],

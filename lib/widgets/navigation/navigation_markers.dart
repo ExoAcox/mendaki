@@ -749,25 +749,71 @@ class CompassNeedle extends StatelessWidget {
     return Transform.rotate(
       angle: rotationDegrees * (math.pi / 180.0),
       child: SizedBox(
-        width: 30,
-        height: 30,
+        width: 32,
+        height: 32,
         child: Stack(
           alignment: Alignment.center,
           children: [
+            // North (N) - Merah
             const Positioned(
               top: 0,
               child: Text(
                 'N',
                 style: TextStyle(
-                  fontSize: 7.5,
+                  fontSize: 6.5,
                   fontWeight: FontWeight.w900,
                   color: Color(0xFFBA1A1A),
                   height: 1.0,
                 ),
               ),
             ),
+            // South (S)
+            const Positioned(
+              bottom: 0,
+              child: Text(
+                'S',
+                style: TextStyle(
+                  fontSize: 6.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF616161),
+                  height: 1.0,
+                ),
+              ),
+            ),
+            // West (W) - di-rotate menghadap keluar
+            const Positioned(
+              left: 0.5,
+              child: RotatedBox(
+                quarterTurns: 3,
+                child: Text(
+                  'W',
+                  style: TextStyle(
+                    fontSize: 6.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF616161),
+                    height: 1.0,
+                  ),
+                ),
+              ),
+            ),
+            // East (E) - di-rotate menghadap keluar
+            const Positioned(
+              right: 0.5,
+              child: RotatedBox(
+                quarterTurns: 1,
+                child: Text(
+                  'E',
+                  style: TextStyle(
+                    fontSize: 6.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF616161),
+                    height: 1.0,
+                  ),
+                ),
+              ),
+            ),
             CustomPaint(
-              size: const Size(12, 20),
+              size: const Size(10, 18),
               painter: _CompassNeedlePainter(),
             ),
           ],
@@ -788,9 +834,9 @@ class _CompassNeedlePainter extends CustomPainter {
       ..color = const Color(0xFFBA1A1A)
       ..style = PaintingStyle.fill;
     final northPath = Path()
-      ..moveTo(midX, 3.5)
-      ..lineTo(midX + 4.5, midY)
-      ..lineTo(midX, midY - 1)
+      ..moveTo(midX, 2.0)
+      ..lineTo(midX + 3.8, midY)
+      ..lineTo(midX, midY - 0.8)
       ..close();
     canvas.drawPath(northPath, northPaint);
 
@@ -798,9 +844,9 @@ class _CompassNeedlePainter extends CustomPainter {
       ..color = const Color(0xFFFF5252)
       ..style = PaintingStyle.fill;
     final northPathLeft = Path()
-      ..moveTo(midX, 3.5)
-      ..lineTo(midX - 4.5, midY)
-      ..lineTo(midX, midY - 1)
+      ..moveTo(midX, 2.0)
+      ..lineTo(midX - 3.8, midY)
+      ..lineTo(midX, midY - 0.8)
       ..close();
     canvas.drawPath(northPathLeft, northLightPaint);
 
@@ -809,9 +855,9 @@ class _CompassNeedlePainter extends CustomPainter {
       ..color = const Color(0xFF757575)
       ..style = PaintingStyle.fill;
     final southPath = Path()
-      ..moveTo(midX, size.height - 1)
-      ..lineTo(midX + 4.5, midY)
-      ..lineTo(midX, midY + 1)
+      ..moveTo(midX, size.height - 2.0)
+      ..lineTo(midX + 3.8, midY)
+      ..lineTo(midX, midY + 0.8)
       ..close();
     canvas.drawPath(southPath, southPaint);
 
@@ -819,9 +865,9 @@ class _CompassNeedlePainter extends CustomPainter {
       ..color = const Color(0xFFBDBDBD)
       ..style = PaintingStyle.fill;
     final southPathLeft = Path()
-      ..moveTo(midX, size.height - 1)
-      ..lineTo(midX - 4.5, midY)
-      ..lineTo(midX, midY + 1)
+      ..moveTo(midX, size.height - 2.0)
+      ..lineTo(midX - 3.8, midY)
+      ..lineTo(midX, midY + 0.8)
       ..close();
     canvas.drawPath(southPathLeft, southLightPaint);
 
@@ -829,13 +875,13 @@ class _CompassNeedlePainter extends CustomPainter {
     final pivotPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(midX, midY), 2.2, pivotPaint);
+    canvas.drawCircle(Offset(midX, midY), 2.0, pivotPaint);
 
     final pivotBorder = Paint()
       ..color = const Color(0xFF424242)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-    canvas.drawCircle(Offset(midX, midY), 2.2, pivotBorder);
+      ..strokeWidth = 0.8;
+    canvas.drawCircle(Offset(midX, midY), 2.0, pivotBorder);
   }
 
   @override

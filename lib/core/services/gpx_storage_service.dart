@@ -9,8 +9,27 @@ import 'package:mendaki/models/mountain.dart';
 import 'package:path_provider/path_provider.dart';
 
 class GpxStorageService {
+  @visibleForTesting
+  static String? customGpxDirectoryPath;
+
   /// Mendapatkan path direktori penyimpanan GPX offline
   static Future<String> getGpxDirectoryPath() async {
+    if (customGpxDirectoryPath != null) {
+      final gpxDir = Directory('$customGpxDirectoryPath/gpx');
+      if (!await gpxDir.exists()) {
+        await gpxDir.create(recursive: true);
+      }
+      return gpxDir.path;
+    }
+
+    if (Platform.environment.containsKey('FLUTTER_TEST')) {
+      final gpxDir = Directory('${Directory.systemTemp.path}/gpx');
+      if (!await gpxDir.exists()) {
+        await gpxDir.create(recursive: true);
+      }
+      return gpxDir.path;
+    }
+
     Directory targetDir;
     try {
       targetDir = await getApplicationDocumentsDirectory();

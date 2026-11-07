@@ -26,16 +26,13 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       titleSpacing: 16,
       title: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryContainer.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.landscape_rounded,
-              color: AppTheme.primary,
-              size: 24,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.asset(
+              'assets/mendaki_logo.png',
+              width: 36,
+              height: 36,
+              fit: BoxFit.cover,
             ),
           ),
           const SizedBox(width: 10),
@@ -53,7 +50,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
               ),
               Text(
-                'Tracking & Peta Offline',
+                'Navigasi & Peta Gunung Offline',
                 style: TextStyle(
                   color: AppTheme.outline,
                   fontSize: 10,
@@ -74,7 +71,10 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
               borderRadius: BorderRadius.circular(12),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: isShowingDownloaded
                       ? const Color(0xFF0F5238)
@@ -84,8 +84,8 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                     color: isShowingDownloaded
                         ? const Color(0xFF89EDBA)
                         : downloadedCount > 0
-                            ? AppTheme.primary.withValues(alpha: 0.25)
-                            : Colors.transparent,
+                        ? AppTheme.primary.withValues(alpha: 0.25)
+                        : Colors.transparent,
                     width: 1.5,
                   ),
                 ),

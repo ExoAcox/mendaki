@@ -60,6 +60,9 @@ class NavigationSessionService {
     if (customSessionDirectoryPath != null) {
       return '$customSessionDirectoryPath/active_navigation_session.json';
     }
+    if (Platform.environment.containsKey('FLUTTER_TEST')) {
+      return '${Directory.systemTemp.path}/active_navigation_session.json';
+    }
     Directory targetDir;
     try {
       targetDir = await getApplicationDocumentsDirectory();
