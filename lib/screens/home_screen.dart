@@ -40,8 +40,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<String> filters = [
     'Semua',
     'Jawa Tengah',
-    'Jawa Timur',
     'Jawa Barat',
+    'Jawa Timur',
     'Luar Jawa',
   ];
 
@@ -91,11 +91,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openLibrary() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const LibraryScreen(),
-      ),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const LibraryScreen()));
     _checkDownloadedCount();
   }
 
@@ -269,8 +267,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         onDetailTap: () async {
                           await Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  DetailScreen(mountain: mountain),
+                              builder: (_) => DetailScreen(mountain: mountain),
                             ),
                           );
                           _checkDownloadedCount();

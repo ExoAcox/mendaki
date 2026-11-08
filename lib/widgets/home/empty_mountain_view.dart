@@ -29,7 +29,7 @@ class EmptyMountainView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              title ?? 'Tidak ada data gunung di Supabase',
+              title ?? 'Tidak ada data gunung',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 15,
@@ -43,10 +43,7 @@ class EmptyMountainView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 12, color: AppTheme.outline),
             ),
-            if (action != null) ...[
-              const SizedBox(height: 16),
-              action!,
-            ],
+            if (action != null) ...[const SizedBox(height: 16), action!],
           ],
         ),
       ),

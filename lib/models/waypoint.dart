@@ -3,7 +3,7 @@ class Waypoint {
   final double latitude;
   final double longitude;
   final double? elevation;
-  final String type; // basecamp, pos, water, camp, summit, hazard
+  final String type; // post, basecamp, camp, summit
   final String? description;
   final String? comment;
   final bool hasWater;
@@ -11,26 +11,21 @@ class Waypoint {
   final String? signalInfo;
 
   bool get isBasecamp =>
-      type == 'basecamp' || name.toLowerCase().contains('basecamp');
-  bool get isCamp {
+      type == 'basecamp' || (comment ?? '').trim().toLowerCase() == 'basecamp';
+  bool get isCamp =>
+      type == 'camp' || (comment ?? '').trim().toLowerCase() == 'camp';
+  bool get isSummit {
     final cmt = (comment ?? '').trim().toLowerCase();
-    final tp = type.toLowerCase();
-    final nm = name.toLowerCase();
-    return cmt == 'camp' ||
-        cmt.contains('camp') ||
-        tp == 'camp' ||
-        nm.contains('camp') ||
-        nm.contains('camping');
+    return type == 'summit' || cmt == 'summit' || cmt == 'peak';
   }
-  bool get isSummit =>
-      type == 'summit' || name.toLowerCase().contains('puncak');
+  bool get isPost => !isBasecamp && !isCamp && !isSummit;
 
   const Waypoint({
     required this.name,
     required this.latitude,
     required this.longitude,
     this.elevation,
-    this.type = 'pos',
+    this.type = 'post',
     this.description,
     this.comment,
     this.hasWater = false,
@@ -54,12 +49,14 @@ class Waypoint {
   }
 
   factory Waypoint.fromJson(Map<String, dynamic> json) {
+    final rawType = json['type'] as String? ?? 'post';
+    final normalizedType = rawType == 'pos' ? 'post' : rawType;
     return Waypoint(
       name: json['name'] as String? ?? '',
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       elevation: (json['elevation'] as num?)?.toDouble(),
-      type: json['type'] as String? ?? 'pos',
+      type: normalizedType,
       description: json['description'] as String?,
       comment: json['comment'] as String?,
       hasWater: json['hasWater'] as bool? ?? false,

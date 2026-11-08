@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 
-class NavigationTopBar extends StatelessWidget {
+class NavigationBottomBar extends StatelessWidget {
   final Duration elapsedDuration;
   final double? altitude;
   final VoidCallback onFinishTap;
 
-  const NavigationTopBar({
+  const NavigationBottomBar({
     super.key,
     required this.elapsedDuration,
     this.altitude,
@@ -24,7 +24,6 @@ class NavigationTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      // mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // Time Information Widget
         Container(

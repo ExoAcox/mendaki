@@ -6,7 +6,7 @@ import 'package:mendaki/core/services/gpx_storage_service.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/models/waypoint.dart';
 import 'package:mendaki/widgets/map/map_attribution_badge.dart';
-import 'package:mendaki/widgets/navigation/navigation_markers.dart';
+import 'package:mendaki/widgets/map/map_marker.dart';
 
 class DetailMapHeader extends StatefulWidget {
   final Mountain mountain;
@@ -184,48 +184,9 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
     });
   }
 
-  bool _isSummit(Waypoint wpt) {
-    final comment = (wpt.comment ?? '').trim().toLowerCase();
-    final type = wpt.type.toLowerCase();
-    final name = wpt.name.toLowerCase();
-    return comment == 'summit' ||
-        comment.contains('summit') ||
-        type == 'summit' ||
-        name.contains('puncak') ||
-        name.contains('summit') ||
-        name.contains('peak');
-  }
-
-  bool _isBasecamp(Waypoint wpt) {
-    final comment = (wpt.comment ?? '').trim().toLowerCase();
-    final type = wpt.type.toLowerCase();
-    final name = wpt.name.toLowerCase();
-    final isGate = name.contains('pintu rimba') || name.contains('gerbang');
-    if (isGate) return false;
-
-    return comment == 'basecamp' ||
-        comment.contains('basecamp') ||
-        type == 'basecamp' ||
-        name.contains('basecamp') ||
-        widget.mountain.routes.any(
-          (r) =>
-              r.basecampName.toLowerCase() == name ||
-              (r.basecampName.toLowerCase().isNotEmpty &&
-                  name.contains(r.basecampName.toLowerCase())),
-        );
-  }
-
-  bool _isCamp(Waypoint wpt) {
-    final comment = (wpt.comment ?? '').trim().toLowerCase();
-    final type = wpt.type.toLowerCase();
-    final name = wpt.name.toLowerCase();
-    return comment == 'camp' ||
-        comment.contains('camp') ||
-        type == 'camp' ||
-        name.contains('camp') ||
-        name.contains('camping') ||
-        wpt.isCamp;
-  }
+  bool _isSummit(Waypoint wpt) => wpt.isSummit;
+  bool _isBasecamp(Waypoint wpt) => wpt.isBasecamp;
+  bool _isCamp(Waypoint wpt) => wpt.isCamp;
 
   void _rebuildMarkers() {
     if (_gpxData == null) return;

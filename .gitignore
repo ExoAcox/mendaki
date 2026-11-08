@@ -13,6 +13,7 @@ token.txt
 .history
 .svn/
 .swiftpm/
+.promotion/
 migrate_working_dir/
 
 # Environment Variables & Secrets

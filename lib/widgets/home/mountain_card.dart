@@ -134,7 +134,7 @@ class _MountainCardState extends State<MountainCard> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'GPX & Data Offline ${widget.mountain.name} berhasil disimpan!',
+                    'GPX ${widget.mountain.name} berhasil disimpan!',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -151,8 +151,8 @@ class _MountainCardState extends State<MountainCard> {
 
         final isMissingPlugin = e.toString().contains('MissingPluginException');
         final message = isMissingPlugin
-            ? 'Plugin baru terpasang. Silakan Stop & Run ulang aplikasi (Full Rebuild).'
-            : 'Gagal mengunduh berkas GPX: $e';
+            ? 'Plugin baru terpasang. Silakan Stop & Run ulang aplikasi.'
+            : 'Gagal mengunduh data GPX: $e';
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

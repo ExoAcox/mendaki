@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -10,13 +9,11 @@ import 'package:mendaki/core/services/navigation_session_service.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/models/route.dart';
 import 'package:mendaki/models/waypoint.dart';
-import 'package:mendaki/widgets/map/map_attribution_badge.dart';
 import 'package:mendaki/widgets/navigation/navigation_finish_dialog.dart';
-import 'package:mendaki/widgets/navigation/navigation_far_notice.dart';
-import 'package:mendaki/widgets/navigation/navigation_finish_button.dart';
-import 'package:mendaki/widgets/navigation/navigation_floating_controls.dart';
+import 'package:mendaki/widgets/navigation/navigation_geo_utils.dart';
+import 'package:mendaki/widgets/navigation/navigation_layer_builder.dart';
 import 'package:mendaki/widgets/navigation/navigation_map_viewport.dart';
-import 'package:mendaki/widgets/navigation/navigation_markers.dart';
+import 'package:mendaki/widgets/navigation/navigation_overlay_controls.dart';
 import 'package:path_provider/path_provider.dart';
 
 class NavigationScreen extends StatefulWidget {
@@ -190,29 +187,10 @@ class _NavigationScreenState extends State<NavigationScreen>
   }
 
   void _rebuildPolylines() {
-    final combined = List<Polyline>.from(_baseGpxPolylines);
-
-    if (_breadcrumbPath.length >= 2) {
-      // 1. Background casing putih untuk trace path
-      combined.add(
-        Polyline(
-          points: List<LatLng>.from(_breadcrumbPath),
-          strokeWidth: 6.0,
-          color: Colors.white.withValues(alpha: 0.9),
-        ),
-      );
-
-      // 2. Foreground trace path warna secondary Color(0xFFA33D23)
-      combined.add(
-        Polyline(
-          points: List<LatLng>.from(_breadcrumbPath),
-          strokeWidth: 4.0,
-          color: const Color(0xFFA33D23),
-        ),
-      );
-    }
-
-    _polylines = combined;
+    _polylines = [
+      ..._baseGpxPolylines,
+      ...NavigationLayerBuilder.buildBreadcrumbPolylines(_breadcrumbPath),
+    ];
   }
 
   void _updateUserPosition(Position pos) {
@@ -302,37 +280,15 @@ class _NavigationScreenState extends State<NavigationScreen>
 
   void _buildMapElements(GpxData gpxData) {
     _gpxData = gpxData;
+    final polylines = NavigationLayerBuilder.buildGpxPolylines(gpxData);
 
-    final polylines = <Polyline>[];
     final allPoints = <LatLng>[];
-
-    const polylineColor = Color(0xFF0F5238);
-
     for (final track in gpxData.tracks) {
-      final points = track.trackPoints
-          .map((pt) => LatLng(pt.latitude, pt.longitude))
-          .toList();
-
-      if (points.isNotEmpty) {
-        allPoints.addAll(points);
-
-        // 1. Background polyline (border putih kontras tinggi)
-        polylines.add(
-          Polyline(
-            points: points,
-            strokeWidth: 5.5,
-            color: Colors.white.withValues(alpha: 0.85),
-          ),
-        );
-
-        // 2. Foreground polyline (warna seragam)
-        polylines.add(
-          Polyline(points: points, strokeWidth: 3.5, color: polylineColor),
-        );
-      }
+      allPoints.addAll(
+        track.trackPoints.map((pt) => LatLng(pt.latitude, pt.longitude)),
+      );
     }
 
-    // Set Map Center ke rata-rata koordinat jalur atau koordinat gunung
     LatLng calculatedCenter = _mapCenter;
     if (allPoints.isNotEmpty) {
       double totalLat = 0;
@@ -360,7 +316,6 @@ class _NavigationScreenState extends State<NavigationScreen>
         _rebuildMarkers();
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        // Jika lokasi jauh dari gunung, tetap fokus di gunung
         if (_isFarFromMountain || !_hasUserPosition) {
           _focusMountain(zoom: 14.0);
         } else {
@@ -386,101 +341,15 @@ class _NavigationScreenState extends State<NavigationScreen>
     });
   }
 
-  bool _isSummit(Waypoint wpt) {
-    final comment = (wpt.comment ?? '').trim().toLowerCase();
-    final type = wpt.type.toLowerCase();
-    final name = wpt.name.toLowerCase();
-    return comment == 'summit' ||
-        comment.contains('summit') ||
-        type == 'summit' ||
-        name.contains('puncak') ||
-        name.contains('summit') ||
-        name.contains('peak');
-  }
-
-  bool _isBasecamp(Waypoint wpt) {
-    final comment = (wpt.comment ?? '').trim().toLowerCase();
-    final type = wpt.type.toLowerCase();
-    final name = wpt.name.toLowerCase();
-    final isGate = name.contains('pintu rimba') || name.contains('gerbang');
-    if (isGate) return false;
-
-    return comment == 'basecamp' ||
-        comment.contains('basecamp') ||
-        type == 'basecamp' ||
-        name.contains('basecamp') ||
-        widget.mountain.routes.any(
-          (r) =>
-              r.basecampName.toLowerCase() == name ||
-              (r.basecampName.toLowerCase().isNotEmpty &&
-                  name.contains(r.basecampName.toLowerCase())),
-        );
-  }
-
-  bool _isCamp(Waypoint wpt) {
-    final comment = (wpt.comment ?? '').trim().toLowerCase();
-    final type = wpt.type.toLowerCase();
-    final name = wpt.name.toLowerCase();
-    return comment == 'camp' ||
-        comment.contains('camp') ||
-        type == 'camp' ||
-        name.contains('camp') ||
-        name.contains('camping') ||
-        wpt.isCamp;
-  }
-
-  LatLng _getSummitCoordinate() {
-    if (_gpxData != null) {
-      for (final wpt in _gpxData!.waypoints) {
-        if (_isSummit(wpt)) {
-          return LatLng(wpt.latitude, wpt.longitude);
-        }
-      }
-      Waypoint? highest;
-      for (final wpt in _gpxData!.waypoints) {
-        if (wpt.elevation != null) {
-          if (highest == null || wpt.elevation! > (highest.elevation ?? 0)) {
-            highest = wpt;
-          }
-        }
-      }
-      if (highest != null) {
-        return LatLng(highest.latitude, highest.longitude);
-      }
-    }
-    return _mountainCenter ??
-        LatLng(
-          widget.mountain.latitude ?? -7.4542,
-          widget.mountain.longitude ?? 110.4397,
-        );
-  }
-
-  double _calculateBearing(LatLng from, LatLng to) {
-    final double lat1 = from.latitude * (math.pi / 180.0);
-    final double lon1 = from.longitude * (math.pi / 180.0);
-    final double lat2 = to.latitude * (math.pi / 180.0);
-    final double lon2 = to.longitude * (math.pi / 180.0);
-
-    final double dLon = lon2 - lon1;
-
-    final double y = math.sin(dLon) * math.cos(lat2);
-    final double x =
-        math.cos(lat1) * math.sin(lat2) -
-        math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
-
-    final double bearingRad = math.atan2(y, x);
-    final double bearingDeg = (bearingRad * (180.0 / math.pi) + 360.0) % 360.0;
-    return bearingDeg;
-  }
-
-  double _calculateSummitUpRotation() {
-    final summitCoord = _getSummitCoordinate();
-    final bearing = _calculateBearing(_currentPosition, summitCoord);
-    return (360.0 - bearing) % 360.0;
-  }
-
   void _focusGpsWithSummitUp({double zoom = 15.8}) {
-    final targetRotation = _calculateSummitUpRotation();
+    final summitCoord = NavigationGeoUtils.findSummitCoordinate(
+      _gpxData,
+      _mountainCenter ?? _currentPosition,
+    );
+    final targetRotation = NavigationGeoUtils.calculateSummitUpRotation(
+      _currentPosition,
+      summitCoord,
+    );
     if (mounted) {
       setState(() {
         _currentRotation = targetRotation;
@@ -514,72 +383,15 @@ class _NavigationScreenState extends State<NavigationScreen>
   }
 
   void _rebuildMarkers() {
-    if (_gpxData == null) return;
-
-    final regularMarkers = <Marker>[];
-    final campMarkers = <Marker>[];
-    final summitMarkers = <Marker>[];
-    final basecampMarkers = <Marker>[];
-    Marker? selectedMarker;
-
-    for (final wpt in _gpxData!.waypoints) {
-      final isSelected = _selectedWaypoint == wpt;
-      final isSummit = _isSummit(wpt);
-      final isBasecamp = !isSummit && _isBasecamp(wpt);
-      final isCamp = !isSummit && !isBasecamp && _isCamp(wpt);
-
-      final marker = buildWaypointMapMarker(
-        waypoint: wpt,
-        isSelected: isSelected,
-        isSummit: isSummit,
-        isBasecamp: isBasecamp,
-        isCamp: isCamp,
-        showCampLabel: true,
-        rotate: true,
-        onTap: () => _onWaypointTap(wpt),
-      );
-
-      if (isSelected) {
-        selectedMarker = marker;
-      } else if (isBasecamp) {
-        basecampMarkers.add(marker);
-      } else if (isSummit) {
-        summitMarkers.add(marker);
-      } else if (isCamp) {
-        campMarkers.add(marker);
-      } else {
-        regularMarkers.add(marker);
-      }
-    }
-
-    final markers = <Marker>[
-      ...regularMarkers,
-      ...campMarkers,
-      ...summitMarkers,
-      ...basecampMarkers,
-    ];
-
-    if (selectedMarker != null) {
-      markers.add(selectedMarker);
-    }
-
-    // Pin Posisi GPS Pendaki (Live radar pulse) jika posisi tersedia
-    if (_hasUserPosition) {
-      markers.add(
-        Marker(
-          point: _currentPosition,
-          width: 52,
-          height: 52,
-          rotate: false,
-          child: NavigationUserMarker(
-            pulseAnimation: _pulseAnimation,
-            heading: _userHeading,
-          ),
-        ),
-      );
-    }
-
-    _markers = markers;
+    _markers = NavigationLayerBuilder.buildNavigationMarkers(
+      gpxData: _gpxData,
+      selectedWaypoint: _selectedWaypoint,
+      hasUserPosition: _hasUserPosition,
+      currentPosition: _currentPosition,
+      pulseAnimation: _pulseAnimation,
+      userHeading: _userHeading,
+      onWaypointTap: _onWaypointTap,
+    );
   }
 
   @override
@@ -623,7 +435,9 @@ class _NavigationScreenState extends State<NavigationScreen>
       context,
       mountain: widget.mountain,
       route: widget.selectedRoute,
-      distanceTraveledKm: _calculateTraveledDistanceKm(),
+      distanceTraveledKm: NavigationGeoUtils.calculatePathDistanceKm(
+        _breadcrumbPath,
+      ),
       elapsed: _elapsedDuration,
       onFinish: _finishNavigation,
     );
@@ -649,23 +463,8 @@ class _NavigationScreenState extends State<NavigationScreen>
     }
   }
 
-  double _calculateTraveledDistanceKm() {
-    if (_breadcrumbPath.length < 2) return 0.0;
-    double totalMeters = 0.0;
-    for (int i = 0; i < _breadcrumbPath.length - 1; i++) {
-      totalMeters += Geolocator.distanceBetween(
-        _breadcrumbPath[i].latitude,
-        _breadcrumbPath[i].longitude,
-        _breadcrumbPath[i + 1].latitude,
-        _breadcrumbPath[i + 1].longitude,
-      );
-    }
-    return totalMeters / 1000.0;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -684,7 +483,13 @@ class _NavigationScreenState extends State<NavigationScreen>
                 initialZoom: 14.0,
                 initialRotation: _isFarFromMountain
                     ? 0.0
-                    : _calculateSummitUpRotation(),
+                    : NavigationGeoUtils.calculateSummitUpRotation(
+                        _currentPosition,
+                        NavigationGeoUtils.findSummitCoordinate(
+                          _gpxData,
+                          _mountainCenter ?? _currentPosition,
+                        ),
+                      ),
                 offlineBasePath: _offlineBasePath,
                 mountainId: widget.mountain.id,
                 polylines: _polylines,
@@ -707,65 +512,24 @@ class _NavigationScreenState extends State<NavigationScreen>
               ),
             ),
 
-            // Floating Far Notice jika jauh
-            if (_isFarFromMountain)
-              Positioned(
-                top: MediaQuery.of(context).padding.top + 24,
-                left: 16,
-                right: 16,
-                child: NavigationFarNotice(distanceKm: _distanceToMountainKm),
+            // 2. Overlay Controls & Metrics (Atribusi, Far Notice, Metrics Chip, Finish Button, Floating Controls)
+            NavigationOverlayControls(
+              isFarFromMountain: _isFarFromMountain,
+              distanceToMountainKm: _distanceToMountainKm,
+              elapsedDuration: _elapsedDuration,
+              currentAltitude: _currentAltitude,
+              distanceTraveledKm: NavigationGeoUtils.calculatePathDistanceKm(
+                _breadcrumbPath,
               ),
-
-            // Credit Atribusi Peta (Di Atas Tengah)
-            Positioned(
-              top:
-                  MediaQuery.of(context).padding.top +
-                  (_isFarFromMountain ? 76 : 12),
-              left: 16,
-              right: 16,
-              child: Align(
-                alignment: _isFarFromMountain
-                    ? Alignment.topCenter
-                    : Alignment.topRight,
-                child: MapAttributionBadge(),
-              ),
-            ),
-
-            // Paling Bawah: Chip gabungan 3 Info Full Width (Elapsed Time, Altitude, Jarak yang dilalui)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: bottomPadding + 16,
-              child: NavigationMetricsChip(
-                elapsedDuration: _elapsedDuration,
-                altitude: _currentAltitude,
-                distanceKm: _calculateTraveledDistanceKm(),
-              ),
-            ),
-
-            // Di Atas Chip - Sebelah Kiri: Button Finish
-            Positioned(
-              left: 16,
-              bottom: bottomPadding + 68,
-              child: NavigationFinishButton(
-                onTap: _showFinishConfirmationDialog,
-              ),
-            ),
-
-            // Di Atas Chip - Sebelah Kanan: Button Find Me & Button Compass (di atasnya)
-            Positioned(
-              right: 16,
-              bottom: bottomPadding + 68,
-              child: NavigationFloatingControls(
-                currentRotation: _currentRotation,
-                onCompassTap: () {
-                  setState(() {
-                    _currentRotation = 0.0;
-                  });
-                  _mapController.rotate(0.0);
-                },
-                onFindMeTap: _handleFindMeTap,
-              ),
+              currentRotation: _currentRotation,
+              onFinishTap: _showFinishConfirmationDialog,
+              onCompassTap: () {
+                setState(() {
+                  _currentRotation = 0.0;
+                });
+                _mapController.rotate(0.0);
+              },
+              onFindMeTap: _handleFindMeTap,
             ),
           ],
         ),

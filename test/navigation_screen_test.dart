@@ -6,7 +6,7 @@ import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/models/route.dart';
 import 'package:mendaki/models/waypoint.dart';
 import 'package:mendaki/screens/navigation_screen.dart';
-import 'package:mendaki/widgets/navigation/navigation_markers.dart';
+import 'package:mendaki/widgets/map/map_marker.dart';
 
 void main() {
   const testRoute = HikingRoute(
@@ -109,9 +109,7 @@ void main() {
         await tester.pumpWidget(
           const MaterialApp(
             home: Scaffold(
-              body: NavigationCampMarkerWidget(
-                waypoint: campWaypoint,
-              ),
+              body: NavigationCampMarkerWidget(waypoint: campWaypoint),
             ),
           ),
         );
@@ -192,7 +190,9 @@ void main() {
 
         expect(find.text('Selesaikan Navigasi?'), findsOneWidget);
         expect(
-          find.text('Apakah Anda yakin ingin menyelesaikan sesi navigasi di Gunung Merbabu?'),
+          find.text(
+            'Apakah Anda yakin ingin menyelesaikan sesi navigasi di Gunung Merbabu?',
+          ),
           findsOneWidget,
         );
         expect(find.text('Batal'), findsOneWidget);

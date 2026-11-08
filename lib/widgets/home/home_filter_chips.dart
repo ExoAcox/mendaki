@@ -34,8 +34,15 @@ class HomeFilterChips extends StatelessWidget {
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               color: isSelected ? Colors.white : AppTheme.onSurface,
             ),
-            backgroundColor: AppTheme.surfaceContainer,
-            selectedColor: AppTheme.primary,
+            color: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return AppTheme.primary;
+              }
+              if (states.contains(WidgetState.pressed)) {
+                return AppTheme.primary.withValues(alpha: 0.15);
+              }
+              return AppTheme.surfaceContainer;
+            }),
             side: BorderSide(
               color: isSelected
                   ? AppTheme.primary

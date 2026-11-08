@@ -66,6 +66,14 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
         ),
       ),
+      chipTheme: ChipThemeData(
+        color: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return primary;
+          }
+          return null;
+        }),
+      ),
     );
   }
 }

@@ -7,8 +7,8 @@ import 'package:mendaki/widgets/navigation/navigation_far_notice.dart';
 import 'package:mendaki/widgets/navigation/navigation_finish_button.dart';
 import 'package:mendaki/widgets/navigation/navigation_floating_button.dart';
 import 'package:mendaki/widgets/navigation/navigation_floating_controls.dart';
-import 'package:mendaki/widgets/navigation/navigation_markers.dart';
-import 'package:mendaki/widgets/navigation/navigation_top_bar.dart';
+import 'package:mendaki/widgets/map/map_marker.dart';
+import 'package:mendaki/widgets/navigation/navigation_bottom_bar.dart';
 
 void main() {
   group('Navigation Modular Widgets Tests', () {
@@ -154,7 +154,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: NavigationTopBar(
+              body: NavigationBottomBar(
                 elapsedDuration: const Duration(
                   hours: 1,
                   minutes: 23,
@@ -233,34 +233,35 @@ void main() {
       expect(finishConfirmed, isTrue);
     });
 
-    testWidgets('NavigationFinishDialog formats distance < 1 km as meters like floating controls', (
-      tester,
-    ) async {
-      const testMountain = Mountain(
-        id: 'merbabu',
-        name: 'Gunung Merbabu',
-        elevation: 3145,
-        location: 'Boyolali',
-        province: 'Jawa Tengah',
-        difficulty: 'Sedang',
-        estimatedTime: '2D1N',
-      );
+    testWidgets(
+      'NavigationFinishDialog formats distance < 1 km as meters like floating controls',
+      (tester) async {
+        const testMountain = Mountain(
+          id: 'merbabu',
+          name: 'Gunung Merbabu',
+          elevation: 3145,
+          location: 'Boyolali',
+          province: 'Jawa Tengah',
+          difficulty: 'Sedang',
+          estimatedTime: '2D1N',
+        );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: NavigationFinishDialog(
-              mountain: testMountain,
-              elapsed: const Duration(minutes: 10),
-              distanceTraveledKm: 0.45,
-              onFinish: () {},
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: NavigationFinishDialog(
+                mountain: testMountain,
+                elapsed: const Duration(minutes: 10),
+                distanceTraveledKm: 0.45,
+                onFinish: () {},
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      expect(find.text('JARAK DITEMPUH'), findsOneWidget);
-      expect(find.text('450 m'), findsOneWidget);
-    });
+        expect(find.text('JARAK DITEMPUH'), findsOneWidget);
+        expect(find.text('450 m'), findsOneWidget);
+      },
+    );
   });
 }

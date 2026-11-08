@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/widgets/navigation/navigation_floating_button.dart';
-import 'package:mendaki/widgets/navigation/navigation_markers.dart';
+import 'package:mendaki/widgets/map/map_marker.dart';
 
 /// Single unified chip di bagian paling bawah yang menampilkan 3 info navigasi:
 /// 1. Waktu berlalu (Elapsed time)

@@ -117,15 +117,10 @@ class _DetailScreenState extends State<DetailScreen> {
         },
       );
 
-      final sizeMb = await OfflineMapService.getOfflineMapSizeMb(_mountain.id);
-
       if (mounted) {
         setState(() {
           _isOfflineReady = true;
-          _mountain = _mountain.copyWith(
-            isGpxReady: true,
-            isMapReady: true,
-          );
+          _mountain = _mountain.copyWith(isGpxReady: true, isMapReady: true);
         });
         await GpxStorageService.saveDownloadedMountain(_mountain);
 
@@ -147,7 +142,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Paket peta offline ${_mountain.name} (${sizeMb.toStringAsFixed(1)} MB) berhasil diunduh! Siap dibuka tanpa sinyal.',
+                    'Map offline ${_mountain.name} berhasil disimpan!',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -162,7 +157,7 @@ class _DetailScreenState extends State<DetailScreen> {
           SnackBar(
             backgroundColor: const Color(0xFFBA1A1A),
             behavior: SnackBarBehavior.floating,
-            content: Text('Gagal mengunduh paket offline: $e'),
+            content: Text('Gagal mengunduh map offline: $e'),
           ),
         );
       }
@@ -176,15 +171,14 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   void _startNavigation() {
-    final activeRoute =
-        _mountain.routes.isNotEmpty ? _mountain.routes.first : null;
+    final activeRoute = _mountain.routes.isNotEmpty
+        ? _mountain.routes.first
+        : null;
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => NavigationScreen(
-          mountain: _mountain,
-          selectedRoute: activeRoute,
-        ),
+        builder: (_) =>
+            NavigationScreen(mountain: _mountain, selectedRoute: activeRoute),
       ),
     );
   }

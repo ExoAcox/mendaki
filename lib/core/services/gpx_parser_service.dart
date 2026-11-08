@@ -143,10 +143,10 @@ class GpxParserService {
         if (elevation > maxEle) maxEle = elevation;
       }
 
-      // Klasifikasi jenis waypoint: utamakan tag <cmt>, lalu fallback ke nama/deskripsi
-      final type = _classifyWaypointType(name, desc, cmt);
+      // Klasifikasi jenis waypoint: hanya 4 tipe (post, basecamp, camp, summit) murni dari tag <cmt>
+      final type = _classifyWaypointType(cmt);
       final hasWater = _checkWaterAvailable(name, desc, cmt);
-      final tentCapacity = _extractTentCapacity(name, desc);
+      final tentCapacity = _extractTentCapacity(name, desc, type);
       final signalInfo = _extractSignalInfo(name, desc);
 
       waypoints.add(
@@ -277,51 +277,16 @@ class GpxParserService {
     );
   }
 
-  // --- Helper Klasifikasi Umum ---
+  // --- Helper Klasifikasi Umum (Hanya 4 tipe: post, basecamp, camp, summit) ---
 
-  static String _classifyWaypointType(
-    String name,
-    String? desc, [
-    String? cmt,
-  ]) {
+  static String _classifyWaypointType(String? cmt) {
     final comment = (cmt ?? '').trim().toLowerCase();
-    if (comment == 'summit' || comment == 'peak') {
-      return 'summit';
-    } else if (comment == 'basecamp') {
+    if (comment == 'basecamp') {
       return 'basecamp';
-    } else if (comment == 'water' || comment == 'air') {
-      return 'water';
     } else if (comment == 'camp') {
       return 'camp';
-    }
-
-    final text = '${name.toUpperCase()} ${(desc ?? '').toUpperCase()}';
-    if (text.contains('BASECAMP') ||
-        text.startsWith('BC ') ||
-        text.contains(' BC')) {
-      return 'basecamp';
-    } else if (text.contains('AIR') ||
-        text.contains('WATER') ||
-        text.contains('SPRING') ||
-        text.contains('SUMBER')) {
-      return 'water';
-    } else if (text.contains('PUNCAK') ||
-        text.contains('SUMMIT') ||
-        text.contains('PEAK')) {
+    } else if (comment == 'summit' || comment == 'peak') {
       return 'summit';
-    } else if (text.contains('CAMP') ||
-        text.contains('SABANA') ||
-        text.contains('SHELTER') ||
-        text.contains('TENDA')) {
-      return 'camp';
-    } else if (text.contains('BAHAYA') ||
-        text.contains('JURANG') ||
-        text.contains('WASPADAI')) {
-      return 'warning';
-    } else if (text.contains('PINTU RIMBA') || text.contains('GERBANG')) {
-      return 'gate';
-    } else if (text.contains('POS') || text.contains('CHECKPOINT')) {
-      return 'post';
     }
     return 'post';
   }
@@ -342,13 +307,11 @@ class GpxParserService {
         text.contains('BASECAMP');
   }
 
-  static int? _extractTentCapacity(String name, String? desc) {
+  static int? _extractTentCapacity(String name, String? desc, String type) {
+    if (type != 'camp') return null;
     final text = '${name.toUpperCase()} ${(desc ?? '').toUpperCase()}';
     if (text.contains('SABANA') || text.contains('CAMP UTAMA')) return 50;
-    if (text.contains('CAMP')) return 20;
-    if (text.contains('POS 1')) return 3;
-    if (text.contains('POS 2')) return 6;
-    return null;
+    return 20;
   }
 
   static String? _extractSignalInfo(String name, String? desc) {
