@@ -71,4 +71,4 @@ Contributions are warmly welcome! Please check out our [Contributing Guide](CONT
 - **Application Code**: Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE.md) © 2026 Mendaki Contributors. Free to use, modify, and share for personal, educational, and noncommercial purposes. Commercial use or monetization is strictly prohibited without prior written permission.
 - **GPX Data**: Mountain trail routes and waypoint data referenced from [Astacala](https://astacala.org).
 - **Map Data**: © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), licensed under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/).
-- **Map Rendering & Topographic Tiles**: © [OpenTopoMap](https://opentopomap.org/), licensed under [CC-BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- **Map Style**: © [OpenTopoMap](https://opentopomap.org/), licensed under [CC-BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
