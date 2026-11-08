@@ -322,7 +322,7 @@ class _MountainCardState extends State<MountainCard> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.map_rounded,
+                                  Icons.offline_pin_rounded,
                                   color: Color(0xFF89EDBA),
                                   size: 12,
                                 ),
