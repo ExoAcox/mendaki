@@ -9,6 +9,12 @@
    <b>Offline Mountain Navigation & Maps</b>
 </p>
 <p align="center">Explore hiking trails with offline maps, stay safe and accurate even without cellular signal on the summit. Built to help hikers navigate Indonesian mountains with full GPX trail support and local topographic map caching directly on your device.</p>
+<br>
+<p align="center">
+  <a href="https://github.com/ExoAcox/mendaki/releases">
+    <img src="https://img.shields.io/badge/Download-Latest_APK-006D48?style=for-the-badge&logo=android&logoColor=white" alt="Download Latest APK" />
+  </a>
+</p>
 
 ---
 
@@ -20,7 +26,7 @@
 
 #### 1. Clone the Repository
 ```bash
-git clone https://github.com/<your-username>/mendaki.git
+git clone https://github.com/ExoAcox/mendaki.git
 cd mendaki
 ```
 
