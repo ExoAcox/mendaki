@@ -3,9 +3,11 @@
 </p>
 
 <h1 align="center">
-  Mendaki<br>
-  <small>Offline Mountain Navigation & Maps</small>
+  Mendaki
 </h1>
+<p align="center">
+   <b>Offline Mountain Navigation & Maps</b>
+</p>
 <p align="center">Explore hiking trails with offline maps, stay safe and accurate even without cellular signal on the summit. Built to help hikers navigate Indonesian mountains with full GPX trail support and local topographic map caching directly on your device.</p>
 
 ---
