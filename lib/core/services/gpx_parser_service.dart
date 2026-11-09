@@ -109,16 +109,20 @@ class GpxParserService {
     final document = XmlDocument.parse(gpxString);
 
     // 1. Ambil Nama & Metadata Dokumen
-    final metadataName = document
-        .findAllElements('metadata')
-        .firstOrNull
+    final metadataElem = document.findAllElements('metadata').firstOrNull;
+    final metadataName = metadataElem
         ?.findElements('name')
+        .firstOrNull
+        ?.innerText
+        .trim();
+    final metadataDesc = metadataElem
+        ?.findElements('desc')
         .firstOrNull
         ?.innerText
         .trim();
     final documentName = metadataName ?? defaultName;
 
-    // 2. Parse Waypoints (<wpt>)
+    // 2. Parse Waypoints murni (<wpt>)
     final wptElements = document.findAllElements('wpt');
     final List<Waypoint> waypoints = [];
 
@@ -126,64 +130,30 @@ class GpxParserService {
     double maxEle = -double.infinity;
 
     for (final wpt in wptElements) {
-      final lat = double.tryParse(wpt.getAttribute('lat') ?? '') ?? 0.0;
-      final lon = double.tryParse(wpt.getAttribute('lon') ?? '') ?? 0.0;
-      final name =
-          wpt.findElements('name').firstOrNull?.innerText.trim() ?? 'Waypoint';
-      final desc = wpt.findElements('desc').firstOrNull?.innerText.trim();
-      final cmt = wpt.findElements('cmt').firstOrNull?.innerText.trim();
-
-      final eleElem = wpt.findElements('ele').firstOrNull;
-      final elevation = eleElem != null
-          ? double.tryParse(eleElem.innerText.trim())
-          : null;
-
-      if (elevation != null) {
-        if (elevation < minEle) minEle = elevation;
-        if (elevation > maxEle) maxEle = elevation;
+      final waypoint = _parseWaypointElement(wpt);
+      if (waypoint.elevation != null) {
+        if (waypoint.elevation! < minEle) minEle = waypoint.elevation!;
+        if (waypoint.elevation! > maxEle) maxEle = waypoint.elevation!;
       }
-
-      // Klasifikasi jenis waypoint: hanya 4 tipe (post, basecamp, camp, summit) murni dari tag <cmt>
-      final type = _classifyWaypointType(cmt);
-      final hasWater = _checkWaterAvailable(name, desc, cmt);
-      final tentCapacity = _extractTentCapacity(name, desc, type);
-      final signalInfo = _extractSignalInfo(name, desc);
-
-      waypoints.add(
-        Waypoint(
-          name: name,
-          latitude: lat,
-          longitude: lon,
-          elevation: elevation,
-          type: type,
-          description: desc,
-          comment: cmt,
-          hasWater: hasWater,
-          tentCapacity: tentCapacity,
-          signalInfo: signalInfo,
-        ),
-      );
+      waypoints.add(waypoint);
     }
 
-    // 3. Parse Tracks (<trk>)
-    final trkElements = document.findAllElements('trk');
     final List<HikingRoute> routes = [];
     double totalDistanceKm = 0.0;
     double totalElevationGain = 0.0;
-
     int routeCounter = 1;
-    for (final trk in trkElements) {
-      final trackName =
-          trk.findElements('name').firstOrNull?.innerText.trim() ??
-          'Rute $routeCounter';
-      final trkpts = trk.findAllElements('trkpt');
-      final List<LatLngPoint> trackCoords = [];
 
+    // Helper internal untuk memproses sekumpulan titik koordinat menjadi rute
+    void processPointsList({
+      required String routeName,
+      required Iterable<XmlElement> points,
+    }) {
+      final List<LatLngPoint> coords = [];
       double routeDistance = 0.0;
       double routeElevationGain = 0.0;
       LatLngPoint? prevPoint;
 
-      for (final pt in trkpts) {
+      for (final pt in points) {
         final lat = double.tryParse(pt.getAttribute('lat') ?? '') ?? 0.0;
         final lon = double.tryParse(pt.getAttribute('lon') ?? '') ?? 0.0;
         final ele = double.tryParse(
@@ -195,12 +165,109 @@ class GpxParserService {
           if (ele > maxEle) maxEle = ele;
         }
 
+        // Ekstraksi waypoint otomatis jika titik memiliki <name> dan belum ada di waypoints
+        final ptName = pt.findElements('name').firstOrNull?.innerText.trim();
+        if (ptName != null && ptName.isNotEmpty) {
+          if (!_isWaypointDuplicate(waypoints, lat, lon)) {
+            waypoints.add(_parseWaypointElement(pt));
+          }
+        }
+
         final currentPoint = LatLngPoint(
           latitude: lat,
           longitude: lon,
           elevation: ele,
         );
-        trackCoords.add(currentPoint);
+        coords.add(currentPoint);
+
+        if (prevPoint != null) {
+          routeDistance += _calculateHaversineDistanceKm(
+            prevPoint.latitude,
+            prevPoint.longitude,
+            currentPoint.latitude,
+            currentPoint.longitude,
+          );
+
+          if (prevPoint.elevation != null && currentPoint.elevation != null) {
+            final diff = currentPoint.elevation! - prevPoint.elevation!;
+            if (diff > 0) routeElevationGain += diff;
+          }
+        }
+        prevPoint = currentPoint;
+      }
+
+      if (coords.isEmpty) return;
+
+      // Cek apakah rute ini adalah duplikat dari track yang sudah diparse
+      final isDuplicate = routes.any((r) =>
+          r.name.toLowerCase() == routeName.toLowerCase() ||
+          (r.trackPoints.isNotEmpty &&
+              _calculateHaversineDistanceKm(
+                    r.trackPoints.first.latitude,
+                    r.trackPoints.first.longitude,
+                    coords.first.latitude,
+                    coords.first.longitude,
+                  ) < 0.05 &&
+              _calculateHaversineDistanceKm(
+                    r.trackPoints.last.latitude,
+                    r.trackPoints.last.longitude,
+                    coords.last.latitude,
+                    coords.last.longitude,
+                  ) < 0.05));
+
+      if (isDuplicate) return;
+
+      totalDistanceKm += routeDistance;
+      totalElevationGain += routeElevationGain;
+
+      routes.add(
+        _buildHikingRoute(
+          id: 'route_$routeCounter',
+          name: routeName,
+          trackCoords: coords,
+          routeDistance: routeDistance,
+          routeElevationGain: routeElevationGain,
+          allWaypoints: waypoints,
+        ),
+      );
+
+      routeCounter++;
+    }
+
+    // 3. Parse Tracks (<trk>)
+    final trkElements = document.findAllElements('trk');
+    for (final trk in trkElements) {
+      final trackName =
+          trk.findElements('name').firstOrNull?.innerText.trim() ??
+          'Rute $routeCounter';
+      final trkpts = trk.findAllElements('trkpt');
+      processPointsList(routeName: trackName, points: trkpts);
+    }
+
+    // 4. Parse Routes (<rte>) - Dukungan Hybrid GPX
+    final rteElements = document.findAllElements('rte');
+    for (final rte in rteElements) {
+      final routeName =
+          rte.findElements('name').firstOrNull?.innerText.trim() ??
+          'Rute $routeCounter';
+      final rtepts = rte.findAllElements('rtept');
+      processPointsList(routeName: routeName, points: rtepts);
+    }
+
+    // 5. Fallback: Jika tidak ada <trk> maupun <rte>, namun ada waypoints (>= 2)
+    if (routes.isEmpty && waypoints.length >= 2) {
+      final List<LatLngPoint> fallbackCoords = [];
+      double routeDistance = 0.0;
+      double routeElevationGain = 0.0;
+      LatLngPoint? prevPoint;
+
+      for (final wpt in waypoints) {
+        final currentPoint = LatLngPoint(
+          latitude: wpt.latitude,
+          longitude: wpt.longitude,
+          elevation: wpt.elevation,
+        );
+        fallbackCoords.add(currentPoint);
 
         if (prevPoint != null) {
           routeDistance += _calculateHaversineDistanceKm(
@@ -221,59 +288,117 @@ class GpxParserService {
       totalDistanceKm += routeDistance;
       totalElevationGain += routeElevationGain;
 
-      // Cari pos yang berada di dekat rute track ini (radius 500 meter)
-      final matchingWaypoints = waypoints.where((wpt) {
-        if (trackCoords.isEmpty) return true;
-        return trackCoords.any(
-          (coord) =>
-              _calculateHaversineDistanceKm(
-                wpt.latitude,
-                wpt.longitude,
-                coord.latitude,
-                coord.longitude,
-              ) <=
-              0.5,
-        );
-      }).toList();
-
-      final basecampWpt = matchingWaypoints.firstWhere(
-        (w) => w.type == 'basecamp',
-        orElse: () => WaypointsFallback.defaultBasecamp,
-      );
-
-      final roundedDistance = double.parse(
-        (routeDistance > 0 ? routeDistance : 5.0).toStringAsFixed(1),
-      );
-      final roundedGain = routeElevationGain.toInt();
-      final estHours = math.max(2, (roundedDistance / 1.5).round());
-
       routes.add(
-        HikingRoute(
+        _buildHikingRoute(
           id: 'route_$routeCounter',
-          name: trackName,
-          basecampName: basecampWpt.name,
-          distanceKm: roundedDistance,
-          estimatedDuration: '$estHours - ${estHours + 2} Jam',
-          elevationGainMeters: roundedGain > 0 ? roundedGain : 1000,
-          difficulty: roundedGain > 1500 ? 'Sangat Curam' : 'Sedang',
-          waypoints: matchingWaypoints.isNotEmpty
-              ? matchingWaypoints
-              : waypoints,
-          trackPoints: trackCoords,
+          name: documentName,
+          trackCoords: fallbackCoords,
+          routeDistance: routeDistance,
+          routeElevationGain: routeElevationGain,
+          allWaypoints: waypoints,
         ),
       );
-
-      routeCounter++;
     }
 
     return GpxData(
       name: documentName,
+      description: metadataDesc,
       waypoints: waypoints,
       tracks: routes,
       totalDistanceKm: double.parse(totalDistanceKm.toStringAsFixed(2)),
       minElevation: minEle.isFinite ? minEle : 0.0,
       maxElevation: maxEle.isFinite ? maxEle : 0.0,
       totalElevationGain: totalElevationGain,
+    );
+  }
+
+  // --- Helper Pembangunan Model & Klasifikasi ---
+
+  static Waypoint _parseWaypointElement(XmlElement elem) {
+    final lat = double.tryParse(elem.getAttribute('lat') ?? '') ?? 0.0;
+    final lon = double.tryParse(elem.getAttribute('lon') ?? '') ?? 0.0;
+    final name =
+        elem.findElements('name').firstOrNull?.innerText.trim() ?? 'Waypoint';
+    final desc = elem.findElements('desc').firstOrNull?.innerText.trim();
+    final cmt = elem.findElements('cmt').firstOrNull?.innerText.trim();
+
+    final eleElem = elem.findElements('ele').firstOrNull;
+    final elevation = eleElem != null
+        ? double.tryParse(eleElem.innerText.trim())
+        : null;
+
+    final type = _classifyWaypointType(cmt);
+    final hasWater = _checkWaterAvailable(name, desc, cmt);
+    final tentCapacity = _extractTentCapacity(name, desc, type);
+    final signalInfo = _extractSignalInfo(name, desc);
+
+    return Waypoint(
+      name: name,
+      latitude: lat,
+      longitude: lon,
+      elevation: elevation,
+      type: type,
+      description: desc,
+      comment: cmt,
+      hasWater: hasWater,
+      tentCapacity: tentCapacity,
+      signalInfo: signalInfo,
+    );
+  }
+
+  static bool _isWaypointDuplicate(List<Waypoint> list, double lat, double lon) {
+    for (final w in list) {
+      if ((w.latitude - lat).abs() < 0.0001 && (w.longitude - lon).abs() < 0.0001) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static HikingRoute _buildHikingRoute({
+    required String id,
+    required String name,
+    required List<LatLngPoint> trackCoords,
+    required double routeDistance,
+    required double routeElevationGain,
+    required List<Waypoint> allWaypoints,
+  }) {
+    // Cari pos yang berada di dekat rute track ini (radius 500 meter)
+    final matchingWaypoints = allWaypoints.where((wpt) {
+      if (trackCoords.isEmpty) return true;
+      return trackCoords.any(
+        (coord) =>
+            _calculateHaversineDistanceKm(
+              wpt.latitude,
+              wpt.longitude,
+              coord.latitude,
+              coord.longitude,
+            ) <=
+            0.5,
+      );
+    }).toList();
+
+    final basecampWpt = matchingWaypoints.firstWhere(
+      (w) => w.type == 'basecamp',
+      orElse: () => WaypointsFallback.defaultBasecamp,
+    );
+
+    final roundedDistance = double.parse(
+      (routeDistance > 0 ? routeDistance : 5.0).toStringAsFixed(1),
+    );
+    final roundedGain = routeElevationGain.toInt();
+    final estHours = math.max(2, (roundedDistance / 1.5).round());
+
+    return HikingRoute(
+      id: id,
+      name: name,
+      basecampName: basecampWpt.name,
+      distanceKm: roundedDistance,
+      estimatedDuration: '$estHours - ${estHours + 2} Jam',
+      elevationGainMeters: roundedGain > 0 ? roundedGain : 1000,
+      difficulty: roundedGain > 1500 ? 'Sangat Curam' : 'Sedang',
+      waypoints: matchingWaypoints.isNotEmpty ? matchingWaypoints : allWaypoints,
+      trackPoints: trackCoords,
     );
   }
 

@@ -19,9 +19,21 @@ class DetailQuickStats extends StatelessWidget {
       avgDist = total / mountain.routes.length;
     }
 
-    final elevGain = mountain.elevation > 1200
-        ? mountain.elevation - 1200
-        : mountain.elevation;
+    // Calculate average elevation gain from routes
+    int avgElevGain = 0;
+    if (mountain.routes.isNotEmpty) {
+      final validRoutes = mountain.routes
+          .where((r) => r.elevationGainMeters > 0)
+          .toList();
+      if (validRoutes.isNotEmpty) {
+        final totalGain = validRoutes.fold<int>(
+          0,
+          (sum, r) => sum + r.elevationGainMeters,
+        );
+        avgElevGain =
+            mountain.elevation - (totalGain / validRoutes.length).round();
+      }
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -49,7 +61,7 @@ class DetailQuickStats extends StatelessWidget {
           _buildDivider(),
           _buildStatItem(
             label: 'Elevasi Gain',
-            value: '+$elevGain',
+            value: avgElevGain > 0 ? '+$avgElevGain' : '-',
             unit: 'meter',
             valueColor: AppTheme.primary,
           ),

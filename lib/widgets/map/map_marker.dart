@@ -5,14 +5,17 @@ import 'package:latlong2/latlong.dart' hide Path;
 import 'package:mendaki/models/waypoint.dart';
 
 class NavigationSummitMarkerWidget extends StatelessWidget {
-  static const double markerWidth = 140.0;
-  static const double markerHeight = 60.0;
+  static const double markerWidth = 280.0;
+  static const double markerHeight = 54.0;
   static final Alignment markerAlignment = Marker.computePixelAlignment(
     width: markerWidth,
     height: markerHeight,
-    left: 70.0,
-    top: 44.0,
+    left: 140.0,
+    top: 38.0,
   );
+
+  static const double unselectedSize = 28.0;
+  static const Alignment unselectedAlignment = Alignment.center;
 
   final Waypoint waypoint;
   final bool isSelected;
@@ -31,6 +34,31 @@ class NavigationSummitMarkerWidget extends StatelessWidget {
         .trim();
     final label = cleanName.isNotEmpty ? cleanName : waypoint.name;
     const summitColor = Color(0xFFBA1A1A);
+
+    final pinWidget = Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        color: summitColor,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: const Center(
+        child: Icon(Icons.flag_rounded, color: Colors.white, size: 13),
+      ),
+    );
+
+    // Ketika di-klik (isSelected == true), labelnya menghilang
+    if (isSelected) {
+      return Center(child: pinWidget);
+    }
 
     return SizedBox(
       width: markerWidth,
@@ -57,7 +85,8 @@ class NavigationSummitMarkerWidget extends StatelessWidget {
             child: Text(
               label,
               maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              overflow: TextOverflow.visible,
               textScaler: TextScaler.noScaling,
               style: const TextStyle(
                 color: Colors.white,
@@ -69,25 +98,7 @@ class NavigationSummitMarkerWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: summitColor,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.35),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Center(
-              child: Icon(Icons.flag_rounded, color: Colors.white, size: 13),
-            ),
-          ),
+          pinWidget,
           const SizedBox(height: 4),
         ],
       ),
@@ -96,14 +107,17 @@ class NavigationSummitMarkerWidget extends StatelessWidget {
 }
 
 class NavigationBasecampMarkerWidget extends StatelessWidget {
-  static const double markerWidth = 140.0;
-  static const double markerHeight = 60.0;
+  static const double markerWidth = 280.0;
+  static const double markerHeight = 54.0;
   static final Alignment markerAlignment = Marker.computePixelAlignment(
     width: markerWidth,
     height: markerHeight,
-    left: 70.0,
-    top: 44.0,
+    left: 140.0,
+    top: 38.0,
   );
+
+  static const double unselectedSize = 28.0;
+  static const Alignment unselectedAlignment = Alignment.center;
 
   final Waypoint waypoint;
   final bool isSelected;
@@ -122,6 +136,31 @@ class NavigationBasecampMarkerWidget extends StatelessWidget {
         .trim();
     final label = cleanName.isNotEmpty ? cleanName : waypoint.name;
     const basecampColor = Color(0xFF1565C0);
+
+    final pinWidget = Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        color: basecampColor,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.30),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: const Center(
+        child: Icon(Icons.cottage_rounded, color: Colors.white, size: 13),
+      ),
+    );
+
+    // Ketika di-klik (isSelected == true), labelnya menghilang
+    if (isSelected) {
+      return Center(child: pinWidget);
+    }
 
     return SizedBox(
       width: markerWidth,
@@ -148,7 +187,8 @@ class NavigationBasecampMarkerWidget extends StatelessWidget {
             child: Text(
               label,
               maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              overflow: TextOverflow.visible,
               textScaler: TextScaler.noScaling,
               style: const TextStyle(
                 color: Colors.white,
@@ -160,25 +200,7 @@ class NavigationBasecampMarkerWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: basecampColor,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.30),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Center(
-              child: Icon(Icons.cottage_rounded, color: Colors.white, size: 13),
-            ),
-          ),
+          pinWidget,
           const SizedBox(height: 4),
         ],
       ),
@@ -274,13 +296,13 @@ class _TentPainter extends CustomPainter {
 }
 
 class NavigationCampMarkerWidget extends StatelessWidget {
-  static const double labeledWidth = 140.0;
-  static const double labeledHeight = 60.0;
+  static const double labeledWidth = 280.0;
+  static const double labeledHeight = 54.0;
   static final Alignment labeledAlignment = Marker.computePixelAlignment(
     width: labeledWidth,
     height: labeledHeight,
-    left: 70.0,
-    top: 44.0,
+    left: 140.0,
+    top: 38.0,
   );
 
   static const double unselectedSize = 28.0;
@@ -319,51 +341,8 @@ class NavigationCampMarkerWidget extends StatelessWidget {
       child: const Center(child: TentIcon(size: 13, color: Colors.white)),
     );
 
-    if (!showLabel) {
-      if (isSelected) {
-        return SizedBox(
-          width: labeledWidth,
-          height: labeledHeight,
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: campColor.withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.white, width: 1),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.35),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  waypoint.name.trim(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textScaler: TextScaler.noScaling,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.2,
-                    height: 1.1,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 2),
-              pinWidget,
-              const SizedBox(height: 4),
-            ],
-          ),
-        );
-      }
+    // Ketika di-klik (isSelected == true) atau saat label tidak ditampilkan, label menghilang
+    if (isSelected || !showLabel) {
       return Center(child: pinWidget);
     }
 
@@ -394,7 +373,8 @@ class NavigationCampMarkerWidget extends StatelessWidget {
             child: Text(
               label,
               maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              overflow: TextOverflow.visible,
               textScaler: TextScaler.noScaling,
               style: const TextStyle(
                 color: Colors.white,
@@ -418,13 +398,13 @@ class NavigationRegularWaypointMarkerWidget extends StatelessWidget {
   static const double unselectedSize = 28.0;
   static const Alignment unselectedAlignment = Alignment.center;
 
-  static const double labeledWidth = 140.0;
-  static const double labeledHeight = 60.0;
+  static const double labeledWidth = 280.0;
+  static const double labeledHeight = 54.0;
   static final Alignment labeledAlignment = Marker.computePixelAlignment(
     width: labeledWidth,
     height: labeledHeight,
-    left: 70.0,
-    top: 44.0,
+    left: 140.0,
+    top: 38.0,
   );
 
   final Waypoint waypoint;
@@ -466,7 +446,8 @@ class NavigationRegularWaypointMarkerWidget extends StatelessWidget {
               child: Text(
                 waypoint.name.trim(),
                 maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                overflow: TextOverflow.visible,
                 textScaler: TextScaler.noScaling,
                 style: const TextStyle(
                   color: Colors.white,
@@ -561,30 +542,51 @@ Marker buildWaypointMapMarker({
   final Widget child;
 
   if (isSummit) {
-    width = NavigationSummitMarkerWidget.markerWidth;
-    height = NavigationSummitMarkerWidget.markerHeight;
-    alignment = NavigationSummitMarkerWidget.markerAlignment;
+    if (isSelected) {
+      width = NavigationSummitMarkerWidget.unselectedSize;
+      height = NavigationSummitMarkerWidget.unselectedSize;
+      alignment = NavigationSummitMarkerWidget.unselectedAlignment;
+    } else {
+      width = NavigationSummitMarkerWidget.markerWidth;
+      height = NavigationSummitMarkerWidget.markerHeight;
+      alignment = NavigationSummitMarkerWidget.markerAlignment;
+    }
     child = NavigationSummitMarkerWidget(
       waypoint: waypoint,
       isSelected: isSelected,
     );
   } else if (isBasecamp) {
-    width = NavigationBasecampMarkerWidget.markerWidth;
-    height = NavigationBasecampMarkerWidget.markerHeight;
-    alignment = NavigationBasecampMarkerWidget.markerAlignment;
+    if (isSelected) {
+      width = NavigationBasecampMarkerWidget.unselectedSize;
+      height = NavigationBasecampMarkerWidget.unselectedSize;
+      alignment = NavigationBasecampMarkerWidget.unselectedAlignment;
+    } else {
+      width = NavigationBasecampMarkerWidget.markerWidth;
+      height = NavigationBasecampMarkerWidget.markerHeight;
+      alignment = NavigationBasecampMarkerWidget.markerAlignment;
+    }
     child = NavigationBasecampMarkerWidget(
       waypoint: waypoint,
       isSelected: isSelected,
     );
   } else if (isCamp) {
-    if (showCampLabel || isSelected) {
+    if (isSelected) {
+      width = NavigationCampMarkerWidget.unselectedSize;
+      height = NavigationCampMarkerWidget.unselectedSize;
+      alignment = NavigationCampMarkerWidget.unselectedAlignment;
+      child = NavigationCampMarkerWidget(
+        waypoint: waypoint,
+        isSelected: true,
+        showLabel: false,
+      );
+    } else if (showCampLabel) {
       width = NavigationCampMarkerWidget.labeledWidth;
       height = NavigationCampMarkerWidget.labeledHeight;
       alignment = NavigationCampMarkerWidget.labeledAlignment;
       child = NavigationCampMarkerWidget(
         waypoint: waypoint,
-        isSelected: isSelected,
-        showLabel: showCampLabel,
+        isSelected: false,
+        showLabel: true,
       );
     } else {
       width = NavigationCampMarkerWidget.unselectedSize;
@@ -638,6 +640,7 @@ class NavigationCalloutBubbleWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -656,7 +659,8 @@ class NavigationCalloutBubbleWidget extends StatelessWidget {
           child: Text(
             text,
             maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            softWrap: false,
+            overflow: TextOverflow.visible,
             textScaler: TextScaler.noScaling,
             style: const TextStyle(
               color: Colors.white,

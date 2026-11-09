@@ -63,17 +63,16 @@ class Mountain {
     }
 
     // Ganti strip tersisa dengan spasi (misal "selo-barat" -> "selo barat")
-    clean = clean.replaceAll('-', ' ');
+    clean = clean.replaceAll('-', ' ').replaceAll('_', ' ');
 
     // Capitalize setiap kata
     return clean
         .split(' ')
         .where((word) => word.isNotEmpty)
         .map(
-          (word) =>
-              word.length > 1
-                  ? word[0].toUpperCase() + word.substring(1).toLowerCase()
-                  : word.toUpperCase(),
+          (word) => word.length > 1
+              ? word[0].toUpperCase() + word.substring(1).toLowerCase()
+              : word.toUpperCase(),
         )
         .join(' ');
   }
@@ -192,19 +191,23 @@ class Mountain {
       status: json['status'] as String? ?? 'Buka (Aman)',
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
-      cities: (json['cities'] as List<dynamic>?)
+      cities:
+          (json['cities'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],
-      routes: (json['routes'] as List<dynamic>?)
+      routes:
+          (json['routes'] as List<dynamic>?)
               ?.map((r) => HikingRoute.fromJson(r as Map<String, dynamic>))
               .toList() ??
           const [],
-      rawRoutes: (json['rawRoutes'] as List<dynamic>?)
+      rawRoutes:
+          (json['rawRoutes'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],
-      allWaypoints: (json['allWaypoints'] as List<dynamic>?)
+      allWaypoints:
+          (json['allWaypoints'] as List<dynamic>?)
               ?.map((w) => Waypoint.fromJson(w as Map<String, dynamic>))
               .toList() ??
           const [],

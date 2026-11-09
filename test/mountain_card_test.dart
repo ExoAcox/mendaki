@@ -35,8 +35,7 @@ void main() {
 
         expect(find.text('GPX'), findsOneWidget);
         expect(find.text('Map'), findsOneWidget);
-        expect(find.byIcon(Icons.offline_pin_rounded), findsOneWidget);
-        expect(find.byIcon(Icons.map_rounded), findsOneWidget);
+        expect(find.byIcon(Icons.offline_pin_rounded), findsNWidgets(2));
       },
     );
 
