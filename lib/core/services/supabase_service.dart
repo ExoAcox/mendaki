@@ -107,7 +107,9 @@ class SupabaseService {
         return _mapJsonToMountain(mData);
       }
     } catch (e) {
-      debugPrint('Error fetching mountain detail from Supabase, checking offline cache: $e');
+      debugPrint(
+        'Error fetching mountain detail from Supabase, checking offline cache: $e',
+      );
     }
 
     // Fallback data lokal offline jika sedang tidak ada koneksi
@@ -253,7 +255,6 @@ class SupabaseService {
           idx = rawRoutes.indexWhere((o) {
             final cleanO = o.trim().toLowerCase();
             return cleanO == cleanName ||
-                cleanO.endsWith('-$cleanName') ||
                 cleanO.endsWith('.$cleanName') ||
                 cleanO.contains(cleanName);
           });
