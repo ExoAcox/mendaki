@@ -38,6 +38,7 @@ class Mountain {
           final cleanO = o.trim().toLowerCase();
           return cleanO == clean ||
               cleanO.endsWith('-$clean') ||
+              cleanO.endsWith('.$clean') ||
               cleanO.contains(clean);
         });
         return idx != -1 ? idx : 999999;
@@ -56,14 +57,12 @@ class Mountain {
   static String formatRouteName(String rawRoute, {String? mountainId}) {
     String clean = rawRoute.trim();
     if (mountainId != null && mountainId.isNotEmpty) {
-      final prefix = '${mountainId.toLowerCase()}-';
-      if (clean.toLowerCase().startsWith(prefix)) {
-        clean = clean.substring(prefix.length);
-      }
+      final prefix = '${mountainId.toLowerCase()}.';
+      clean = clean.substring(prefix.length);
     }
 
     // Ganti strip tersisa dengan spasi (misal "selo-barat" -> "selo barat")
-    clean = clean.replaceAll('-', ' ').replaceAll('_', ' ');
+    clean = clean.replaceAll('_', ' ');
 
     // Capitalize setiap kata
     return clean

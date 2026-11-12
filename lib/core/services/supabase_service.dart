@@ -254,6 +254,7 @@ class SupabaseService {
             final cleanO = o.trim().toLowerCase();
             return cleanO == cleanName ||
                 cleanO.endsWith('-$cleanName') ||
+                cleanO.endsWith('.$cleanName') ||
                 cleanO.contains(cleanName);
           });
           return idx != -1 ? idx : 999999;

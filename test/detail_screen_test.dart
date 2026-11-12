@@ -79,28 +79,24 @@ void main() {
     },
   );
 
-  test('formatRouteName formats hyphenated route strings into title case', () {
+  test('formatRouteName formats dot-separated route strings into title case', () {
     expect(
-      Mountain.formatRouteName('merbabu-selo', mountainId: 'merbabu'),
+      Mountain.formatRouteName('merbabu.selo', mountainId: 'merbabu'),
       'Selo',
     );
     expect(
-      Mountain.formatRouteName('merbabu-suwanting', mountainId: 'merbabu'),
+      Mountain.formatRouteName('sindoro.kledung', mountainId: 'sindoro'),
+      'Kledung',
+    );
+    expect(
+      Mountain.formatRouteName('sindoro.alang-alang_sewu', mountainId: 'sindoro'),
+      'Alang-alang Sewu',
+    );
+    expect(
+      Mountain.formatRouteName('merbabu.suwanting', mountainId: 'merbabu'),
       'Suwanting',
     );
-    expect(
-      Mountain.formatRouteName('merbabu-wekas', mountainId: 'merbabu'),
-      'Wekas',
-    );
-    expect(
-      Mountain.formatRouteName('merbabu-thekelan', mountainId: 'merbabu'),
-      'Thekelan',
-    );
-    expect(
-      Mountain.formatRouteName('merbabu-cuntel', mountainId: 'merbabu'),
-      'Cuntel',
-    );
-    expect(Mountain.formatRouteName('selo-timur'), 'Selo Timur');
+    expect(Mountain.formatRouteName('selo_timur'), 'Selo Timur');
     expect(Mountain.formatRouteName('selo'), 'Selo');
   });
 }

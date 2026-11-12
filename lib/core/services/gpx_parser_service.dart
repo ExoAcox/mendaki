@@ -198,24 +198,125 @@ class GpxParserService {
 
       if (coords.isEmpty) return;
 
-      // Cek apakah rute ini adalah duplikat dari track yang sudah diparse
-      final isDuplicate = routes.any((r) =>
-          r.name.toLowerCase() == routeName.toLowerCase() ||
-          (r.trackPoints.isNotEmpty &&
-              _calculateHaversineDistanceKm(
-                    r.trackPoints.first.latitude,
-                    r.trackPoints.first.longitude,
-                    coords.first.latitude,
-                    coords.first.longitude,
-                  ) < 0.05 &&
-              _calculateHaversineDistanceKm(
-                    r.trackPoints.last.latitude,
-                    r.trackPoints.last.longitude,
-                    coords.last.latitude,
-                    coords.last.longitude,
-                  ) < 0.05));
+      // Cek apakah sudah ada rute dengan nama yang sama yang telah diparse
+      final existingIndex = routes.indexWhere(
+        (r) => r.name.toLowerCase() == routeName.toLowerCase(),
+      );
 
-      if (isDuplicate) return;
+      if (existingIndex != -1) {
+        final existing = routes[existingIndex];
+        final ePts = existing.trackPoints;
+
+        // 1. Cek apakah ini benar-benar duplikat geometris identik (titik awal dan akhir sama)
+        final isExactDuplicate = ePts.isNotEmpty &&
+            ((_calculateHaversineDistanceKm(
+                      ePts.first.latitude,
+                      ePts.first.longitude,
+                      coords.first.latitude,
+                      coords.first.longitude,
+                    ) < 0.05 &&
+                _calculateHaversineDistanceKm(
+                      ePts.last.latitude,
+                      ePts.last.longitude,
+                      coords.last.latitude,
+                      coords.last.longitude,
+                    ) < 0.05) ||
+             (_calculateHaversineDistanceKm(
+                      ePts.first.latitude,
+                      ePts.first.longitude,
+                      coords.last.latitude,
+                      coords.last.longitude,
+                    ) < 0.05 &&
+                _calculateHaversineDistanceKm(
+                      ePts.last.latitude,
+                      ePts.last.longitude,
+                      coords.first.latitude,
+                      coords.first.longitude,
+                    ) < 0.05));
+
+        if (isExactDuplicate) return;
+
+        // 2. Cek apakah segmen baru menyambung dengan segmen sebelumnya (head-to-tail / tail-to-head)
+        final dTailToHead = _calculateHaversineDistanceKm(
+          ePts.last.latitude,
+          ePts.last.longitude,
+          coords.first.latitude,
+          coords.first.longitude,
+        );
+        final dHeadToTail = _calculateHaversineDistanceKm(
+          coords.last.latitude,
+          coords.last.longitude,
+          ePts.first.latitude,
+          ePts.first.longitude,
+        );
+
+        if (dTailToHead < 0.2) {
+          // Menyambung di belakang (existing -> coords)
+          final mergedCoords = [...ePts, ...coords];
+          final mergedDistance = existing.distanceKm + routeDistance;
+          final mergedGain = existing.elevationGainMeters + routeElevationGain.toInt();
+          routes[existingIndex] = _buildHikingRoute(
+            id: existing.id,
+            name: existing.name,
+            trackCoords: mergedCoords,
+            routeDistance: mergedDistance,
+            routeElevationGain: mergedGain.toDouble(),
+            allWaypoints: waypoints,
+          );
+          totalDistanceKm += routeDistance;
+          totalElevationGain += routeElevationGain;
+          return;
+        } else if (dHeadToTail < 0.2) {
+          // Menyambung di depan (coords -> existing)
+          final mergedCoords = [...coords, ...ePts];
+          final mergedDistance = existing.distanceKm + routeDistance;
+          final mergedGain = existing.elevationGainMeters + routeElevationGain.toInt();
+          routes[existingIndex] = _buildHikingRoute(
+            id: existing.id,
+            name: existing.name,
+            trackCoords: mergedCoords,
+            routeDistance: mergedDistance,
+            routeElevationGain: mergedGain.toDouble(),
+            allWaypoints: waypoints,
+          );
+          totalDistanceKm += routeDistance;
+          totalElevationGain += routeElevationGain;
+          return;
+        } else if (coords.length > ePts.length * 2) {
+          // Segmen baru jauh lebih lengkap/panjang daripada rintisan segmen awal
+          totalDistanceKm -= existing.distanceKm;
+          totalElevationGain -= existing.elevationGainMeters;
+          totalDistanceKm += routeDistance;
+          totalElevationGain += routeElevationGain;
+          routes[existingIndex] = _buildHikingRoute(
+            id: existing.id,
+            name: routeName,
+            trackCoords: coords,
+            routeDistance: routeDistance,
+            routeElevationGain: routeElevationGain,
+            allWaypoints: waypoints,
+          );
+          return;
+        }
+      } else {
+        // Cek duplikasi geometris terhadap rute lain
+        final isGeoDuplicate = routes.any((r) =>
+            r.trackPoints.isNotEmpty &&
+            _calculateHaversineDistanceKm(
+                  r.trackPoints.first.latitude,
+                  r.trackPoints.first.longitude,
+                  coords.first.latitude,
+                  coords.first.longitude,
+                ) < 0.05 &&
+            _calculateHaversineDistanceKm(
+                  r.trackPoints.last.latitude,
+                  r.trackPoints.last.longitude,
+                  coords.last.latitude,
+                  coords.last.longitude,
+                ) < 0.05);
+
+        if (isGeoDuplicate) return;
+      }
 
       totalDistanceKm += routeDistance;
       totalElevationGain += routeElevationGain;

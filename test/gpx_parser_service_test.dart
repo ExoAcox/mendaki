@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mendaki/core/services/gpx_parser_service.dart';
 import 'package:mendaki/models/waypoint.dart';
@@ -232,6 +233,41 @@ void main() {
       expect(fallbackRoute.trackPoints.first.latitude, -7.10);
       expect(fallbackRoute.trackPoints.last.latitude, -7.15);
       expect(fallbackRoute.distanceKm, greaterThan(0));
+    });
+
+    test('Parses sindoro.gpx with verified basecamps, camps, and summit', () async {
+      final file = File('sindoro.gpx');
+      if (file.existsSync()) {
+        final result = await GpxParserService.parseFile(file);
+        final basecamps = result.waypoints.where((w) => w.isBasecamp).toList();
+        final camps = result.waypoints.where((w) => w.isCamp).toList();
+        final summits = result.waypoints.where((w) => w.isSummit).toList();
+
+        expect(basecamps.length, equals(8));
+        expect(camps.length, equals(10));
+        expect(summits.length, equals(1));
+        expect(summits.first.name, equals('PUNCAK 3151 MDPL'));
+        expect(camps.map((w) => w.name), containsAll([
+          'CAMP',
+          'SUNRISE CAMP',
+        ]));
+
+        // Verifikasi rute bedakah tersambung utuh dari basecamp hingga atas
+        final bedakahRoute = result.tracks.firstWhere(
+          (t) => t.name.toLowerCase() == 'bedakah',
+        );
+        expect(bedakahRoute.trackPoints.length, greaterThanOrEqualTo(150));
+        expect(bedakahRoute.distanceKm, greaterThan(6.0));
+        expect(bedakahRoute.basecampName, equals('BASECAMP BEDAKAH'));
+
+        // Verifikasi rute alang sewu mengambil jalur utama lengkap dari basecamp
+        final alangSewuRoute = result.tracks.firstWhere(
+          (t) => t.name.toLowerCase() == 'alang sewu',
+        );
+        expect(alangSewuRoute.trackPoints.length, greaterThan(400));
+        expect(alangSewuRoute.distanceKm, greaterThan(6.0));
+        expect(alangSewuRoute.basecampName, equals('BASECAMP ALANG-ALANG SEWU'));
+      }
     });
   });
 }

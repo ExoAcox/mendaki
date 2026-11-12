@@ -137,9 +137,21 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
       }
     }
 
-    // Set Map Center ke rata-rata koordinat jalur atau koordinat gunung
+    // Set Map Center ke rata-rata koordinat basecamp, jalur, atau koordinat gunung
     LatLng calculatedCenter = _mapCenter;
-    if (allPoints.isNotEmpty) {
+    final basecamps = gpxData.waypoints.where((w) => w.isBasecamp).toList();
+    if (basecamps.isNotEmpty) {
+      double totalLat = 0;
+      double totalLng = 0;
+      for (final b in basecamps) {
+        totalLat += b.latitude;
+        totalLng += b.longitude;
+      }
+      calculatedCenter = LatLng(
+        totalLat / basecamps.length,
+        totalLng / basecamps.length,
+      );
+    } else if (allPoints.isNotEmpty) {
       double totalLat = 0;
       double totalLng = 0;
       for (final p in allPoints) {
@@ -163,13 +175,77 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
         _mapCenter = calculatedCenter;
         _rebuildMarkers();
       });
-      try {
-        _mapController.move(_mapCenter, 12.2);
-      } catch (_) {}
+      _fitBasecamps();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _fitBasecamps();
+      });
     } else {
       _polylines = polylines;
       _mapCenter = calculatedCenter;
       _rebuildMarkers();
+    }
+  }
+
+  void _fitBasecamps() {
+    if (!mounted) return;
+
+    final basecampPoints = _gpxData?.waypoints
+            .where((w) => w.isBasecamp)
+            .map((w) => LatLng(w.latitude, w.longitude))
+            .toList() ??
+        [];
+
+    final List<LatLng> targetPoints;
+    if (basecampPoints.isNotEmpty) {
+      targetPoints = List<LatLng>.from(basecampPoints);
+      if (targetPoints.length == 1) {
+        targetPoints.add(_mapCenter);
+      }
+    } else {
+      final trackPoints = <LatLng>[];
+      if (_gpxData != null) {
+        for (final track in _gpxData!.tracks) {
+          trackPoints.addAll(
+            track.trackPoints.map((pt) => LatLng(pt.latitude, pt.longitude)),
+          );
+        }
+      }
+      if (trackPoints.isNotEmpty) {
+        targetPoints = trackPoints;
+      } else {
+        targetPoints = [_mapCenter];
+      }
+    }
+
+    var bounds = LatLngBounds.fromPoints(targetPoints);
+    if (bounds.north == bounds.south && bounds.east == bounds.west) {
+      bounds = LatLngBounds(
+        LatLng(bounds.south - 0.02, bounds.west - 0.02),
+        LatLng(bounds.north + 0.02, bounds.east + 0.02),
+      );
+    }
+
+    final topPadding = MediaQuery.maybeOf(context)?.padding.top ?? 24.0;
+    final padding = EdgeInsets.only(
+      top: topPadding + (_isMapExpanded ? 64.0 : 72.0),
+      bottom: _isMapExpanded ? 84.0 : 96.0,
+      left: 48.0,
+      right: 48.0,
+    );
+
+    try {
+      _mapController.fitCamera(
+        CameraFit.bounds(
+          bounds: bounds,
+          padding: padding,
+          minZoom: 9.0,
+          maxZoom: 14.0,
+        ),
+      );
+    } catch (_) {
+      try {
+        _mapController.move(bounds.center, 11.0);
+      } catch (_) {}
     }
   }
 
@@ -252,18 +328,18 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
     setState(() {
       _isMapExpanded = expanded;
     });
-    _mapController.move(_mapCenter, 12.2);
-    // Setelah animasi ekspansi (350ms) selesai, trigger move kembali agar center viewport akurat
+    _fitBasecamps();
+    // Setelah animasi ekspansi (350ms) selesai, trigger fit kembali agar center & zoom viewport akurat dengan ukuran baru
     Future.delayed(const Duration(milliseconds: 360), () {
       if (mounted) {
-        _mapController.move(_mapCenter, 12.2);
+        _fitBasecamps();
       }
     });
   }
 
   LatLngBounds _calculateBounds() {
-    // 15 km buffer ≈ 0.135 derajat
-    const buffer = 0.135;
+    // 22 km buffer ≈ 0.20 derajat
+    const buffer = 0.20;
     double minLat = _mapCenter.latitude;
     double maxLat = _mapCenter.latitude;
     double minLng = _mapCenter.longitude;
@@ -277,6 +353,12 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
           if (pt.longitude < minLng) minLng = pt.longitude;
           if (pt.longitude > maxLng) maxLng = pt.longitude;
         }
+      }
+      for (final wpt in _gpxData!.waypoints) {
+        if (wpt.latitude < minLat) minLat = wpt.latitude;
+        if (wpt.latitude > maxLat) maxLat = wpt.latitude;
+        if (wpt.longitude < minLng) minLng = wpt.longitude;
+        if (wpt.longitude > maxLng) maxLng = wpt.longitude;
       }
     }
 
@@ -307,8 +389,8 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
             mapController: _mapController,
             options: MapOptions(
               initialCenter: _mapCenter,
-              initialZoom: 12.0,
-              minZoom: 12.0,
+              initialZoom: 11.0,
+              minZoom: 9.0,
               maxZoom: 16.5,
               cameraConstraint: CameraConstraint.containCenter(
                 bounds: _calculateBounds(),
@@ -407,7 +489,7 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () {
-                      _mapController.move(_mapCenter, 12.2);
+                      _fitBasecamps();
                     },
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
