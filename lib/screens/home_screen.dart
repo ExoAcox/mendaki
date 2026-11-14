@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:mendaki/core/config/app_config.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
 import 'package:mendaki/core/services/navigation_session_service.dart';
 import 'package:mendaki/core/services/network_service.dart';
 import 'package:mendaki/core/services/supabase_service.dart';
+import 'package:mendaki/core/services/version_state_service.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/screens/detail_screen.dart';
@@ -14,6 +16,7 @@ import 'package:mendaki/widgets/home/home_error_view.dart';
 import 'package:mendaki/widgets/home/home_filter_chips.dart';
 import 'package:mendaki/widgets/home/home_search_bar.dart';
 import 'package:mendaki/widgets/home/mountain_card.dart';
+import 'package:mendaki/widgets/home/version_update_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -52,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _checkActiveNavigationSession();
     _checkDownloadedCount();
     _loadMountains();
+    _checkAppVersion();
   }
 
   @override
@@ -59,6 +63,35 @@ class _HomeScreenState extends State<HomeScreen> {
     _scrollController.dispose();
     searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkAppVersion() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final latestVersion = await SupabaseService.getLatestVersion();
+        if (latestVersion == null || !mounted) return;
+
+        // Bandingkan data.id dari tabel version dengan versi aplikasi saat ini
+        if (latestVersion.id != AppConfig.currentVersion) {
+          // Cek apakah dialog masih dalam masa tunda 7 hari sejak ditutup oleh pengguna
+          final shouldShow = await VersionStateService.shouldShowUpdateDialog(
+            latestVersion.id,
+            forceUpdate: latestVersion.forceUpdate,
+          );
+          if (!shouldShow) return;
+
+          // Jangan tampilkan jika ada sesi navigasi aktif
+          final session = await NavigationSessionService.getActiveSession();
+          if (session != null) return;
+
+          if (mounted) {
+            VersionUpdateDialog.show(context, latestVersion);
+          }
+        }
+      } catch (e) {
+        debugPrint('Error saat pengecekan versi aplikasi: $e');
+      }
+    });
   }
 
   Future<void> _checkActiveNavigationSession() async {

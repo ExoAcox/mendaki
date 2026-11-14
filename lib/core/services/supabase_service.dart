@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mendaki/core/config/supabase_config.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
+import 'package:mendaki/models/app_version.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/models/route.dart';
 
@@ -39,6 +40,26 @@ class SupabaseService {
       );
     }
     return Supabase.instance.client;
+  }
+
+  /// Mengambil data versi aplikasi terbaru dari tabel 'version'
+  static Future<AppVersion?> getLatestVersion() async {
+    if (!isReady) return null;
+
+    try {
+      final response = await client
+          .from('version')
+          .select()
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (response == null) return null;
+      return AppVersion.fromJson(response);
+    } catch (e) {
+      debugPrint('❌ Gagal mengambil data versi dari Supabase: $e');
+      return null;
+    }
   }
 
   /// Mengambil daftar gunung dengan pagination (ringan dan cepat)
