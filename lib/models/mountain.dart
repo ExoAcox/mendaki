@@ -58,7 +58,9 @@ class Mountain {
     String clean = rawRoute.trim();
     if (mountainId != null && mountainId.isNotEmpty) {
       final prefix = '${mountainId.toLowerCase()}.';
-      clean = clean.substring(prefix.length);
+      if (clean.toLowerCase().startsWith(prefix)) {
+        clean = clean.substring(prefix.length);
+      }
     }
 
     // Ganti strip tersisa dengan spasi (misal "selo-barat" -> "selo barat")

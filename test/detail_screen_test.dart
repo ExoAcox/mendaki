@@ -98,5 +98,13 @@ void main() {
     );
     expect(Mountain.formatRouteName('selo_timur'), 'Selo Timur');
     expect(Mountain.formatRouteName('selo'), 'Selo');
+    expect(
+      Mountain.formatRouteName('baderan_-_bremi', mountainId: 'argopuro'),
+      'Baderan - Bremi',
+    );
+    expect(
+      Mountain.formatRouteName('argopuro.baderan_-_bremi', mountainId: 'argopuro'),
+      'Baderan - Bremi',
+    );
   });
 }

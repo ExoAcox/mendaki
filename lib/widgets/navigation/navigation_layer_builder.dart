@@ -20,16 +20,7 @@ class NavigationLayerBuilder {
           .toList();
 
       if (points.isNotEmpty) {
-        // 1. Background polyline (border putih kontras tinggi)
-        polylines.add(
-          Polyline(
-            points: points,
-            strokeWidth: 5.5,
-            color: Colors.white.withValues(alpha: 0.85),
-          ),
-        );
-
-        // 2. Foreground polyline (warna seragam hijau rute)
+        // Foreground polyline (warna seragam hijau rute tanpa border)
         polylines.add(
           Polyline(points: points, strokeWidth: 3.5, color: polylineColor),
         );
@@ -43,13 +34,7 @@ class NavigationLayerBuilder {
     if (breadcrumbPath.length < 2) return const [];
 
     return [
-      // 1. Background casing putih untuk trace path
-      Polyline(
-        points: List<LatLng>.from(breadcrumbPath),
-        strokeWidth: 6.0,
-        color: Colors.white.withValues(alpha: 0.9),
-      ),
-      // 2. Foreground trace path warna secondary
+      // Foreground trace path warna secondary (tanpa border)
       Polyline(
         points: List<LatLng>.from(breadcrumbPath),
         strokeWidth: 4.0,

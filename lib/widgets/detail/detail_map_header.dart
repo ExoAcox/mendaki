@@ -121,16 +121,7 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
       if (points.isNotEmpty) {
         allPoints.addAll(points);
 
-        // Background polyline (border putih kontras tinggi)
-        polylines.add(
-          Polyline(
-            points: points,
-            strokeWidth: 5.5,
-            color: Colors.white.withValues(alpha: 0.85),
-          ),
-        );
-
-        // Foreground polyline (warna seragam)
+        // Polyline jalur rute (tanpa border)
         polylines.add(
           Polyline(points: points, strokeWidth: 3.5, color: polylineColor),
         );
