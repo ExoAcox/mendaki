@@ -87,7 +87,8 @@ class NavigationLayerBuilder {
           isSummit: isSummit,
           isBasecamp: isBasecamp,
           isCamp: isCamp,
-          showCampLabel: true,
+          showCampLabel: false,
+          showSummitLabel: false,
           rotate: true,
           onTap: onWaypointTap != null ? () => onWaypointTap(wpt) : null,
         );

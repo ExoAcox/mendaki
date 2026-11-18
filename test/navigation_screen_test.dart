@@ -147,6 +147,145 @@ void main() {
     );
 
     testWidgets(
+      'buildWaypointMapMarker for camp and summit does not display label by default and displays when isSelected is true',
+      (tester) async {
+        const summitWpt = Waypoint(
+          name: 'Puncak Sejati',
+          latitude: -7.3842,
+          longitude: 110.0700,
+          type: 'summit',
+        );
+        const campWpt = Waypoint(
+          name: 'Camp Plalangan',
+          latitude: -7.3772,
+          longitude: 110.0504,
+          type: 'camp',
+        );
+
+        // 1. Default (unselected): labels should NOT show
+        final defaultSummitMarker = buildWaypointMapMarker(
+          waypoint: summitWpt,
+          isSelected: false,
+          isSummit: true,
+          isBasecamp: false,
+          isCamp: false,
+        );
+        final defaultCampMarker = buildWaypointMapMarker(
+          waypoint: campWpt,
+          isSelected: false,
+          isSummit: false,
+          isBasecamp: false,
+          isCamp: true,
+        );
+
+        expect(defaultSummitMarker.width, 28.0);
+        expect(defaultCampMarker.width, 28.0);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Column(
+                children: [
+                  defaultSummitMarker.child,
+                  defaultCampMarker.child,
+                ],
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('Sejati'), findsNothing);
+        expect(find.text('Puncak Sejati'), findsNothing);
+        expect(find.text('Camp Plalangan'), findsNothing);
+
+        // 2. Selected: labels SHOULD show
+        final selectedSummitMarker = buildWaypointMapMarker(
+          waypoint: summitWpt,
+          isSelected: true,
+          isSummit: true,
+          isBasecamp: false,
+          isCamp: false,
+        );
+        final selectedCampMarker = buildWaypointMapMarker(
+          waypoint: campWpt,
+          isSelected: true,
+          isSummit: false,
+          isBasecamp: false,
+          isCamp: true,
+        );
+
+        expect(selectedSummitMarker.width, 280.0);
+        expect(selectedCampMarker.width, 280.0);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Column(
+                children: [
+                  selectedSummitMarker.child,
+                  selectedCampMarker.child,
+                ],
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('Puncak Sejati'), findsOneWidget);
+        expect(find.text('Camp Plalangan'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'buildWaypointMapMarker for basecamp always displays label and cannot be hidden even when isSelected is true',
+      (tester) async {
+        const basecampWpt = Waypoint(
+          name: 'BASECAMP GARUNG',
+          latitude: -7.3533,
+          longitude: 110.0315,
+          type: 'basecamp',
+        );
+
+        // 1. Unselected: label MUST appear
+        final defaultBcMarker = buildWaypointMapMarker(
+          waypoint: basecampWpt,
+          isSelected: false,
+          isSummit: false,
+          isBasecamp: true,
+          isCamp: false,
+        );
+        expect(defaultBcMarker.width, 280.0);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: defaultBcMarker.child,
+            ),
+          ),
+        );
+        expect(find.text('BC GARUNG'), findsOneWidget);
+
+        // 2. Selected (clicked): label MUST STILL appear (cannot be hidden)
+        final selectedBcMarker = buildWaypointMapMarker(
+          waypoint: basecampWpt,
+          isSelected: true,
+          isSummit: false,
+          isBasecamp: true,
+          isCamp: false,
+        );
+        expect(selectedBcMarker.width, 280.0);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: selectedBcMarker.child,
+            ),
+          ),
+        );
+        expect(find.text('BC GARUNG'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
       'Tapping finish button displays confirmation dialog, Batal keeps on page, Selesai pops',
       (tester) async {
         bool popped = false;

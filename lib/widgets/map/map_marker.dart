@@ -5,34 +5,36 @@ import 'package:latlong2/latlong.dart' hide Path;
 import 'package:mendaki/models/waypoint.dart';
 
 class NavigationSummitMarkerWidget extends StatelessWidget {
-  static const double markerWidth = 280.0;
-  static const double markerHeight = 54.0;
-  static final Alignment markerAlignment = Marker.computePixelAlignment(
-    width: markerWidth,
-    height: markerHeight,
+  static const double labeledWidth = 280.0;
+  static const double labeledHeight = 54.0;
+  static final Alignment labeledAlignment = Marker.computePixelAlignment(
+    width: labeledWidth,
+    height: labeledHeight,
     left: 140.0,
     top: 38.0,
   );
+
+  static const double markerWidth = labeledWidth;
+  static const double markerHeight = labeledHeight;
+  static final Alignment markerAlignment = labeledAlignment;
 
   static const double unselectedSize = 28.0;
   static const Alignment unselectedAlignment = Alignment.center;
 
   final Waypoint waypoint;
   final bool isSelected;
+  final bool showLabel;
 
   const NavigationSummitMarkerWidget({
     super.key,
     required this.waypoint,
     this.isSelected = false,
+    this.showLabel = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cleanName = waypoint.name
-        .replaceAll('PUNCAK', '')
-        .replaceAll('Puncak', '')
-        .trim();
-    final label = cleanName.isNotEmpty ? cleanName : waypoint.name;
+    final label = waypoint.name;
     const summitColor = Color(0xFFBA1A1A);
 
     final pinWidget = Container(
@@ -55,14 +57,14 @@ class NavigationSummitMarkerWidget extends StatelessWidget {
       ),
     );
 
-    // Ketika di-klik (isSelected == true), labelnya menghilang
-    if (isSelected) {
+    // Default label tidak muncul; hanya muncul saat di-klik (isSelected == true) atau showLabel == true
+    if (!isSelected && !showLabel) {
       return Center(child: pinWidget);
     }
 
     return SizedBox(
-      width: markerWidth,
-      height: markerHeight,
+      width: labeledWidth,
+      height: labeledHeight,
       child: Column(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.end,
@@ -157,11 +159,7 @@ class NavigationBasecampMarkerWidget extends StatelessWidget {
       ),
     );
 
-    // Ketika di-klik (isSelected == true), labelnya menghilang
-    if (isSelected) {
-      return Center(child: pinWidget);
-    }
-
+    // Label Basecamp selalu muncul dan tidak bisa di-hide
     return SizedBox(
       width: markerWidth,
       height: markerHeight,
@@ -341,8 +339,8 @@ class NavigationCampMarkerWidget extends StatelessWidget {
       child: const Center(child: TentIcon(size: 13, color: Colors.white)),
     );
 
-    // Ketika di-klik (isSelected == true) atau saat label tidak ditampilkan, label menghilang
-    if (isSelected || !showLabel) {
+    // Default label tidak muncul; hanya muncul saat di-klik (isSelected == true) atau showLabel == true
+    if (!isSelected && !showLabel) {
       return Center(child: pinWidget);
     }
 
@@ -533,6 +531,7 @@ Marker buildWaypointMapMarker({
   required bool isBasecamp,
   required bool isCamp,
   bool showCampLabel = false,
+  bool showSummitLabel = false,
   bool rotate = false,
   VoidCallback? onTap,
 }) {
@@ -542,50 +541,42 @@ Marker buildWaypointMapMarker({
   final Widget child;
 
   if (isSummit) {
-    if (isSelected) {
+    if (isSelected || showSummitLabel) {
+      width = NavigationSummitMarkerWidget.labeledWidth;
+      height = NavigationSummitMarkerWidget.labeledHeight;
+      alignment = NavigationSummitMarkerWidget.labeledAlignment;
+      child = NavigationSummitMarkerWidget(
+        waypoint: waypoint,
+        isSelected: isSelected,
+        showLabel: true,
+      );
+    } else {
       width = NavigationSummitMarkerWidget.unselectedSize;
       height = NavigationSummitMarkerWidget.unselectedSize;
       alignment = NavigationSummitMarkerWidget.unselectedAlignment;
-    } else {
-      width = NavigationSummitMarkerWidget.markerWidth;
-      height = NavigationSummitMarkerWidget.markerHeight;
-      alignment = NavigationSummitMarkerWidget.markerAlignment;
+      child = NavigationSummitMarkerWidget(
+        waypoint: waypoint,
+        isSelected: false,
+        showLabel: false,
+      );
     }
-    child = NavigationSummitMarkerWidget(
-      waypoint: waypoint,
-      isSelected: isSelected,
-    );
   } else if (isBasecamp) {
-    if (isSelected) {
-      width = NavigationBasecampMarkerWidget.unselectedSize;
-      height = NavigationBasecampMarkerWidget.unselectedSize;
-      alignment = NavigationBasecampMarkerWidget.unselectedAlignment;
-    } else {
-      width = NavigationBasecampMarkerWidget.markerWidth;
-      height = NavigationBasecampMarkerWidget.markerHeight;
-      alignment = NavigationBasecampMarkerWidget.markerAlignment;
-    }
+    // Basecamp selalu memunculkan label, tidak bisa di-hide
+    width = NavigationBasecampMarkerWidget.markerWidth;
+    height = NavigationBasecampMarkerWidget.markerHeight;
+    alignment = NavigationBasecampMarkerWidget.markerAlignment;
     child = NavigationBasecampMarkerWidget(
       waypoint: waypoint,
       isSelected: isSelected,
     );
   } else if (isCamp) {
-    if (isSelected) {
-      width = NavigationCampMarkerWidget.unselectedSize;
-      height = NavigationCampMarkerWidget.unselectedSize;
-      alignment = NavigationCampMarkerWidget.unselectedAlignment;
-      child = NavigationCampMarkerWidget(
-        waypoint: waypoint,
-        isSelected: true,
-        showLabel: false,
-      );
-    } else if (showCampLabel) {
+    if (isSelected || showCampLabel) {
       width = NavigationCampMarkerWidget.labeledWidth;
       height = NavigationCampMarkerWidget.labeledHeight;
       alignment = NavigationCampMarkerWidget.labeledAlignment;
       child = NavigationCampMarkerWidget(
         waypoint: waypoint,
-        isSelected: false,
+        isSelected: isSelected,
         showLabel: true,
       );
     } else {

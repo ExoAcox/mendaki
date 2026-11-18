@@ -395,14 +395,6 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
               cameraConstraint: CameraConstraint.containCenter(
                 bounds: _calculateBounds(),
               ),
-              onTap: (tapPosition, point) {
-                if (_selectedWaypoint != null) {
-                  setState(() {
-                    _selectedWaypoint = null;
-                    _rebuildMarkers();
-                  });
-                }
-              },
               interactionOptions: const InteractionOptions(
                 flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
               ),

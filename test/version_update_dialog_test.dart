@@ -6,13 +6,13 @@ import 'package:mendaki/widgets/home/version_update_dialog.dart';
 
 void main() {
   group('AppVersion Model & Comparison Tests', () {
-    test('fromJson parses full data correctly', () {
+    test('fromJson parses full data correctly with force_update_version', () {
       final json = {
         'id': '1.1',
         'title': 'Mendaki v1.1',
         'desc': '<p><strong>Updates</strong><ul><li>Fitur baru</li></ul></p>',
         'update_link': 'https://example.com/app.apk',
-        'force_update': true,
+        'force_update_version': '1.1',
         'created_at': '2026-11-13T06:47:34.951130Z',
       };
 
@@ -21,16 +21,40 @@ void main() {
       expect(version.title, 'Mendaki v1.1');
       expect(version.desc, contains('Fitur baru'));
       expect(version.updateLink, 'https://example.com/app.apk');
-      expect(version.forceUpdate, isTrue);
+      expect(version.forceUpdateVersion, '1.1');
       expect(version.createdAt, isNotNull);
     });
 
-    test('version comparison identifies difference', () {
-      const currentVersion = AppConfig.currentVersion; // '1.0'
-      const newVersionId = '1.1';
+    test('isForceUpdate returns true if current version is below force_update_version', () {
+      const version = AppVersion(
+        id: '1.2',
+        title: 'Mendaki v1.2',
+        desc: 'Update',
+        forceUpdateVersion: '1.1',
+      );
 
-      expect(newVersionId != currentVersion, isTrue);
-      expect('1.0' != currentVersion, isFalse);
+      // Versi 1.0 di bawah 1.1 -> force update
+      expect(version.isForceUpdate('1.0'), isTrue);
+      // Versi 1.0.9 di bawah 1.1 -> force update
+      expect(version.isForceUpdate('1.0.9'), isTrue);
+      // Versi 1.1 sama dengan 1.1 -> bukan force update
+      expect(version.isForceUpdate('1.1'), isFalse);
+      // Versi 1.2 di atas 1.1 -> bukan force update
+      expect(version.isForceUpdate('1.2'), isFalse);
+    });
+
+    test('compareVersions compares version segments numerically', () {
+      expect(AppVersion.compareVersions('1.0', '1.1'), isNegative);
+      expect(AppVersion.compareVersions('1.1', '1.1'), 0);
+      expect(AppVersion.compareVersions('1.2', '1.1'), isPositive);
+      expect(AppVersion.compareVersions('1.9', '1.10'), isNegative);
+      expect(AppVersion.compareVersions('1.1', '1.1.0'), 0);
+    });
+
+    test('version comparison identifies difference', () {
+      expect(AppVersion.isVersionBelow('1.0', '1.1'), isTrue);
+      expect(AppVersion.isVersionBelow('1.1', '1.1'), isFalse);
+      expect(AppVersion.isVersionBelow('1.2', '1.1'), isFalse);
     });
   });
 

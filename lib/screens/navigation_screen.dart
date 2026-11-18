@@ -494,14 +494,6 @@ class _NavigationScreenState extends State<NavigationScreen>
                 mountainId: widget.mountain.id,
                 polylines: _polylines,
                 markers: _markers,
-                onTap: (tapPosition, point) {
-                  if (_selectedWaypoint != null) {
-                    setState(() {
-                      _selectedWaypoint = null;
-                      _rebuildMarkers();
-                    });
-                  }
-                },
                 onPositionChanged: (camera, hasGesture) {
                   if (camera.rotation != _currentRotation) {
                     setState(() {
