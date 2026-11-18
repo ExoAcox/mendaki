@@ -503,7 +503,7 @@ class GpxParserService {
     );
   }
 
-  // --- Helper Klasifikasi Umum (Hanya 4 tipe: post, basecamp, camp, summit) ---
+  // --- Helper Klasifikasi Umum (Tipe: post, basecamp, camp, summit, danger) ---
 
   static String _classifyWaypointType(String? cmt) {
     final comment = (cmt ?? '').trim().toLowerCase();
@@ -513,6 +513,8 @@ class GpxParserService {
       return 'camp';
     } else if (comment == 'summit' || comment == 'peak') {
       return 'summit';
+    } else if (comment == 'danger') {
+      return 'danger';
     }
     return 'post';
   }

@@ -286,6 +286,80 @@ void main() {
     );
 
     testWidgets(
+      'buildWaypointMapMarker for danger displays skull or x icon with black pin, hide label by default and show on select',
+      (tester) async {
+        const dangerWpt = Waypoint(
+          name: 'Jurang Terjal',
+          latitude: -7.3600,
+          longitude: 110.0400,
+          comment: 'danger',
+        );
+
+        expect(dangerWpt.isDanger, isTrue);
+
+        // 1. Default (unselected): label should NOT show, skull icon is rendered
+        final defaultDangerMarker = buildWaypointMapMarker(
+          waypoint: dangerWpt,
+          isSelected: false,
+          isSummit: false,
+          isBasecamp: false,
+          isCamp: false,
+          isDanger: true,
+        );
+        expect(defaultDangerMarker.width, 28.0);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: defaultDangerMarker.child,
+            ),
+          ),
+        );
+        expect(find.text('Jurang Terjal'), findsNothing);
+        expect(find.byType(SkullIcon), findsOneWidget);
+
+        // 2. Selected (clicked): label SHOULD show
+        final selectedDangerMarker = buildWaypointMapMarker(
+          waypoint: dangerWpt,
+          isSelected: true,
+          isSummit: false,
+          isBasecamp: false,
+          isCamp: false,
+          isDanger: true,
+        );
+        expect(selectedDangerMarker.width, 280.0);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: selectedDangerMarker.child,
+            ),
+          ),
+        );
+        expect(find.text('Jurang Terjal'), findsOneWidget);
+
+        // 3. Optional X icon mode
+        final xDangerMarker = buildWaypointMapMarker(
+          waypoint: dangerWpt,
+          isSelected: false,
+          isSummit: false,
+          isBasecamp: false,
+          isCamp: false,
+          isDanger: true,
+          useSkull: false,
+        );
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: xDangerMarker.child,
+            ),
+          ),
+        );
+        expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+      },
+    );
+
+    testWidgets(
       'Tapping finish button displays confirmation dialog, Batal keeps on page, Selesai pops',
       (tester) async {
         bool popped = false;

@@ -61,9 +61,18 @@ void main() {
         comment: 'summit',
       );
       expect(explicitSummit.isSummit, isTrue);
+
+      const explicitDanger = Waypoint(
+        name: 'Jurang Dalam',
+        latitude: -7.45,
+        longitude: 110.44,
+        comment: 'danger',
+      );
+      expect(explicitDanger.isDanger, isTrue);
+      expect(explicitDanger.isPost, isFalse);
     });
 
-    test('GpxParserService parses exactly 4 types strictly from <cmt> tag', () {
+    test('GpxParserService parses types strictly from <cmt> tag including danger', () {
       const gpxContent = '''<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Mendaki">
   <metadata><name>Merbabu Selo</name></metadata>
@@ -85,6 +94,10 @@ void main() {
   <wpt lat="-7.44" lon="110.43">
     <name>Puncak Kenteng Songo</name>
   </wpt>
+  <wpt lat="-7.43" lon="110.43">
+    <name>Tebing Curam</name>
+    <cmt>danger</cmt>
+  </wpt>
   <trk>
     <name>Jalur Selo</name>
     <trkseg>
@@ -95,7 +108,7 @@ void main() {
 </gpx>''';
 
       final result = GpxParserService.parseString(gpxContent);
-      expect(result.waypoints.length, 5);
+      expect(result.waypoints.length, 6);
 
       // Basecamp with <cmt>basecamp</cmt>
       final bc = result.waypoints[0];
@@ -123,6 +136,12 @@ void main() {
       expect(summitNoCmt.type, 'post');
       expect(summitNoCmt.isSummit, isFalse);
       expect(summitNoCmt.isPost, isTrue);
+
+      // Tebing Curam with <cmt>danger</cmt> -> danger
+      final danger = result.waypoints[5];
+      expect(danger.type, 'danger');
+      expect(danger.isDanger, isTrue);
+      expect(danger.isPost, isFalse);
     });
   });
 

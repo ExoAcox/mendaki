@@ -55,6 +55,7 @@ class NavigationLayerBuilder {
   }) {
     final regularMarkers = <Marker>[];
     final campMarkers = <Marker>[];
+    final dangerMarkers = <Marker>[];
     final summitMarkers = <Marker>[];
     final basecampMarkers = <Marker>[];
     Marker? selectedMarker;
@@ -64,7 +65,8 @@ class NavigationLayerBuilder {
         final isSelected = selectedWaypoint == wpt;
         final isSummit = wpt.isSummit;
         final isBasecamp = !isSummit && wpt.isBasecamp;
-        final isCamp = !isSummit && !isBasecamp && wpt.isCamp;
+        final isDanger = !isSummit && !isBasecamp && wpt.isDanger;
+        final isCamp = !isSummit && !isBasecamp && !isDanger && wpt.isCamp;
 
         final marker = buildWaypointMapMarker(
           waypoint: wpt,
@@ -72,8 +74,10 @@ class NavigationLayerBuilder {
           isSummit: isSummit,
           isBasecamp: isBasecamp,
           isCamp: isCamp,
+          isDanger: isDanger,
           showCampLabel: false,
           showSummitLabel: false,
+          showDangerLabel: false,
           rotate: true,
           onTap: onWaypointTap != null ? () => onWaypointTap(wpt) : null,
         );
@@ -84,6 +88,8 @@ class NavigationLayerBuilder {
           basecampMarkers.add(marker);
         } else if (isSummit) {
           summitMarkers.add(marker);
+        } else if (isDanger) {
+          dangerMarkers.add(marker);
         } else if (isCamp) {
           campMarkers.add(marker);
         } else {
@@ -95,6 +101,7 @@ class NavigationLayerBuilder {
     final markers = <Marker>[
       ...regularMarkers,
       ...campMarkers,
+      ...dangerMarkers,
       ...summitMarkers,
       ...basecampMarkers,
     ];

@@ -392,6 +392,218 @@ class NavigationCampMarkerWidget extends StatelessWidget {
   }
 }
 
+class SkullIcon extends StatelessWidget {
+  final double size;
+  final Color color;
+  final Color eyeColor;
+
+  const SkullIcon({
+    super.key,
+    this.size = 13,
+    this.color = Colors.white,
+    this.eyeColor = const Color(0xFF1E1E1E),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(size, size),
+      painter: _SkullPainter(color: color, eyeColor: eyeColor),
+    );
+  }
+}
+
+class _SkullPainter extends CustomPainter {
+  final Color color;
+  final Color eyeColor;
+
+  const _SkullPainter({
+    required this.color,
+    required this.eyeColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
+    final skullPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    // 1. Skull cranium & jaw contour
+    final skullPath = Path()
+      ..moveTo(w * 0.28, h * 0.90)
+      ..lineTo(w * 0.72, h * 0.90)
+      ..lineTo(w * 0.72, h * 0.64)
+      ..cubicTo(w * 0.96, h * 0.54, w * 0.96, h * 0.08, w * 0.50, h * 0.08)
+      ..cubicTo(w * 0.04, h * 0.08, w * 0.04, h * 0.54, w * 0.28, h * 0.64)
+      ..close();
+
+    canvas.drawPath(skullPath, skullPaint);
+
+    // 2. Eye sockets
+    final cutoutPaint = Paint()
+      ..color = eyeColor
+      ..style = PaintingStyle.fill;
+
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(w * 0.35, h * 0.44),
+        width: w * 0.22,
+        height: w * 0.26,
+      ),
+      cutoutPaint,
+    );
+
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(w * 0.65, h * 0.44),
+        width: w * 0.22,
+        height: w * 0.26,
+      ),
+      cutoutPaint,
+    );
+
+    // 3. Nasal aperture
+    final nosePath = Path()
+      ..moveTo(w * 0.50, h * 0.54)
+      ..lineTo(w * 0.43, h * 0.65)
+      ..lineTo(w * 0.57, h * 0.65)
+      ..close();
+    canvas.drawPath(nosePath, cutoutPaint);
+
+    // 4. Teeth vertical dividers on jaw
+    final teethPaint = Paint()
+      ..color = eyeColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = (w * 0.07).clamp(0.8, 1.5);
+
+    canvas.drawLine(
+      Offset(w * 0.43, h * 0.76),
+      Offset(w * 0.43, h * 0.90),
+      teethPaint,
+    );
+    canvas.drawLine(
+      Offset(w * 0.57, h * 0.76),
+      Offset(w * 0.57, h * 0.90),
+      teethPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _SkullPainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.eyeColor != eyeColor;
+}
+
+class NavigationDangerMarkerWidget extends StatelessWidget {
+  static const double labeledWidth = 280.0;
+  static const double labeledHeight = 54.0;
+  static final Alignment labeledAlignment = Marker.computePixelAlignment(
+    width: labeledWidth,
+    height: labeledHeight,
+    left: 140.0,
+    top: 38.0,
+  );
+
+  static const double markerWidth = labeledWidth;
+  static const double markerHeight = labeledHeight;
+  static final Alignment markerAlignment = labeledAlignment;
+
+  static const double unselectedSize = 28.0;
+  static const Alignment unselectedAlignment = Alignment.center;
+
+  final Waypoint waypoint;
+  final bool isSelected;
+  final bool showLabel;
+  final bool useSkull;
+
+  const NavigationDangerMarkerWidget({
+    super.key,
+    required this.waypoint,
+    this.isSelected = false,
+    this.showLabel = false,
+    this.useSkull = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final label = waypoint.name;
+    const dangerColor = Color(0xFF1E1E1E);
+
+    final iconWidget = useSkull
+        ? const SkullIcon(size: 13, color: Colors.white, eyeColor: dangerColor)
+        : const Icon(Icons.close_rounded, color: Colors.white, size: 14);
+
+    final pinWidget = Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        color: dangerColor,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.40),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Center(child: iconWidget),
+    );
+
+    // Default label tidak muncul; hanya muncul saat di-klik (isSelected == true) atau showLabel == true
+    if (!isSelected && !showLabel) {
+      return Center(child: pinWidget);
+    }
+
+    return SizedBox(
+      width: labeledWidth,
+      height: labeledHeight,
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: dangerColor.withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Colors.white, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Text(
+              label,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.visible,
+              textScaler: TextScaler.noScaling,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+                height: 1.1,
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          pinWidget,
+          const SizedBox(height: 4),
+        ],
+      ),
+    );
+  }
+}
+
 class NavigationRegularWaypointMarkerWidget extends StatelessWidget {
   static const double unselectedSize = 28.0;
   static const Alignment unselectedAlignment = Alignment.center;
@@ -530,15 +742,20 @@ Marker buildWaypointMapMarker({
   required bool isSummit,
   required bool isBasecamp,
   required bool isCamp,
+  bool isDanger = false,
   bool showCampLabel = false,
   bool showSummitLabel = false,
+  bool showDangerLabel = false,
   bool rotate = false,
+  bool useSkull = true,
   VoidCallback? onTap,
 }) {
   final double width;
   final double height;
   final Alignment alignment;
   final Widget child;
+
+  final bool danger = isDanger || waypoint.isDanger;
 
   if (isSummit) {
     if (isSelected || showSummitLabel) {
@@ -569,6 +786,28 @@ Marker buildWaypointMapMarker({
       waypoint: waypoint,
       isSelected: isSelected,
     );
+  } else if (danger) {
+    if (isSelected || showDangerLabel) {
+      width = NavigationDangerMarkerWidget.labeledWidth;
+      height = NavigationDangerMarkerWidget.labeledHeight;
+      alignment = NavigationDangerMarkerWidget.labeledAlignment;
+      child = NavigationDangerMarkerWidget(
+        waypoint: waypoint,
+        isSelected: isSelected,
+        showLabel: true,
+        useSkull: useSkull,
+      );
+    } else {
+      width = NavigationDangerMarkerWidget.unselectedSize;
+      height = NavigationDangerMarkerWidget.unselectedSize;
+      alignment = NavigationDangerMarkerWidget.unselectedAlignment;
+      child = NavigationDangerMarkerWidget(
+        waypoint: waypoint,
+        isSelected: false,
+        showLabel: false,
+        useSkull: useSkull,
+      );
+    }
   } else if (isCamp) {
     if (isSelected || showCampLabel) {
       width = NavigationCampMarkerWidget.labeledWidth;

@@ -254,12 +254,14 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
   bool _isSummit(Waypoint wpt) => wpt.isSummit;
   bool _isBasecamp(Waypoint wpt) => wpt.isBasecamp;
   bool _isCamp(Waypoint wpt) => wpt.isCamp;
+  bool _isDanger(Waypoint wpt) => wpt.isDanger;
 
   void _rebuildMarkers() {
     if (_gpxData == null) return;
 
     final regularMarkers = <Marker>[];
     final campMarkers = <Marker>[];
+    final dangerMarkers = <Marker>[];
     final summitMarkers = <Marker>[];
     final basecampMarkers = <Marker>[];
     Marker? selectedMarker;
@@ -268,7 +270,8 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
       final isSelected = _selectedWaypoint == wpt;
       final isSummit = _isSummit(wpt);
       final isBasecamp = !isSummit && _isBasecamp(wpt);
-      final isCamp = !isSummit && !isBasecamp && _isCamp(wpt);
+      final isDanger = !isSummit && !isBasecamp && _isDanger(wpt);
+      final isCamp = !isSummit && !isBasecamp && !isDanger && _isCamp(wpt);
 
       final marker = buildWaypointMapMarker(
         waypoint: wpt,
@@ -276,7 +279,10 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
         isSummit: isSummit,
         isBasecamp: isBasecamp,
         isCamp: isCamp,
+        isDanger: isDanger,
         showCampLabel: false,
+        showSummitLabel: false,
+        showDangerLabel: false,
         rotate: false,
         onTap: () => _onWaypointTap(wpt),
       );
@@ -287,6 +293,8 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
         basecampMarkers.add(marker);
       } else if (isSummit) {
         summitMarkers.add(marker);
+      } else if (isDanger) {
+        dangerMarkers.add(marker);
       } else if (isCamp) {
         campMarkers.add(marker);
       } else {
@@ -297,12 +305,14 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
     // Urutan z-index dari belakang ke depan:
     // 1. Waypoint biasa (di belakang)
     // 2. Camp / Tenda markers
-    // 3. Summit markers
-    // 4. Basecamp markers (selalu di depan waypoint biasa agar labelnya tidak tertimpa)
-    // 5. Marker yang sedang aktif/dipilih (z-index paling depan)
+    // 3. Danger markers (titik bahaya)
+    // 4. Summit markers
+    // 5. Basecamp markers (selalu di depan waypoint biasa agar labelnya tidak tertimpa)
+    // 6. Marker yang sedang aktif/dipilih (z-index paling depan)
     final markers = <Marker>[
       ...regularMarkers,
       ...campMarkers,
+      ...dangerMarkers,
       ...summitMarkers,
       ...basecampMarkers,
     ];
