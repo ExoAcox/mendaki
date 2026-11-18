@@ -341,6 +341,15 @@ class _NavigationScreenState extends State<NavigationScreen>
     });
   }
 
+  void _onMapTap(TapPosition tapPosition, LatLng point) {
+    if (_selectedWaypoint != null) {
+      setState(() {
+        _selectedWaypoint = null;
+        _rebuildMarkers();
+      });
+    }
+  }
+
   void _focusGpsWithSummitUp({double zoom = 15.8}) {
     final summitCoord = NavigationGeoUtils.findSummitCoordinate(
       _gpxData,
@@ -494,6 +503,7 @@ class _NavigationScreenState extends State<NavigationScreen>
                 mountainId: widget.mountain.id,
                 polylines: _polylines,
                 markers: _markers,
+                onTap: _onMapTap,
                 onPositionChanged: (camera, hasGesture) {
                   if (camera.rotation != _currentRotation) {
                     setState(() {

@@ -7,6 +7,7 @@ import 'package:mendaki/models/route.dart';
 import 'package:mendaki/models/waypoint.dart';
 import 'package:mendaki/screens/navigation_screen.dart';
 import 'package:mendaki/widgets/map/map_marker.dart';
+import 'package:mendaki/widgets/navigation/navigation_map_viewport.dart';
 
 void main() {
   const testRoute = HikingRoute(
@@ -297,7 +298,7 @@ void main() {
 
         expect(dangerWpt.isDanger, isTrue);
 
-        // 1. Default (unselected): label should NOT show, skull icon is rendered
+        // 1. Default (unselected): compact size 16x16 like regular marker, label does NOT show
         final defaultDangerMarker = buildWaypointMapMarker(
           waypoint: dangerWpt,
           isSelected: false,
@@ -318,7 +319,7 @@ void main() {
         expect(find.text('Jurang Terjal'), findsNothing);
         expect(find.byType(SkullIcon), findsOneWidget);
 
-        // 2. Selected (clicked): label SHOULD show
+        // 2. Selected (clicked): expands to 24x24 pin with SkullIcon and label
         final selectedDangerMarker = buildWaypointMapMarker(
           waypoint: dangerWpt,
           isSelected: true,
@@ -337,11 +338,12 @@ void main() {
           ),
         );
         expect(find.text('Jurang Terjal'), findsOneWidget);
+        expect(find.byType(SkullIcon), findsOneWidget);
 
-        // 3. Optional X icon mode
+        // 3. Optional X icon mode when selected
         final xDangerMarker = buildWaypointMapMarker(
           waypoint: dangerWpt,
-          isSelected: false,
+          isSelected: true,
           isSummit: false,
           isBasecamp: false,
           isCamp: false,
@@ -356,6 +358,74 @@ void main() {
           ),
         );
         expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Tapping anywhere on map closes active selected waypoint label',
+      (tester) async {
+        Waypoint? selectedWpt;
+        const testWpt = Waypoint(
+          name: 'Puncak Merbabu',
+          latitude: -7.4542,
+          longitude: 110.4397,
+          comment: 'summit',
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: StatefulBuilder(
+              builder: (context, setState) {
+                return Scaffold(
+                  body: Stack(
+                    children: [
+                      NavigationMapViewport(
+                        mapController: MapController(),
+                        initialCenter: const LatLng(-7.4542, 110.4397),
+                        mountainId: 'merbabu',
+                        polylines: const [],
+                        markers: [
+                          buildWaypointMapMarker(
+                            waypoint: testWpt,
+                            isSelected: selectedWpt == testWpt,
+                            isSummit: true,
+                            isBasecamp: false,
+                            isCamp: false,
+                            onTap: () {
+                              setState(() {
+                                selectedWpt = testWpt;
+                              });
+                            },
+                          ),
+                        ],
+                        onTap: (tapPosition, point) {
+                          if (selectedWpt != null) {
+                            setState(() {
+                              selectedWpt = null;
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+
+        // 1. Initial state: label is not shown
+        expect(find.text('Puncak Merbabu'), findsNothing);
+
+        // 2. Tap on the marker: label appears
+        await tester.tap(find.byType(NavigationSummitMarkerWidget));
+        await tester.pump();
+        expect(find.text('Puncak Merbabu'), findsOneWidget);
+
+        // 3. Click sembarang on the map: label closes
+        await tester.tapAt(const Offset(20, 20));
+        await tester.pump(const Duration(milliseconds: 350));
+        expect(find.text('Puncak Merbabu'), findsNothing);
       },
     );
 

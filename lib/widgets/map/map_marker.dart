@@ -417,10 +417,7 @@ class _SkullPainter extends CustomPainter {
   final Color color;
   final Color eyeColor;
 
-  const _SkullPainter({
-    required this.color,
-    required this.eyeColor,
-  });
+  const _SkullPainter({required this.color, required this.eyeColor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -531,6 +528,42 @@ class NavigationDangerMarkerWidget extends StatelessWidget {
     final label = waypoint.name;
     const dangerColor = Color(0xFF1E1E1E);
 
+    // Default (unselected & no label): ukuran sama seperti marker biasa (16x16)
+    if (!isSelected && !showLabel) {
+      return Center(
+        child: Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: dangerColor,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.35),
+                blurRadius: 3,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Center(
+            child: useSkull
+                ? const SkullIcon(
+                    size: 10,
+                    color: Colors.white,
+                    eyeColor: dangerColor,
+                  )
+                : const Icon(
+                    Icons.close_rounded,
+                    color: Colors.white,
+                    size: 8.5,
+                  ),
+          ),
+        ),
+      );
+    }
+
+    // Saat di-klik (isSelected / showLabel): baru membesar (pin 24x24 + icon + label banner)
     final iconWidget = useSkull
         ? const SkullIcon(size: 13, color: Colors.white, eyeColor: dangerColor)
         : const Icon(Icons.close_rounded, color: Colors.white, size: 14);
@@ -552,11 +585,6 @@ class NavigationDangerMarkerWidget extends StatelessWidget {
       ),
       child: Center(child: iconWidget),
     );
-
-    // Default label tidak muncul; hanya muncul saat di-klik (isSelected == true) atau showLabel == true
-    if (!isSelected && !showLabel) {
-      return Center(child: pinWidget);
-    }
 
     return SizedBox(
       width: labeledWidth,

@@ -251,6 +251,15 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
     });
   }
 
+  void _onMapTap(TapPosition tapPosition, LatLng point) {
+    if (_selectedWaypoint != null) {
+      setState(() {
+        _selectedWaypoint = null;
+        _rebuildMarkers();
+      });
+    }
+  }
+
   bool _isSummit(Waypoint wpt) => wpt.isSummit;
   bool _isBasecamp(Waypoint wpt) => wpt.isBasecamp;
   bool _isCamp(Waypoint wpt) => wpt.isCamp;
@@ -393,6 +402,7 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
               initialZoom: 11.0,
               minZoom: 9.0,
               maxZoom: 16.5,
+              onTap: _onMapTap,
               cameraConstraint: CameraConstraint.containCenter(
                 bounds: _calculateBounds(),
               ),
