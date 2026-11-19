@@ -49,13 +49,19 @@ As far as the law allows, the software comes as is, without any warranty or cond
 
 This application incorporates map data, topographic contour tiles, elevation profiles, and hiking trail tracks licensed or referenced from third-party open data providers:
 
-### 1. Astacala
-- **GPX Data**: [Astacala Universitas Telkom](https://astacala.org) *with modification
+#### 1. Astacala
+- **GPX Data**: [Astacala](https://astacala.org)
 
-### 2. OpenStreetMap
+#### 2. Wikiloc
+- **GPX Data**: [Wikiloc](https://www.wikiloc.com)
+
+#### 3. Gunung Bagging
+- **GPX Data**: [Gunung Bagging](https://www.gunungbagging.com)
+
+#### 4. OpenStreetMap
 - **Map Data**: © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright)
 - **License**: [Open Data Commons Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/)
 
-### 3. OpenTopoMap
+#### 5. OpenTopoMap
 - **Map Style**: © [OpenTopoMap](https://opentopomap.org/)
 - **License**: [Creative Commons Attribution-ShareAlike 3.0 Unported (CC-BY-SA 3.0)](https://creativecommons.org/licenses/by-sa/3.0/)

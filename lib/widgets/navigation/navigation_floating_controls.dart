@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/widgets/navigation/navigation_floating_button.dart';
@@ -37,21 +38,52 @@ class NavigationMetricsChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.16),
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
-            offset: const Offset(0, 3),
+            offset: const Offset(0, 2),
+          ),
+          BoxShadow(
+            color: AppTheme.primary.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Row(
-        children: [
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withValues(alpha: 0.85),
+                  Colors.white.withValues(alpha: 0.58),
+                  Colors.white.withValues(alpha: 0.72),
+                ],
+                stops: const [0.0, 0.5, 1.0],
+              ),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.5),
+                width: 1.2,
+              ),
+            ),
+            child: Row(
+              children: [
           // 1. Elapsed Time
           Expanded(
             child: Row(
@@ -138,7 +170,10 @@ class NavigationMetricsChip extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  ),
+),
+);
   }
 
   Widget _buildDivider() {

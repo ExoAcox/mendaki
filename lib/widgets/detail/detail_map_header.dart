@@ -1,8 +1,10 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mendaki/core/services/gpx_parser_service.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
+import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/models/waypoint.dart';
 import 'package:mendaki/widgets/map/map_attribution_badge.dart';
@@ -454,34 +456,64 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
             right: 12,
             child: Row(
               children: [
-                // Circular Frosted Back Button
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap:
-                        widget.onBack ?? () => Navigator.of(context).maybePop(),
-                    borderRadius: BorderRadius.circular(24),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.45),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.25),
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.25),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                // Circular Frosted Liquid Glass Back Button
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.10),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
                       ),
-                      child: const Icon(
-                        Icons.arrow_back_rounded,
-                        color: Colors.white,
-                        size: 20,
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap:
+                              widget.onBack ??
+                              () => Navigator.of(context).maybePop(),
+                          splashColor: AppTheme.primary.withValues(alpha: 0.12),
+                          highlightColor: Colors.transparent,
+                          customBorder: const CircleBorder(),
+                          child: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white.withValues(alpha: 0.85),
+                                  Colors.white.withValues(alpha: 0.58),
+                                  Colors.white.withValues(alpha: 0.72),
+                                ],
+                                stops: const [0.0, 0.5, 1.0],
+                              ),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.5),
+                                width: 1.2,
+                              ),
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.arrow_back_rounded,
+                                color: AppTheme.onSurface,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -489,51 +521,79 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
                 const Spacer(),
 
                 // Recenter Button
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      _fitBasecamps();
-                    },
+                Container(
+                  decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.10),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.45),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.25),
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.my_location_rounded,
-                            color: Color(0xFF89EDBA),
-                            size: 14,
-                          ),
-                          SizedBox(width: 5),
-                          Text(
-                            'Pusatkan',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            _fitBasecamps();
+                          },
+                          splashColor: AppTheme.primary.withValues(alpha: 0.12),
+                          highlightColor: Colors.transparent,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white.withValues(alpha: 0.85),
+                                  Colors.white.withValues(alpha: 0.58),
+                                  Colors.white.withValues(alpha: 0.72),
+                                ],
+                                stops: const [0.0, 0.5, 1.0],
+                              ),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.5),
+                                width: 1.2,
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.my_location_rounded,
+                                  color: AppTheme.primary,
+                                  size: 14,
+                                ),
+                                SizedBox(width: 5),
+                                Text(
+                                  'Pusatkan',
+                                  style: TextStyle(
+                                    color: AppTheme.onSurface,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'Plus Jakarta Sans',
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -541,51 +601,79 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
                 const SizedBox(width: 8),
 
                 // Expand / Collapse Map Toggle Button
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => _setMapExpanded(!_isMapExpanded),
+                Container(
+                  decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.10),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.45),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.25),
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _isMapExpanded
-                                ? Icons.close_fullscreen_rounded
-                                : Icons.open_in_full_rounded,
-                            color: const Color(0xFF89EDBA),
-                            size: 14,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            _isMapExpanded ? 'Perkecil' : 'Perbesar',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => _setMapExpanded(!_isMapExpanded),
+                          splashColor: AppTheme.primary.withValues(alpha: 0.12),
+                          highlightColor: Colors.transparent,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white.withValues(alpha: 0.85),
+                                  Colors.white.withValues(alpha: 0.58),
+                                  Colors.white.withValues(alpha: 0.72),
+                                ],
+                                stops: const [0.0, 0.5, 1.0],
+                              ),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.5),
+                                width: 1.2,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _isMapExpanded
+                                      ? Icons.close_fullscreen_rounded
+                                      : Icons.open_in_full_rounded,
+                                  color: AppTheme.primary,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  _isMapExpanded ? 'Perkecil' : 'Perbesar',
+                                  style: const TextStyle(
+                                    color: AppTheme.onSurface,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'Plus Jakarta Sans',
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -593,52 +681,68 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
 
                 if (widget.isOfflineReady) ...[
                   const SizedBox(width: 8),
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
+                  Container(
+                    decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.10),
+                          blurRadius: 20,
+                          offset: const Offset(0, 6),
                         ),
-                        decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF0F5238,
-                          ).withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: const Color(
-                              0xFF89EDBA,
-                            ).withValues(alpha: 0.6),
-                            width: 1,
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.85),
+                                Colors.white.withValues(alpha: 0.58),
+                                Colors.white.withValues(alpha: 0.72),
+                              ],
+                              stops: const [0.0, 0.5, 1.0],
                             ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.check_circle_rounded,
-                              color: Color(0xFF89EDBA),
-                              size: 14,
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.5),
+                              width: 1.2,
                             ),
-                            const SizedBox(width: 5),
-                            const Text(
-                              'Offline',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_circle_rounded,
+                                color: AppTheme.primary,
+                                size: 14,
                               ),
-                            ),
-                          ],
+                              SizedBox(width: 5),
+                              Text(
+                                'Offline',
+                                style: TextStyle(
+                                  color: AppTheme.primary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Plus Jakarta Sans',
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

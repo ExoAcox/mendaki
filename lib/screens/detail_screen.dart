@@ -189,6 +189,7 @@ class _DetailScreenState extends State<DetailScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
+      extendBody: true,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,7 +242,7 @@ class _DetailScreenState extends State<DetailScreen> {
               ),
               const SizedBox(height: 16),
             ],
-            const SizedBox(height: 80),
+            const SizedBox(height: 96),
           ],
         ),
       ),

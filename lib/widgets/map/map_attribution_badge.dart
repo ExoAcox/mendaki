@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:mendaki/core/theme/app_theme.dart';
 
 /// Badge atribusi ringkas untuk lisensi OpenTopoMap & OpenStreetMap.
 /// Menampilkan teks ringkas legal di layar dan menampilkan detail lengkap saat diklik.
@@ -68,24 +70,63 @@ class MapAttributionBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => showMapLicenseDialog(context),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.2),
-            width: 0.5,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
-        ),
-        child: Text(
-          '© OpenTopoMap',
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.9),
-            fontSize: 9,
-            fontWeight: FontWeight.w500,
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => showMapLicenseDialog(context),
+              splashColor: AppTheme.primary.withValues(alpha: 0.12),
+              highlightColor: Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.85),
+                      Colors.white.withValues(alpha: 0.58),
+                      Colors.white.withValues(alpha: 0.72),
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    width: 1.0,
+                  ),
+                ),
+                child: const Text(
+                  '© OpenTopoMap',
+                  style: TextStyle(
+                    color: AppTheme.onSurface,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Plus Jakarta Sans',
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
