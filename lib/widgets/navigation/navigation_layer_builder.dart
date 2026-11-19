@@ -99,9 +99,9 @@ class NavigationLayerBuilder {
     }
 
     final markers = <Marker>[
+      ...dangerMarkers,
       ...regularMarkers,
       ...campMarkers,
-      ...dangerMarkers,
       ...summitMarkers,
       ...basecampMarkers,
     ];

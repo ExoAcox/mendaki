@@ -180,7 +180,8 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
   void _fitBasecamps() {
     if (!mounted) return;
 
-    final basecampPoints = _gpxData?.waypoints
+    final basecampPoints =
+        _gpxData?.waypoints
             .where((w) => w.isBasecamp)
             .map((w) => LatLng(w.latitude, w.longitude))
             .toList() ??
@@ -312,16 +313,16 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
     }
 
     // Urutan z-index dari belakang ke depan:
-    // 1. Waypoint biasa (di belakang)
-    // 2. Camp / Tenda markers
-    // 3. Danger markers (titik bahaya)
+    // 1. Danger markers
+    // 2. Regular markers
+    // 3. Camp markers
     // 4. Summit markers
-    // 5. Basecamp markers (selalu di depan waypoint biasa agar labelnya tidak tertimpa)
-    // 6. Marker yang sedang aktif/dipilih (z-index paling depan)
+    // 5. Basecamp markers
+    // 6. Marker yang sedang aktif
     final markers = <Marker>[
+      ...dangerMarkers,
       ...regularMarkers,
       ...campMarkers,
-      ...dangerMarkers,
       ...summitMarkers,
       ...basecampMarkers,
     ];
