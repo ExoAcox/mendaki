@@ -20,15 +20,18 @@ import 'package:mendaki/widgets/home/mountain_card.dart';
 import 'package:mendaki/widgets/home/version_update_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final VoidCallback? onOpenLibrary;
+
+  const HomeScreen({super.key, this.onOpenLibrary});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   String selectedFilter = 'Semua';
   final TextEditingController searchController = TextEditingController();
+  final FocusNode searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
 
   List<Mountain> mountains = [];
@@ -40,6 +43,21 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentPage = 1;
   static const int _pageSize = 10;
   int _downloadedCount = 0;
+
+  void refreshDownloadedCount() {
+    _checkDownloadedCount();
+  }
+
+  void focusSearch() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+    searchFocusNode.requestFocus();
+  }
 
   final List<String> filters = [
     'Semua',
@@ -63,6 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _scrollController.dispose();
     searchController.dispose();
+    searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -125,6 +144,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openLibrary() async {
+    if (widget.onOpenLibrary != null) {
+      widget.onOpenLibrary!();
+      return;
+    }
     await Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => const LibraryScreen()));
@@ -234,12 +257,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: HomeAppBar(
-        downloadedCount: _downloadedCount,
-        onLibraryTap: _openLibrary,
-      ),
+      appBar: const HomeAppBar(),
       body: SafeArea(
         top: false,
+        bottom: false,
         child: RefreshIndicator(
           onRefresh: _loadMountains,
           color: AppTheme.primary,
@@ -255,6 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 HomeSearchBar(
                   controller: searchController,
+                  focusNode: searchFocusNode,
                   onSubmitted: (_) => _loadMountains(),
                   onClear: () {
                     searchController.clear();
@@ -303,7 +325,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         onDetailTap: () async {
                           await Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => DetailScreen(mountain: mountain),
+                              builder: (_) =>
+                                  DetailScreen(mountain: mountain),
                             ),
                           );
                           _checkDownloadedCount();
@@ -330,7 +353,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildFeedbackPrompt(),
                   ],
                 ],
-                const SizedBox(height: 80),
+                const SizedBox(height: 96),
               ],
             ),
           ),

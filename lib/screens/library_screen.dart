@@ -5,21 +5,40 @@ import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/screens/detail_screen.dart';
 import 'package:mendaki/widgets/home/empty_mountain_view.dart';
-import 'package:mendaki/widgets/home/feedback_modal.dart';
+import 'package:mendaki/widgets/home/home_app_bar.dart';
 import 'package:mendaki/widgets/home/home_search_bar.dart';
 import 'package:mendaki/widgets/home/mountain_card.dart';
+import 'package:mendaki/widgets/home/offline_storage_bar.dart';
 
 class LibraryScreen extends StatefulWidget {
-  const LibraryScreen({super.key});
+  final bool showBackButton;
+  final VoidCallback? onExploreTap;
+
+  const LibraryScreen({
+    super.key,
+    this.showBackButton = true,
+    this.onExploreTap,
+  });
 
   @override
-  State<LibraryScreen> createState() => _LibraryScreenState();
+  State<LibraryScreen> createState() => LibraryScreenState();
 }
 
-class _LibraryScreenState extends State<LibraryScreen> {
+class LibraryScreenState extends State<LibraryScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   List<Mountain> _downloadedMountains = [];
   bool _isLoading = true;
+  int _gpxBytes = 0;
+  int _mapBytes = 0;
+
+  void refreshDownloadedMountains() {
+    _loadDownloadedMountains();
+  }
+
+  void focusSearch() {
+    _searchFocusNode.requestFocus();
+  }
 
   @override
   void initState() {
@@ -30,6 +49,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -42,12 +62,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
       final list = await GpxStorageService.getDownloadedMountains(
         onlyFullyReady: true,
       );
+      final gpxBytes = await GpxStorageService.getTotalGpxSizeBytes();
+      final mapBytes = await OfflineMapService.getTotalOfflineMapsSizeBytes();
+
       if (mounted) {
         setState(() {
           // Hanya menampilkan gunung yang kedua-duanya (isGpxReady dan isMapReady) ada
           _downloadedMountains = list
               .where((m) => m.isGpxReady && m.isMapReady)
               .toList();
+          _gpxBytes = gpxBytes;
+          _mapBytes = mapBytes;
           _isLoading = false;
         });
       }
@@ -209,24 +234,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: AppBar(
-        titleSpacing: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.onSurface),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Library',
-          style: TextStyle(
-            fontFamily: 'Plus Jakarta Sans',
-            color: AppTheme.onSurface,
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
-          ),
-        ),
-      ),
+      appBar: HomeAppBar(showBackButton: widget.showBackButton),
       body: SafeArea(
+        bottom: false,
         child: RefreshIndicator(
           onRefresh: _loadDownloadedMountains,
           color: AppTheme.primary,
@@ -239,9 +249,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const OfflineStorageNotice(),
+                const SizedBox(height: 12),
                 // 1. Search Bar (tanpa filter provinsi)
                 HomeSearchBar(
                   controller: _searchController,
+                  focusNode: _searchFocusNode,
                   hintText: 'Cari gunung di library...',
                   onChanged: (_) => setState(() {}),
                   onSubmitted: (_) => setState(() {}),
@@ -252,29 +265,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // 2. Keterangan teks kalau data yang ada di sini offline
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.offline_pin_rounded,
-                      color: AppTheme.primary,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Data dan peta gunung di halaman ini tersimpan offline di perangkat Anda.',
-                        style: TextStyle(
-                          color: AppTheme.onSurfaceVariant.withValues(
-                            alpha: 0.9,
-                          ),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                // 2.1 Indikator ukuran penyimpanan offline (GPX & Map)
+                OfflineStorageBar(gpxBytes: _gpxBytes, mapBytes: _mapBytes),
                 const SizedBox(height: 16),
 
                 // 3. Mountain card seperti home
@@ -292,7 +284,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     message:
                         'Data offline gunung yang telah Anda unduh akan muncul di sini untuk diakses tanpa koneksi internet.',
                     action: ElevatedButton.icon(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () {
+                        if (widget.onExploreTap != null) {
+                          widget.onExploreTap!();
+                        } else if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        }
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primary,
                         foregroundColor: AppTheme.onPrimary,
@@ -309,7 +307,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     title: 'Gunung Tidak Ditemukan',
                     message: 'Tidak ada gunung di library offline.',
                     action: ElevatedButton.icon(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () {
+                        if (widget.onExploreTap != null) {
+                          widget.onExploreTap!();
+                        } else if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        }
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primary,
                         foregroundColor: AppTheme.onPrimary,
@@ -338,66 +342,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     ),
                     const SizedBox(height: 16),
                   ],
-                  const SizedBox(height: 8),
-                  _buildFeedbackPrompt(),
                 ],
-                const SizedBox(height: 80),
+                const SizedBox(height: 96),
               ],
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildFeedbackPrompt() {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 8.0),
-      padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: AppTheme.outlineVariant.withValues(alpha: 0.5),
-            width: 1.0,
-          ),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'Data gunung belum tersedia?',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppTheme.onSurfaceVariant.withValues(alpha: 0.8),
-            ),
-          ),
-          const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: () => FeedbackModal.show(context, initialType: 'request'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.primary,
-              side: BorderSide(
-                color: AppTheme.primary.withValues(alpha: 0.7),
-                width: 1.2,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            icon: const Icon(Icons.edit_note_rounded, size: 18),
-            label: const Text(
-              'Request di sini',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

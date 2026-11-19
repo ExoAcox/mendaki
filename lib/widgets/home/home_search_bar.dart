@@ -7,6 +7,7 @@ class HomeSearchBar extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final VoidCallback? onClear;
   final String hintText;
+  final FocusNode? focusNode;
 
   const HomeSearchBar({
     super.key,
@@ -15,6 +16,7 @@ class HomeSearchBar extends StatelessWidget {
     this.onChanged,
     this.onClear,
     this.hintText = 'Cari gunung...',
+    this.focusNode,
   });
 
   @override
@@ -36,6 +38,7 @@ class HomeSearchBar extends StatelessWidget {
       ),
       child: TextField(
         controller: controller,
+        focusNode: focusNode,
         onSubmitted: onSubmitted,
         onChanged: onChanged,
         decoration: InputDecoration(

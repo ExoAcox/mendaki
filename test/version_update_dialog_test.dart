@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mendaki/core/config/app_config.dart';
 import 'package:mendaki/models/app_version.dart';
 import 'package:mendaki/widgets/home/version_update_dialog.dart';
 

@@ -71,6 +71,27 @@ class GpxStorageService {
     return '$dirPath/$mountainId.image.jpg';
   }
 
+  /// Menghitung total ukuran seluruh berkas GPX dan data terkait yang tersimpan offline (dalam bytes)
+  static Future<int> getTotalGpxSizeBytes() async {
+    try {
+      final dirPath = await getGpxDirectoryPath();
+      final dir = Directory(dirPath);
+      if (!await dir.exists()) return 0;
+
+      int totalBytes = 0;
+      await for (final entity
+          in dir.list(recursive: false, followLinks: false)) {
+        if (entity is File) {
+          totalBytes += await entity.length();
+        }
+      }
+      return totalBytes;
+    } catch (e) {
+      debugPrint('Error calculating total GPX size: $e');
+      return 0;
+    }
+  }
+
   /// Menyimpan data Mountain lengkap beserta routes & foto secara offline
   static Future<void> saveDownloadedMountain(Mountain mountain) async {
     try {

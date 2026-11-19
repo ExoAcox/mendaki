@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mendaki/core/services/network_service.dart';
 import 'package:mendaki/screens/home_screen.dart';
+import 'package:mendaki/screens/library_screen.dart';
 import 'package:mendaki/widgets/home/home_error_view.dart';
 import 'package:mendaki/widgets/home/home_filter_chips.dart';
 
@@ -117,7 +118,7 @@ void main() {
         await tester.pump();
 
         // Should navigate to LibraryScreen
-        expect(find.text('Library'), findsOneWidget);
+        expect(find.byType(LibraryScreen), findsOneWidget);
       },
     );
   });

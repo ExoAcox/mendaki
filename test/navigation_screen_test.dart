@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:mendaki/core/services/navigation_session_service.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/models/route.dart';
 import 'package:mendaki/models/waypoint.dart';
@@ -35,6 +36,9 @@ void main() {
   );
 
   group('NavigationScreen Map & Floating Message Tests', () {
+    tearDown(() async {
+      await NavigationSessionService.clearActiveSession();
+    });
     testWidgets(
       'Renders map directly and shows floating message when user is far from mountain',
       (tester) async {

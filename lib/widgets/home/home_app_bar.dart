@@ -6,6 +6,9 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onLibraryTap;
   final VoidCallback? onDownloadedTap;
   final bool isShowingDownloaded;
+  final bool showLibraryIcon;
+  final bool showBackButton;
+  final VoidCallback? onBackTap;
 
   const HomeAppBar({
     super.key,
@@ -13,6 +16,9 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onLibraryTap,
     this.onDownloadedTap,
     this.isShowingDownloaded = false,
+    this.showLibraryIcon = false,
+    this.showBackButton = false,
+    this.onBackTap,
   });
 
   @override
@@ -21,9 +27,20 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveOnTap = onLibraryTap ?? onDownloadedTap;
+    final shouldShowAction = showLibraryIcon || isShowingDownloaded;
 
     return AppBar(
-      titleSpacing: 16,
+      titleSpacing: showBackButton ? 0 : 16,
+      automaticallyImplyLeading: false,
+      leading: showBackButton
+          ? IconButton(
+              icon: const Icon(
+                Icons.arrow_back_rounded,
+                color: AppTheme.onSurface,
+              ),
+              onPressed: onBackTap ?? () => Navigator.of(context).pop(),
+            )
+          : null,
       title: Row(
         children: [
           ClipRRect(
@@ -61,66 +78,68 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ],
       ),
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 12.0),
-          child: Tooltip(
-            message: 'Library Offline',
-            child: InkWell(
-              onTap: effectiveOnTap,
-              borderRadius: BorderRadius.circular(12),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: isShowingDownloaded
-                      ? const Color(0xFF0F5238)
-                      : AppTheme.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isShowingDownloaded
-                        ? const Color(0xFF89EDBA)
-                        : downloadedCount > 0
-                        ? AppTheme.primary.withValues(alpha: 0.25)
-                        : Colors.transparent,
-                    width: 1.5,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isShowingDownloaded || downloadedCount > 0
-                          ? Icons.offline_pin_rounded
-                          : Icons.download_done_rounded,
-                      color: isShowingDownloaded
-                          ? const Color(0xFF89EDBA)
-                          : AppTheme.primary,
-                      size: 20,
-                    ),
-                    if (downloadedCount > 0) ...[
-                      const SizedBox(width: 5),
-                      Text(
-                        '$downloadedCount',
-                        style: TextStyle(
+      actions: shouldShowAction
+          ? [
+              Padding(
+                padding: const EdgeInsets.only(right: 12.0),
+                child: Tooltip(
+                  message: 'Library Offline',
+                  child: InkWell(
+                    onTap: effectiveOnTap,
+                    borderRadius: BorderRadius.circular(12),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isShowingDownloaded
+                            ? const Color(0xFF0F5238)
+                            : AppTheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
                           color: isShowingDownloaded
                               ? const Color(0xFF89EDBA)
-                              : AppTheme.primary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
+                              : downloadedCount > 0
+                              ? AppTheme.primary.withValues(alpha: 0.25)
+                              : Colors.transparent,
+                          width: 1.5,
                         ),
                       ),
-                    ],
-                  ],
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isShowingDownloaded || downloadedCount > 0
+                                ? Icons.offline_pin_rounded
+                                : Icons.download_done_rounded,
+                            color: isShowingDownloaded
+                                ? const Color(0xFF89EDBA)
+                                : AppTheme.primary,
+                            size: 20,
+                          ),
+                          if (downloadedCount > 0) ...[
+                            const SizedBox(width: 5),
+                            Text(
+                              '$downloadedCount',
+                              style: TextStyle(
+                                color: isShowingDownloaded
+                                    ? const Color(0xFF89EDBA)
+                                    : AppTheme.primary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-        ),
-      ],
+            ]
+          : null,
     );
   }
 }

@@ -132,6 +132,43 @@ class OfflineMapService {
     }
   }
 
+  /// Menghitung total ukuran seluruh ubin peta offline yang tersimpan (dalam bytes)
+  static Future<int> getTotalOfflineMapsSizeBytes() async {
+    try {
+      String basePath;
+      if (customOfflineBasePath != null) {
+        basePath = '$customOfflineBasePath/offline_tiles';
+      } else if (Platform.environment.containsKey('FLUTTER_TEST')) {
+        basePath = '${Directory.systemTemp.path}/offline_tiles';
+      } else {
+        Directory appDir;
+        try {
+          appDir = await getApplicationDocumentsDirectory();
+        } catch (_) {
+          appDir = Directory.systemTemp;
+        }
+        basePath = '${appDir.path}/offline_tiles';
+      }
+
+      final dir = Directory(basePath);
+      if (!await dir.exists()) return 0;
+
+      int totalBytes = 0;
+      await for (final entity in dir.list(
+        recursive: true,
+        followLinks: false,
+      )) {
+        if (entity is File) {
+          totalBytes += await entity.length();
+        }
+      }
+      return totalBytes;
+    } catch (e) {
+      debugPrint('Error calculating total offline maps size: $e');
+      return 0;
+    }
+  }
+
   /// Mengunduh seluruh ubin peta OpenTopoMap di sekitar area gunung
   /// untuk rentang zoom level 11 (tinjauan makro) sampai 15 (jalur rinci).
   static Future<void> downloadOfflineMap({
