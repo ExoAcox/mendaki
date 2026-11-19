@@ -53,6 +53,8 @@ class Mountain {
   List<String> get routeIds => routes.map((r) => r.id).toList();
   String? get gpxAssetPath => assetUrl;
 
+  static const List<String> capitalRoute = ["pgpi"];
+
   /// Memformat nama rute (misal "merbabu-selo" -> "Selo", "merbabu-suwanting" -> "Suwanting")
   static String formatRouteName(String rawRoute, {String? mountainId}) {
     String clean = rawRoute.trim();
@@ -66,15 +68,17 @@ class Mountain {
     // Ganti strip tersisa dengan spasi (misal "selo-barat" -> "selo barat")
     clean = clean.replaceAll('_', ' ');
 
-    // Capitalize setiap kata
     return clean
         .split(' ')
         .where((word) => word.isNotEmpty)
-        .map(
-          (word) => word.length > 1
+        .map((word) {
+          if (capitalRoute.any((c) => c.toLowerCase() == word.toLowerCase())) {
+            return word.toUpperCase();
+          }
+          return word.length > 1
               ? word[0].toUpperCase() + word.substring(1).toLowerCase()
-              : word.toUpperCase(),
-        )
+              : word.toUpperCase();
+        })
         .join(' ');
   }
 
