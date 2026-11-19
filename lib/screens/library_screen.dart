@@ -5,6 +5,7 @@ import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/screens/detail_screen.dart';
 import 'package:mendaki/widgets/home/empty_mountain_view.dart';
+import 'package:mendaki/widgets/home/feedback_modal.dart';
 import 'package:mendaki/widgets/home/home_search_bar.dart';
 import 'package:mendaki/widgets/home/mountain_card.dart';
 
@@ -44,8 +45,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
       if (mounted) {
         setState(() {
           // Hanya menampilkan gunung yang kedua-duanya (isGpxReady dan isMapReady) ada
-          _downloadedMountains =
-              list.where((m) => m.isGpxReady && m.isMapReady).toList();
+          _downloadedMountains = list
+              .where((m) => m.isGpxReady && m.isMapReady)
+              .toList();
           _isLoading = false;
         });
       }
@@ -305,8 +307,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 else if (filtered.isEmpty)
                   EmptyMountainView(
                     title: 'Gunung Tidak Ditemukan',
-                    message:
-                        'Tidak ada gunung di library offline yang cocok dengan "${_searchController.text.trim()}".',
+                    message: 'Tidak ada gunung di library offline.',
+                    action: ElevatedButton.icon(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: AppTheme.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: const Icon(Icons.explore_rounded, size: 18),
+                      label: const Text('Jelajahi Gunung'),
+                    ),
                   )
                 else ...[
                   for (final mountain in filtered) ...[
@@ -325,12 +338,66 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     ),
                     const SizedBox(height: 16),
                   ],
+                  const SizedBox(height: 8),
+                  _buildFeedbackPrompt(),
                 ],
                 const SizedBox(height: 80),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildFeedbackPrompt() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8.0),
+      padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: AppTheme.outlineVariant.withValues(alpha: 0.5),
+            width: 1.0,
+          ),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            'Data gunung belum tersedia?',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppTheme.onSurfaceVariant.withValues(alpha: 0.8),
+            ),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: () => FeedbackModal.show(context, initialType: 'request'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppTheme.primary,
+              side: BorderSide(
+                color: AppTheme.primary.withValues(alpha: 0.7),
+                width: 1.2,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            icon: const Icon(Icons.edit_note_rounded, size: 18),
+            label: const Text(
+              'Request di sini',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

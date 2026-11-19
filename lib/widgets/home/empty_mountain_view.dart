@@ -19,7 +19,7 @@ class EmptyMountainView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 48.0, horizontal: 16.0),
+        padding: const EdgeInsets.fromLTRB(16, 48, 16, 12),
         child: Column(
           children: [
             Icon(

@@ -62,6 +62,29 @@ class SupabaseService {
     }
   }
 
+  /// Mengirim feedback atau request ke tabel 'feedback'
+  static Future<void> submitFeedback({
+    required String type,
+    required String comment,
+    String? email,
+  }) async {
+    if (!isReady) {
+      throw StateError(
+        'Supabase belum diinisialisasi atau belum dikonfigurasi.',
+      );
+    }
+
+    final data = <String, dynamic>{
+      'type': type,
+      'comment': comment.trim(),
+    };
+    if (email != null && email.trim().isNotEmpty) {
+      data['email'] = email.trim();
+    }
+
+    await client.from('feedback').insert(data);
+  }
+
   /// Mengambil daftar gunung dengan pagination (ringan dan cepat)
   static Future<List<Mountain>> getMountains({
     String? province,
