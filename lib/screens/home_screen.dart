@@ -43,6 +43,7 @@ class HomeScreenState extends State<HomeScreen> {
   int _currentPage = 1;
   static const int _pageSize = 10;
   int _downloadedCount = 0;
+  int _totalCount = 0;
 
   void refreshDownloadedCount() {
     _checkDownloadedCount();
@@ -192,7 +193,7 @@ class HomeScreenState extends State<HomeScreen> {
 
     // 2. Jika online, ambil daftar gunung dari server
     try {
-      final data = await SupabaseService.getMountains(
+      final result = await SupabaseService.getMountainsResult(
         province: selectedFilter == 'Semua' ? null : selectedFilter,
         search: searchController.text.trim().isEmpty
             ? null
@@ -203,11 +204,12 @@ class HomeScreenState extends State<HomeScreen> {
 
       if (mounted) {
         setState(() {
-          mountains = data;
+          mountains = result.mountains;
+          _totalCount = result.totalCount;
           isLoading = false;
           _hasError = false;
           _isOffline = false;
-          _hasMore = data.length >= _pageSize;
+          _hasMore = result.mountains.length >= _pageSize;
         });
       }
     } catch (e) {
@@ -218,6 +220,7 @@ class HomeScreenState extends State<HomeScreen> {
           _hasError = true;
           _isOffline = false;
           mountains = [];
+          _totalCount = 0;
         });
       }
     }
@@ -230,7 +233,7 @@ class HomeScreenState extends State<HomeScreen> {
 
     try {
       final nextPage = _currentPage + 1;
-      final data = await SupabaseService.getMountains(
+      final result = await SupabaseService.getMountainsResult(
         province: selectedFilter == 'Semua' ? null : selectedFilter,
         search: searchController.text.trim().isEmpty
             ? null
@@ -241,9 +244,10 @@ class HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         _currentPage = nextPage;
-        mountains.addAll(data);
+        mountains.addAll(result.mountains);
+        _totalCount = result.totalCount;
         _isLoadingMore = false;
-        _hasMore = data.length >= _pageSize;
+        _hasMore = result.mountains.length >= _pageSize;
       });
     } catch (e) {
       debugPrint('Error loading more mountains: $e');
@@ -325,8 +329,7 @@ class HomeScreenState extends State<HomeScreen> {
                         onDetailTap: () async {
                           await Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  DetailScreen(mountain: mountain),
+                              builder: (_) => DetailScreen(mountain: mountain),
                             ),
                           );
                           _checkDownloadedCount();
@@ -388,14 +391,15 @@ class HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
-            onPressed: () => FeedbackModal.show(context, initialType: 'request'),
+            onPressed: () =>
+                FeedbackModal.show(context, initialType: 'request'),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppTheme.primary,
               side: BorderSide(
                 color: AppTheme.primary.withValues(alpha: 0.7),
                 width: 1.2,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -403,10 +407,7 @@ class HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.edit_note_rounded, size: 18),
             label: const Text(
               'Request di sini',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -415,6 +416,7 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSectionHeader() {
+    final countToDisplay = _totalCount > 0 ? _totalCount : mountains.length;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -428,7 +430,7 @@ class HomeScreenState extends State<HomeScreen> {
           ),
         ),
         Text(
-          '${mountains.length} Gunung',
+          '$countToDisplay Gunung',
           style: const TextStyle(
             color: AppTheme.primary,
             fontSize: 13,

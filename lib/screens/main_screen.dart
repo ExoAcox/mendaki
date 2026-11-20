@@ -62,7 +62,10 @@ class _MainScreenState extends State<MainScreen> {
           IndexedStack(
             index: _currentIndex,
             children: [
-              HomeScreen(key: _homeKey, onOpenLibrary: () => _onTabSelected(1)),
+              HomeScreen(
+                key: _homeKey,
+                onOpenLibrary: () => _onTabSelected(1),
+              ),
               LibraryScreen(
                 key: _libraryKey,
                 showBackButton: false,
@@ -71,6 +74,8 @@ class _MainScreenState extends State<MainScreen> {
               const MoreScreen(),
             ],
           ),
+
+          // Floating Navigation Bar
           Positioned(
             left: 0,
             right: 0,

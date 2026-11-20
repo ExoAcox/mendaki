@@ -6,6 +6,17 @@ import 'package:mendaki/models/app_version.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/models/route.dart';
 
+/// Hasil query daftar gunung beserta total baris hasil pencarian/filter
+class MountainQueryResult {
+  final List<Mountain> mountains;
+  final int totalCount;
+
+  const MountainQueryResult({
+    required this.mountains,
+    required this.totalCount,
+  });
+}
+
 class SupabaseService {
   static bool _isInitialized = false;
 
@@ -85,8 +96,8 @@ class SupabaseService {
     await client.from('feedback').insert(data);
   }
 
-  /// Mengambil daftar gunung dengan pagination (ringan dan cepat)
-  static Future<List<Mountain>> getMountains({
+  /// Mengambil daftar gunung beserta total count dengan pagination (ringan dan cepat)
+  static Future<MountainQueryResult> getMountainsResult({
     String? province,
     String? search,
     int page = 1,
@@ -122,17 +133,42 @@ class SupabaseService {
         }
       }
 
-      final List<dynamic> mountainRows = await query
+      final PostgrestResponse<dynamic> response = await query
           .order('elevation', ascending: false)
-          .range(from, to);
+          .range(from, to)
+          .count(CountOption.exact);
 
-      return mountainRows
+      final List<dynamic> mountainRows = response.data as List<dynamic>;
+      final int totalCount = response.count;
+
+      final list = mountainRows
           .map((mData) => _mapJsonToMountain(mData as Map<String, dynamic>))
           .toList();
+
+      return MountainQueryResult(
+        mountains: list,
+        totalCount: totalCount,
+      );
     } catch (e) {
       debugPrint('Error fetching mountains from Supabase: $e');
       rethrow;
     }
+  }
+
+  /// Mengambil daftar gunung dengan pagination (ringan dan cepat)
+  static Future<List<Mountain>> getMountains({
+    String? province,
+    String? search,
+    int page = 1,
+    int pageSize = 10,
+  }) async {
+    final result = await getMountainsResult(
+      province: province,
+      search: search,
+      page: page,
+      pageSize: pageSize,
+    );
+    return result.mountains;
   }
 
   /// Mengambil detail gunung beserta rutenya dalam 1x hit query

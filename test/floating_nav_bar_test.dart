@@ -30,7 +30,7 @@ void main() {
       // Verify icons
       expect(find.byIcon(Icons.home_rounded), findsOneWidget);
       expect(find.byIcon(Icons.collections_bookmark_outlined), findsOneWidget);
-      expect(find.byIcon(Icons.grid_view_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.more_horiz), findsOneWidget);
     });
 
     testWidgets('tapping menu item triggers onTap callback', (
@@ -83,7 +83,7 @@ void main() {
 
       expect(find.byIcon(Icons.home_outlined), findsOneWidget);
       expect(find.byIcon(Icons.collections_bookmark_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.grid_view_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.more_horiz), findsOneWidget);
     });
 
     testWidgets('navbar fits content/icons and does not stretch full width', (

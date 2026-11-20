@@ -312,8 +312,8 @@ class _MountainCardState extends State<MountainCard> {
                                 highlightColor: Colors.transparent,
                                 customBorder: const CircleBorder(),
                                 child: Container(
-                                  width: 32,
-                                  height: 32,
+                                  width: 26,
+                                  height: 26,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     gradient: LinearGradient(
@@ -337,7 +337,7 @@ class _MountainCardState extends State<MountainCard> {
                                     child: Icon(
                                       Icons.delete_outline_rounded,
                                       color: Color(0xFFBA1A1A),
-                                      size: 18,
+                                      size: 16,
                                     ),
                                   ),
                                 ),
@@ -349,7 +349,7 @@ class _MountainCardState extends State<MountainCard> {
                     ),
                   Positioned(
                     left: 16,
-                    bottom: 16,
+                    bottom: 12,
                     right: 16,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -363,7 +363,7 @@ class _MountainCardState extends State<MountainCard> {
                             letterSpacing: -0.4,
                           ),
                         ),
-                        const SizedBox(height: 3),
+                        // const SizedBox(height: 3),
                         Row(
                           children: [
                             const Icon(
