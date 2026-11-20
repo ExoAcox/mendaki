@@ -12,6 +12,18 @@ class GpxStorageService {
   @visibleForTesting
   static String? customGpxDirectoryPath;
 
+  static final Map<String, bool> _gpxDownloadedCache = {};
+
+  /// Mengambil status download GPX dari memori cache (sinkron tanpa async disk I/O)
+  static bool? isGpxDownloadedCached(String mountainId) {
+    return _gpxDownloadedCache[mountainId];
+  }
+
+  /// Menyimpan status download GPX ke memori cache
+  static void setGpxDownloadedCache(String mountainId, bool isDownloaded) {
+    _gpxDownloadedCache[mountainId] = isDownloaded;
+  }
+
   /// Mendapatkan path direktori penyimpanan GPX offline
   static Future<String> getGpxDirectoryPath() async {
     if (customGpxDirectoryPath != null) {
@@ -257,6 +269,7 @@ class GpxStorageService {
 
   /// Menghapus paket data gunung offline (gpx, metadata, mountain json, foto)
   static Future<void> deleteDownloadedMountain(String mountainId) async {
+    _gpxDownloadedCache[mountainId] = false;
     try {
       final gpxPath = await getLocalGpxFilePath(mountainId);
       final metaPath = await getLocalMetadataFilePath(mountainId);
@@ -318,10 +331,14 @@ class GpxStorageService {
       final file = File(filePath);
       if (await file.exists()) {
         final length = await file.length();
-        return length > 0;
+        final ready = length > 0;
+        _gpxDownloadedCache[mountainId] = ready;
+        return ready;
       }
+      _gpxDownloadedCache[mountainId] = false;
       return false;
     } catch (_) {
+      _gpxDownloadedCache[mountainId] = false;
       return false;
     }
   }
@@ -472,6 +489,8 @@ class GpxStorageService {
         lastModified: lastModified,
         contentLength: totalBytes,
       );
+
+      _gpxDownloadedCache[mountainId] = true;
 
       if (onProgress != null) {
         onProgress(1.0);

@@ -182,16 +182,16 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
   void _fitBasecamps() {
     if (!mounted) return;
 
-    final basecampPoints =
+    final keyPoints =
         _gpxData?.waypoints
-            .where((w) => w.isBasecamp)
+            .where((w) => w.isBasecamp || w.isSummit)
             .map((w) => LatLng(w.latitude, w.longitude))
             .toList() ??
         [];
 
     final List<LatLng> targetPoints;
-    if (basecampPoints.isNotEmpty) {
-      targetPoints = List<LatLng>.from(basecampPoints);
+    if (keyPoints.isNotEmpty) {
+      targetPoints = List<LatLng>.from(keyPoints);
       if (targetPoints.length == 1) {
         targetPoints.add(_mapCenter);
       }
@@ -809,53 +809,70 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
                         ),
                         const SizedBox(width: 12),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF0F5238,
-                            ).withValues(alpha: 0.85),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: const Color(
-                                0xFF89EDBA,
-                              ).withValues(alpha: 0.5),
-                              width: 1,
-                            ),
+                            borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.35),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
+                                color: Colors.black.withValues(alpha: 0.18),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
                               ),
                             ],
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              Text(
-                                '${widget.mountain.elevation}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  fontFamily: 'monospace',
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white.withValues(alpha: 0.88),
+                                      Colors.white.withValues(alpha: 0.60),
+                                      Colors.white.withValues(alpha: 0.75),
+                                    ],
+                                    stops: const [0.0, 0.5, 1.0],
+                                  ),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.6),
+                                    width: 1.0,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.baseline,
+                                  textBaseline: TextBaseline.alphabetic,
+                                  children: [
+                                    Text(
+                                      '${widget.mountain.elevation}',
+                                      style: const TextStyle(
+                                        color: AppTheme.primary,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w800,
+                                        fontFamily: 'monospace',
+                                      ),
+                                    ),
+                                    const SizedBox(width: 3),
+                                    const Text(
+                                      'MDPL',
+                                      style: TextStyle(
+                                        color: AppTheme.primary,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(width: 3),
-                              Text(
-                                'MDPL',
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.9),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ],

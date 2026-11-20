@@ -3,8 +3,10 @@ import 'package:mendaki/core/config/app_config.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
 import 'package:mendaki/core/services/navigation_session_service.dart';
 import 'package:mendaki/core/services/network_service.dart';
+import 'package:mendaki/core/services/offline_map_service.dart';
 import 'package:mendaki/core/services/supabase_service.dart';
 import 'package:mendaki/core/services/version_state_service.dart';
+import 'package:mendaki/core/services/view_preference_service.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/screens/detail_screen.dart';
@@ -17,6 +19,7 @@ import 'package:mendaki/widgets/home/home_error_view.dart';
 import 'package:mendaki/widgets/home/home_filter_chips.dart';
 import 'package:mendaki/widgets/home/home_search_bar.dart';
 import 'package:mendaki/widgets/home/mountain_card.dart';
+import 'package:mendaki/widgets/home/mountain_card_compact.dart';
 import 'package:mendaki/widgets/home/version_update_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -44,6 +47,7 @@ class HomeScreenState extends State<HomeScreen> {
   static const int _pageSize = 10;
   int _downloadedCount = 0;
   int _totalCount = 0;
+  String _viewMode = ViewPreferenceService.homeViewModeCached;
 
   void refreshDownloadedCount() {
     _checkDownloadedCount();
@@ -71,11 +75,21 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _loadViewPreference();
     _scrollController.addListener(_onScroll);
     _checkActiveNavigationSession();
     _checkDownloadedCount();
     _loadMountains();
     _checkAppVersion();
+  }
+
+  Future<void> _loadViewPreference() async {
+    final mode = await ViewPreferenceService.getHomeViewMode();
+    if (mounted && _viewMode != mode) {
+      setState(() {
+        _viewMode = mode;
+      });
+    }
   }
 
   @override
@@ -136,7 +150,13 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _checkDownloadedCount() async {
-    final count = await GpxStorageService.getDownloadedMountainsCount();
+    final list =
+        await GpxStorageService.getDownloadedMountains(onlyFullyReady: false);
+    for (final m in list) {
+      GpxStorageService.setGpxDownloadedCache(m.id, m.isGpxReady);
+      OfflineMapService.setOfflineMapDownloadedCache(m.id, m.isMapReady);
+    }
+    final count = list.where((m) => m.isGpxReady && m.isMapReady).length;
     if (mounted) {
       setState(() {
         _downloadedCount = count;
@@ -324,19 +344,39 @@ class HomeScreenState extends State<HomeScreen> {
                     _buildFeedbackPrompt(),
                   ] else ...[
                     for (final mountain in mountains) ...[
-                      MountainCard(
-                        mountain: mountain,
-                        onDetailTap: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => DetailScreen(mountain: mountain),
-                            ),
-                          );
-                          _checkDownloadedCount();
-                        },
-                        onDownloaded: _checkDownloadedCount,
+                      if (_viewMode == ViewPreferenceService.viewModeCompact)
+                        MountainCardCompact(
+                          mountain: mountain,
+                          onDetailTap: () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    DetailScreen(mountain: mountain),
+                              ),
+                            );
+                            _checkDownloadedCount();
+                          },
+                          onDownloaded: _checkDownloadedCount,
+                        )
+                      else
+                        MountainCard(
+                          mountain: mountain,
+                          onDetailTap: () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    DetailScreen(mountain: mountain),
+                              ),
+                            );
+                            _checkDownloadedCount();
+                          },
+                          onDownloaded: _checkDownloadedCount,
+                        ),
+                      SizedBox(
+                        height: _viewMode == ViewPreferenceService.viewModeCompact
+                            ? 10
+                            : 16,
                       ),
-                      const SizedBox(height: 16),
                     ],
                     if (_isLoadingMore)
                       const Padding(
@@ -419,25 +459,104 @@ class HomeScreenState extends State<HomeScreen> {
     final countToDisplay = _totalCount > 0 ? _totalCount : mountains.length;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text(
-          'Daftar Gunung',
+        Text(
+          '$countToDisplay Gunung Tersedia',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 14.5,
             fontWeight: FontWeight.w700,
             color: AppTheme.onSurface,
-            letterSpacing: -0.3,
+            letterSpacing: -0.2,
           ),
         ),
-        Text(
-          '$countToDisplay Gunung',
-          style: const TextStyle(
-            color: AppTheme.primary,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
+
+        Container(
+          height: 34,
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppTheme.outlineVariant.withValues(alpha: 0.5),
+              width: 0.8,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildViewModeToggleItem(
+                label: 'Detail',
+                icon: Icons.web,
+                isSelected: _viewMode == ViewPreferenceService.viewModeDetail,
+                onTap: () {
+                  if (_viewMode != ViewPreferenceService.viewModeDetail) {
+                    setState(() {
+                      _viewMode = ViewPreferenceService.viewModeDetail;
+                    });
+                    ViewPreferenceService.setHomeViewMode(
+                      ViewPreferenceService.viewModeDetail,
+                    );
+                  }
+                },
+              ),
+              _buildViewModeToggleItem(
+                label: 'Simple',
+                icon: Icons.format_list_bulleted,
+                isSelected: _viewMode == ViewPreferenceService.viewModeCompact,
+                onTap: () {
+                  if (_viewMode != ViewPreferenceService.viewModeCompact) {
+                    setState(() {
+                      _viewMode = ViewPreferenceService.viewModeCompact;
+                    });
+                    ViewPreferenceService.setHomeViewMode(
+                      ViewPreferenceService.viewModeCompact,
+                    );
+                  }
+                },
+              ),
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildViewModeToggleItem({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      key: Key('toggle_mode_${label.toLowerCase()}'),
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeInOut,
+        width: 32,
+        height: 28,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : null,
+        ),
+        child: Icon(
+          icon,
+          size: 16,
+          color: isSelected ? AppTheme.primary : AppTheme.outline,
+        ),
+      ),
     );
   }
 }

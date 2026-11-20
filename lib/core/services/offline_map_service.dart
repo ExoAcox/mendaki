@@ -66,6 +66,20 @@ class OfflineFirstTileProvider extends TileProvider {
 
 /// Layanan untuk mengunduh, mengecek status, dan mengelola paket peta offline gunung.
 class OfflineMapService {
+  static final Map<String, bool> _mapDownloadedCache = {};
+
+  /// Mengambil status download peta dari memori cache (sinkron tanpa async disk I/O)
+  static bool? isOfflineMapDownloadedCached(String mountainId) {
+    return _mapDownloadedCache[mountainId];
+  }
+
+  /// Menyimpan status download peta ke memori cache
+  static void setOfflineMapDownloadedCache(
+    String mountainId,
+    bool isDownloaded,
+  ) {
+    _mapDownloadedCache[mountainId] = isDownloaded;
+  }
   /// Mengonversi bujur (longitude) ke koordinat tile X
   static int lon2tileX(double lon, int z) =>
       ((lon + 180.0) / 360.0 * (1 << z)).floor();
@@ -103,10 +117,16 @@ class OfflineMapService {
   static Future<bool> isOfflineMapDownloaded(String mountainId) async {
     try {
       final dir = await getOfflineTilesDir(mountainId);
-      if (!await dir.exists()) return false;
+      if (!await dir.exists()) {
+        _mapDownloadedCache[mountainId] = false;
+        return false;
+      }
       final metaFile = File('${dir.path}/.metadata.json');
-      return await metaFile.exists();
+      final exists = await metaFile.exists();
+      _mapDownloadedCache[mountainId] = exists;
+      return exists;
     } catch (_) {
+      _mapDownloadedCache[mountainId] = false;
       return false;
     }
   }
@@ -301,10 +321,12 @@ class OfflineMapService {
             'Kartendaten: © OpenStreetMap-Mitwirkende, SRTM | Kartendarstellung: © OpenTopoMap (CC-BY-SA)',
       }),
     );
+    _mapDownloadedCache[mountainId] = true;
   }
 
   /// Menghapus seluruh paket tile peta offline suatu gunung
   static Future<void> deleteOfflineMap(String mountainId) async {
+    _mapDownloadedCache[mountainId] = false;
     try {
       final dir = await getOfflineTilesDir(mountainId);
       if (await dir.exists()) {

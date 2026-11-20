@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
 import 'package:mendaki/core/services/offline_map_service.dart';
+import 'package:mendaki/core/services/view_preference_service.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/screens/detail_screen.dart';
@@ -8,6 +9,7 @@ import 'package:mendaki/widgets/home/empty_mountain_view.dart';
 import 'package:mendaki/widgets/home/home_app_bar.dart';
 import 'package:mendaki/widgets/home/home_search_bar.dart';
 import 'package:mendaki/widgets/home/mountain_card.dart';
+import 'package:mendaki/widgets/home/mountain_card_compact.dart';
 import 'package:mendaki/widgets/home/offline_storage_bar.dart';
 
 class LibraryScreen extends StatefulWidget {
@@ -31,6 +33,7 @@ class LibraryScreenState extends State<LibraryScreen> {
   bool _isLoading = true;
   int _gpxBytes = 0;
   int _mapBytes = 0;
+  String _viewMode = ViewPreferenceService.libraryViewModeCached;
 
   void refreshDownloadedMountains() {
     _loadDownloadedMountains();
@@ -43,7 +46,17 @@ class LibraryScreenState extends State<LibraryScreen> {
   @override
   void initState() {
     super.initState();
+    _loadViewPreference();
     _loadDownloadedMountains();
+  }
+
+  Future<void> _loadViewPreference() async {
+    final mode = await ViewPreferenceService.getLibraryViewMode();
+    if (mounted && _viewMode != mode) {
+      setState(() {
+        _viewMode = mode;
+      });
+    }
   }
 
   @override
@@ -326,27 +339,151 @@ class LibraryScreenState extends State<LibraryScreen> {
                     ),
                   )
                 else ...[
+                  _buildSectionHeader(filtered.length),
+                  const SizedBox(height: 12),
                   for (final mountain in filtered) ...[
-                    MountainCard(
-                      mountain: mountain,
-                      onDetailTap: () async {
-                        await Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => DetailScreen(mountain: mountain),
-                          ),
-                        );
-                        _loadDownloadedMountains();
-                      },
-                      onDownloaded: _loadDownloadedMountains,
-                      onDeleteTap: () => _showDeleteModal(mountain),
+                    if (_viewMode == ViewPreferenceService.viewModeCompact)
+                      MountainCardCompact(
+                        mountain: mountain,
+                        onDetailTap: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => DetailScreen(mountain: mountain),
+                            ),
+                          );
+                          _loadDownloadedMountains();
+                        },
+                        onDownloaded: _loadDownloadedMountains,
+                        onDeleteTap: () => _showDeleteModal(mountain),
+                      )
+                    else
+                      MountainCard(
+                        mountain: mountain,
+                        onDetailTap: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => DetailScreen(mountain: mountain),
+                            ),
+                          );
+                          _loadDownloadedMountains();
+                        },
+                        onDownloaded: _loadDownloadedMountains,
+                        onDeleteTap: () => _showDeleteModal(mountain),
+                      ),
+                    SizedBox(
+                      height: _viewMode == ViewPreferenceService.viewModeCompact
+                          ? 10
+                          : 16,
                     ),
-                    const SizedBox(height: 16),
                   ],
                 ],
                 const SizedBox(height: 96),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(int count) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          '$count Gunung Tersedia',
+          style: const TextStyle(
+            fontSize: 14.5,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.onSurface,
+            letterSpacing: -0.2,
+          ),
+        ),
+        Container(
+          height: 34,
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppTheme.outlineVariant.withValues(alpha: 0.5),
+              width: 0.8,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildViewModeToggleItem(
+                label: 'Detail',
+                icon: Icons.web,
+                isSelected: _viewMode == ViewPreferenceService.viewModeDetail,
+                onTap: () {
+                  if (_viewMode != ViewPreferenceService.viewModeDetail) {
+                    setState(() {
+                      _viewMode = ViewPreferenceService.viewModeDetail;
+                    });
+                    ViewPreferenceService.setLibraryViewMode(
+                      ViewPreferenceService.viewModeDetail,
+                    );
+                  }
+                },
+              ),
+              _buildViewModeToggleItem(
+                label: 'Simple',
+                icon: Icons.format_list_bulleted,
+                isSelected: _viewMode == ViewPreferenceService.viewModeCompact,
+                onTap: () {
+                  if (_viewMode != ViewPreferenceService.viewModeCompact) {
+                    setState(() {
+                      _viewMode = ViewPreferenceService.viewModeCompact;
+                    });
+                    ViewPreferenceService.setLibraryViewMode(
+                      ViewPreferenceService.viewModeCompact,
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildViewModeToggleItem({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      key: Key('toggle_mode_${label.toLowerCase()}'),
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeInOut,
+        width: 32,
+        height: 28,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : null,
+        ),
+        child: Icon(
+          icon,
+          size: 16,
+          color: isSelected ? AppTheme.primary : AppTheme.outline,
         ),
       ),
     );

@@ -75,10 +75,10 @@ class DetailBottomBar extends StatelessWidget {
                   stops: const [0.0, 0.5, 1.0],
                 ),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  width: 1.2,
-                ),
+                // border: Border.all(
+                //   color: Colors.white.withValues(alpha: 0.5),
+                //   width: 1.2,
+                // ),
               ),
               clipBehavior: Clip.antiAlias,
               child: Stack(
@@ -106,7 +106,7 @@ class DetailBottomBar extends StatelessWidget {
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          'Mengunduh Peta Offline... ${(progress * 100).toInt()}%',
+                          'Downloading Map Offline... ${(progress * 100).toInt()}%',
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,

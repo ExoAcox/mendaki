@@ -36,8 +36,12 @@ class _MountainCardState extends State<MountainCard> {
   @override
   void initState() {
     super.initState();
-    _isGpxDownloaded = widget.mountain.isGpxReady;
-    _isMapDownloaded = widget.mountain.isMapReady;
+    _isGpxDownloaded =
+        GpxStorageService.isGpxDownloadedCached(widget.mountain.id) ??
+            widget.mountain.isGpxReady;
+    _isMapDownloaded =
+        OfflineMapService.isOfflineMapDownloadedCached(widget.mountain.id) ??
+            widget.mountain.isMapReady;
     _checkDownloadStatus();
   }
 
