@@ -114,6 +114,17 @@ class DownloadService extends ChangeNotifier {
         );
         await androidImpl.createNotificationChannel(channel);
       }
+
+      final iosImpl = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>();
+      if (iosImpl != null) {
+        await iosImpl.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+      }
       _isInitialized = true;
     } catch (e) {
       debugPrint('DownloadService initialize warning: $e');
