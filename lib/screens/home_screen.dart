@@ -8,6 +8,7 @@ import 'package:mendaki/core/services/supabase_service.dart';
 import 'package:mendaki/core/services/version_state_service.dart';
 import 'package:mendaki/core/services/view_preference_service.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
+import 'package:mendaki/models/app_version.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/screens/detail_screen.dart';
 import 'package:mendaki/screens/library_screen.dart';
@@ -106,8 +107,8 @@ class HomeScreenState extends State<HomeScreen> {
         final latestVersion = await SupabaseService.getLatestVersion();
         if (latestVersion == null || !mounted) return;
 
-        // Bandingkan data.id dari tabel version dengan versi aplikasi saat ini
-        if (latestVersion.id != AppConfig.currentVersion) {
+        // Cek apakah versi saat ini lebih rendah dari versi terbaru di database
+        if (AppVersion.isVersionBelow(AppConfig.currentVersion, latestVersion.id)) {
           // Cek apakah dialog masih dalam masa tunda 7 hari sejak ditutup oleh pengguna
           final shouldShow = await VersionStateService.shouldShowUpdateDialog(
             latestVersion.id,
