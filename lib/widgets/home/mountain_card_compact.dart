@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:mendaki/core/services/download_service.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
 import 'package:mendaki/core/services/offline_map_service.dart';
 import 'package:mendaki/core/services/supabase_service.dart';
@@ -28,8 +29,11 @@ class MountainCardCompact extends StatefulWidget {
 class _MountainCardCompactState extends State<MountainCardCompact> {
   bool _isGpxDownloaded = false;
   bool _isMapDownloaded = false;
-  bool _isDownloading = false;
-  double _downloadProgress = 0.0;
+
+  bool get _isDownloading =>
+      DownloadService.instance.isDownloadingGpx(widget.mountain.id);
+  double get _downloadProgress =>
+      DownloadService.instance.getGpxProgress(widget.mountain.id);
 
   @override
   void initState() {
@@ -40,7 +44,21 @@ class _MountainCardCompactState extends State<MountainCardCompact> {
     _isMapDownloaded =
         OfflineMapService.isOfflineMapDownloadedCached(widget.mountain.id) ??
         widget.mountain.isMapReady;
+    DownloadService.instance.addListener(_onDownloadServiceUpdate);
     _checkDownloadStatus();
+  }
+
+  @override
+  void dispose() {
+    DownloadService.instance.removeListener(_onDownloadServiceUpdate);
+    super.dispose();
+  }
+
+  void _onDownloadServiceUpdate() {
+    if (mounted) {
+      _checkDownloadStatus();
+      setState(() {});
+    }
   }
 
   @override
@@ -76,10 +94,7 @@ class _MountainCardCompactState extends State<MountainCardCompact> {
   }
 
   Future<void> _downloadGpxAndOpen() async {
-    setState(() {
-      _isDownloading = true;
-      _downloadProgress = 0.0;
-    });
+    if (_isDownloading) return;
 
     try {
       Mountain fullMountain = widget.mountain;
@@ -96,27 +111,12 @@ class _MountainCardCompactState extends State<MountainCardCompact> {
         }
       }
 
-      await GpxStorageService.downloadAndSaveGpx(
-        mountainId: widget.mountain.id,
-        onProgress: (progress) {
-          if (mounted) {
-            setState(() {
-              _downloadProgress = progress;
-            });
-          }
-        },
-      );
-
-      await GpxStorageService.saveDownloadedMountain(fullMountain);
-
-      if (mounted) {
-        setState(() {
-          _isGpxDownloaded = true;
-          _isDownloading = false;
-        });
-
+      final success = await DownloadService.instance.startGpxDownload(fullMountain);
+      if (success && mounted) {
+        await _checkDownloadStatus();
         widget.onDownloaded?.call();
 
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppTheme.primary,
@@ -148,13 +148,10 @@ class _MountainCardCompactState extends State<MountainCardCompact> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isDownloading = false;
-        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: const Color(0xFFBA1A1A),
-            content: Text('Gagal mengunduh GPX: $e'),
+            content: Text('Gagal mengunduh: $e'),
           ),
         );
       }

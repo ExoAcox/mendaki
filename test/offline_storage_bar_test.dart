@@ -46,10 +46,9 @@ void main() {
       // Total 10.0 MB (was 9500 + 500 = 10000 KB ~= 9.8 MB)
       expect(find.text(OfflineStorageBar.formatBytes(gpx + map)), findsOneWidget);
 
-      // Verify legend contains GPX and Peta with their sizes and percentages
+      // Verify legend contains GPX and Map with their sizes
       expect(find.textContaining('GPX:'), findsOneWidget);
-      expect(find.textContaining('Peta:'), findsOneWidget);
-      expect(find.textContaining('%'), findsWidgets);
+      expect(find.textContaining('Map:'), findsOneWidget);
     });
 
     test('formatBytes formats different byte sizes correctly', () {
@@ -107,7 +106,7 @@ void main() {
 
       expect(find.text('25.0 MB'), findsOneWidget);
       expect(find.textContaining('GPX:'), findsOneWidget);
-      expect(find.textContaining('Peta:'), findsOneWidget);
+      expect(find.textContaining('Map:'), findsOneWidget);
     });
   });
 }

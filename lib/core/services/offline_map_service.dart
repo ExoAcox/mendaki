@@ -224,6 +224,7 @@ class OfflineMapService {
     int maxZoom = 16,
     List<int>? zoomLevels,
     void Function(int downloaded, int total)? onProgress,
+    bool Function()? isCancelled,
   }) async {
     // 1. Tentukan batas koordinat bounding box
     double minLat;
@@ -294,6 +295,11 @@ class OfflineMapService {
     const concurrency = 4;
 
     for (int i = 0; i < tiles.length; i += concurrency) {
+      if (isCancelled?.call() == true) {
+        debugPrint('Download of map tiles for $mountainId cancelled.');
+        client.close(force: true);
+        return;
+      }
       final chunk = tiles.sublist(i, (i + concurrency).clamp(0, tiles.length));
       await Future.wait(
         chunk.map((tile) async {
@@ -331,6 +337,11 @@ class OfflineMapService {
           }
         }),
       );
+    }
+
+    if (isCancelled?.call() == true) {
+      client.close(force: true);
+      return;
     }
 
     client.close();

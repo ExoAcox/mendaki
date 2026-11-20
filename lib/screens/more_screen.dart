@@ -405,8 +405,8 @@ class MoreScreen extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             '• GPX Data: Astacala, Wikiloc, Gunung Bagging\n'
-            '• Peta: © OpenStreetMap contributors (ODbL)\n'
-            '• Gaya Peta: © OpenTopoMap (CC-BY-SA 3.0)',
+            '• Map Data: © OpenStreetMap contributors (ODbL)\n'
+            '• Map Design: © OpenTopoMap (CC-BY-SA 3.0)',
             style: TextStyle(
               fontSize: 12.5,
               height: 1.6,

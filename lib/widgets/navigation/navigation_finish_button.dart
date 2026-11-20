@@ -18,7 +18,7 @@ class NavigationFinishButton extends StatelessWidget {
             offset: const Offset(0, 6),
           ),
           BoxShadow(
-            color: const Color(0xFFA33D23).withValues(alpha: 0.12),
+            color: const Color(0xFFDC2626).withValues(alpha: 0.25),
             blurRadius: 14,
             offset: const Offset(0, 3),
           ),
@@ -46,15 +46,15 @@ class NavigationFinishButton extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      const Color(0xFFA33D23).withValues(alpha: 0.80),
-                      const Color(0xFF8F321B).withValues(alpha: 0.62),
-                      const Color(0xFFA33D23).withValues(alpha: 0.75),
+                      const Color(0xFFEF4444).withValues(alpha: 0.85),
+                      const Color(0xFFDC2626).withValues(alpha: 0.75),
+                      const Color(0xFFB91C1C).withValues(alpha: 0.85),
                     ],
                     stops: const [0.0, 0.5, 1.0],
                   ),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.25),
+                    color: Colors.white.withValues(alpha: 0.2),
                     width: 1.2,
                   ),
                 ),

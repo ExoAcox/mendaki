@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:mendaki/core/services/download_service.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
 import 'package:mendaki/core/services/offline_map_service.dart';
 import 'package:mendaki/core/services/supabase_service.dart';
@@ -30,8 +31,11 @@ class MountainCard extends StatefulWidget {
 class _MountainCardState extends State<MountainCard> {
   bool _isGpxDownloaded = false;
   bool _isMapDownloaded = false;
-  bool _isDownloading = false;
-  double _downloadProgress = 0.0;
+
+  bool get _isDownloading =>
+      DownloadService.instance.isDownloadingGpx(widget.mountain.id);
+  double get _downloadProgress =>
+      DownloadService.instance.getGpxProgress(widget.mountain.id);
 
   @override
   void initState() {
@@ -42,7 +46,21 @@ class _MountainCardState extends State<MountainCard> {
     _isMapDownloaded =
         OfflineMapService.isOfflineMapDownloadedCached(widget.mountain.id) ??
             widget.mountain.isMapReady;
+    DownloadService.instance.addListener(_onDownloadServiceUpdate);
     _checkDownloadStatus();
+  }
+
+  @override
+  void dispose() {
+    DownloadService.instance.removeListener(_onDownloadServiceUpdate);
+    super.dispose();
+  }
+
+  void _onDownloadServiceUpdate() {
+    if (mounted) {
+      _checkDownloadStatus();
+      setState(() {});
+    }
   }
 
   @override
@@ -78,10 +96,7 @@ class _MountainCardState extends State<MountainCard> {
   }
 
   Future<void> _downloadGpxAndOpen() async {
-    setState(() {
-      _isDownloading = true;
-      _downloadProgress = 0.0;
-    });
+    if (_isDownloading) return;
 
     try {
       // 1. Ambil data detail lengkap gunung & rutenya dari Supabase / cache jika belum ada
@@ -99,29 +114,12 @@ class _MountainCardState extends State<MountainCard> {
         }
       }
 
-      // 2. Unduh berkas GPX
-      await GpxStorageService.downloadAndSaveGpx(
-        mountainId: widget.mountain.id,
-        onProgress: (progress) {
-          if (mounted) {
-            setState(() {
-              _downloadProgress = progress;
-            });
-          }
-        },
-      );
-
-      // 3. Simpan data mountain & routes secara offline
-      await GpxStorageService.saveDownloadedMountain(fullMountain);
-
-      if (mounted) {
-        setState(() {
-          _isGpxDownloaded = true;
-          _isDownloading = false;
-        });
-
+      final success = await DownloadService.instance.startGpxDownload(fullMountain);
+      if (success && mounted) {
+        await _checkDownloadStatus();
         widget.onDownloaded?.call();
 
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppTheme.primary,
@@ -150,14 +148,10 @@ class _MountainCardState extends State<MountainCard> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isDownloading = false;
-        });
-
         final isMissingPlugin = e.toString().contains('MissingPluginException');
         final message = isMissingPlugin
             ? 'Plugin baru terpasang. Silakan Stop & Run ulang aplikasi.'
-            : 'Gagal mengunduh data GPX: $e';
+            : 'Gagal mengunduh data offline: $e';
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

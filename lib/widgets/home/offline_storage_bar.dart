@@ -220,7 +220,7 @@ class OfflineStorageLegend extends StatelessWidget {
         ),
         OfflineStorageLegendItem(
           color: mapColor,
-          label: 'Peta',
+          label: 'Map',
           bytes: mapBytes,
           percentage: mapPercentage,
         ),
@@ -256,7 +256,7 @@ class OfflineStorageLegendItem extends StatelessWidget {
         ),
         const SizedBox(width: 6),
         Text(
-          '$label: ${OfflineStorageBar.formatBytes(bytes)} (${percentage.toStringAsFixed(percentage > 0 && percentage < 1 ? 1 : 0)}%)',
+          '$label: ${OfflineStorageBar.formatBytes(bytes)}',
           style: const TextStyle(
             fontSize: 11,
             color: AppTheme.onSurfaceVariant,

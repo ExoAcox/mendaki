@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:mendaki/core/services/gpx_parser_service.dart';
-import 'package:mendaki/core/services/gpx_storage_service.dart';
+import 'package:mendaki/core/services/download_service.dart';
 import 'package:mendaki/core/services/offline_map_service.dart';
 import 'package:mendaki/core/services/supabase_service.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
@@ -24,16 +22,32 @@ class DetailScreen extends StatefulWidget {
 class _DetailScreenState extends State<DetailScreen> {
   late Mountain _mountain;
   bool _isLoadingDetail = false;
-  bool _isDownloading = false;
-  double _downloadProgress = 0.0;
   bool _isOfflineReady = false;
+
+  bool get _isDownloading =>
+      DownloadService.instance.isDownloadingMap(_mountain.id);
+  double get _downloadProgress =>
+      DownloadService.instance.getMapProgress(_mountain.id);
 
   @override
   void initState() {
     super.initState();
     _mountain = widget.mountain;
+    DownloadService.instance.addListener(_onDownloadServiceUpdate);
     _checkOfflineStatus();
     _loadMountainDetail();
+  }
+
+  @override
+  void dispose() {
+    DownloadService.instance.removeListener(_onDownloadServiceUpdate);
+    super.dispose();
+  }
+
+  void _onDownloadServiceUpdate() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _loadMountainDetail() async {
@@ -77,54 +91,16 @@ class _DetailScreenState extends State<DetailScreen> {
   Future<void> _downloadOfflinePackage() async {
     if (_isDownloading) return;
 
-    setState(() {
-      _isDownloading = true;
-      _downloadProgress = 0.0;
-    });
-
     try {
-      // 1. Unduh atau pastikan berkas GPX tersimpan di lokal
-      await GpxStorageService.downloadAndSaveGpx(mountainId: _mountain.id);
+      final success = await DownloadService.instance.startMapDownload(_mountain);
+      if (!mounted) return;
 
-      // 2. Simpan data Mountain & Routes lengkap ke penyimpanan lokal offline
-      await GpxStorageService.saveDownloadedMountain(_mountain);
-
-      // 3. Ambil titik track untuk bounding box akurat
-      final gpxFile = await GpxStorageService.getLocalGpxFile(_mountain.id);
-      List<LatLng>? trackPoints;
-      if (gpxFile != null && await gpxFile.exists()) {
-        final gpxData = await GpxParserService.parseFile(gpxFile);
-        trackPoints = gpxData.tracks
-            .expand((t) => t.trackPoints)
-            .map((p) => LatLng(p.latitude, p.longitude))
-            .toList();
-      }
-
-      // 4. Unduh ubin peta (tiles) area gunung: zoom 16 (detail)
-      await OfflineMapService.downloadOfflineMap(
-        mountainId: _mountain.id,
-        centerLat: _mountain.latitude ?? -7.455,
-        centerLng: _mountain.longitude ?? 110.435,
-        trackPoints: trackPoints,
-        minZoom: 16,
-        maxZoom: 16,
-        onProgress: (downloaded, total) {
-          if (mounted) {
-            setState(() {
-              _downloadProgress = total > 0 ? downloaded / total : 0.0;
-            });
-          }
-        },
-      );
-
-      if (mounted) {
+      if (success) {
         setState(() {
           _isOfflineReady = true;
-          _mountain = _mountain.copyWith(isGpxReady: true, isMapReady: true);
+          _mountain = _mountain.copyWith(isMapReady: true);
         });
-        await GpxStorageService.saveDownloadedMountain(_mountain);
 
-        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: const Color(0xFF0F5238),
@@ -160,12 +136,6 @@ class _DetailScreenState extends State<DetailScreen> {
             content: Text('Gagal mengunduh map offline: $e'),
           ),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isDownloading = false;
-        });
       }
     }
   }

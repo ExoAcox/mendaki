@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
 import 'package:mendaki/core/services/offline_map_service.dart';
@@ -111,111 +112,215 @@ class LibraryScreenState extends State<LibraryScreen> {
     }).toList();
   }
 
-  Future<void> _showDeleteModal(Mountain mountain) async {
-    final confirmed = await showModalBottomSheet<bool>(
+  Future<void> _showDeleteDialog(Mountain mountain) async {
+    final confirmed = await showDialog<bool>(
       context: context,
-      backgroundColor: AppTheme.surfaceContainerLowest,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.35),
       builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppTheme.outlineVariant.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 30,
+                  offset: const Offset(0, 10),
                 ),
-                const SizedBox(height: 20),
-                Container(
-                  width: 54,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    color: AppTheme.error.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.delete_outline_rounded,
-                    color: AppTheme.error,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Hapus ${mountain.name}?',
-                  style: const TextStyle(
-                    fontFamily: 'Plus Jakarta Sans',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.onSurface,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Data jalur GPX dan peta offline yang tersimpan di perangkat akan dihapus dari library.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.onSurfaceVariant.withValues(alpha: 0.85),
-                    height: 1.4,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(ctx).pop(false),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: BorderSide(
-                            color: AppTheme.outlineVariant.withValues(
-                              alpha: 0.8,
-                            ),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Batal',
-                          style: TextStyle(
-                            color: AppTheme.onSurface,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.of(ctx).pop(true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.error,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Hapus',
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                    ),
-                  ],
+                BoxShadow(
+                  color: const Color(0xFFDC2626).withValues(alpha: 0.10),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
                 ),
               ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                child: Container(
+                  padding: const EdgeInsets.all(22),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.88),
+                        Colors.white.withValues(alpha: 0.60),
+                        Colors.white.withValues(alpha: 0.78),
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
+                    ),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDC2626).withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFFDC2626).withValues(alpha: 0.20),
+                                width: 1,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.delete_outline_rounded,
+                              color: Color(0xFFDC2626),
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Hapus ${mountain.name}?',
+                              style: const TextStyle(
+                                fontFamily: 'Plus Jakarta Sans',
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        'Data jalur GPX dan peta offline yang tersimpan di perangkat akan dihapus dari library.',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.03),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: OutlinedButton(
+                                onPressed: () => Navigator.of(ctx).pop(false),
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: Colors.white.withValues(
+                                    alpha: 0.35,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 13),
+                                  side: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                    width: 1,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Batal',
+                                  style: TextStyle(
+                                    color: AppTheme.onSurface,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFDC2626).withValues(
+                                      alpha: 0.35,
+                                    ),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () => Navigator.of(ctx).pop(true),
+                                    splashColor: Colors.white.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 13,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            const Color(0xFFEF4444).withValues(
+                                              alpha: 0.90,
+                                            ),
+                                            const Color(0xFFDC2626).withValues(
+                                              alpha: 0.85,
+                                            ),
+                                            const Color(0xFFB91C1C).withValues(
+                                              alpha: 0.90,
+                                            ),
+                                          ],
+                                          stops: const [0.0, 0.5, 1.0],
+                                        ),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.35,
+                                          ),
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: const Text(
+                                        'Hapus',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         );
@@ -354,7 +459,7 @@ class LibraryScreenState extends State<LibraryScreen> {
                           _loadDownloadedMountains();
                         },
                         onDownloaded: _loadDownloadedMountains,
-                        onDeleteTap: () => _showDeleteModal(mountain),
+                        onDeleteTap: () => _showDeleteDialog(mountain),
                       )
                     else
                       MountainCard(
@@ -368,7 +473,7 @@ class LibraryScreenState extends State<LibraryScreen> {
                           _loadDownloadedMountains();
                         },
                         onDownloaded: _loadDownloadedMountains,
-                        onDeleteTap: () => _showDeleteModal(mountain),
+                        onDeleteTap: () => _showDeleteDialog(mountain),
                       ),
                     SizedBox(
                       height: _viewMode == ViewPreferenceService.viewModeCompact
