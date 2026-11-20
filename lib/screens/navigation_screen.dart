@@ -238,10 +238,10 @@ class _NavigationScreenState extends State<NavigationScreen>
       _rebuildMarkers();
     });
 
-    // Jika dekat gunung, arahkan kamera ke GPS user dengan summit-up.
+    // Jika dekat gunung, arahkan kamera ke GPS user.
     // Jika jauh dari gunung, jangan fokus ke marker GPS, tetap fokus di gunung.
     if (!isFar) {
-      _focusGpsWithSummitUp(zoom: 15.8);
+      _focusGps();
     }
   }
 
@@ -317,9 +317,9 @@ class _NavigationScreenState extends State<NavigationScreen>
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_isFarFromMountain || !_hasUserPosition) {
-          _focusMountain(zoom: 14.0);
+          _focusMountain();
         } else {
-          _focusGpsWithSummitUp(zoom: 15.8);
+          _focusGps();
         }
       });
     } else {
@@ -350,28 +350,10 @@ class _NavigationScreenState extends State<NavigationScreen>
     }
   }
 
-  void _focusGpsWithSummitUp({double zoom = 15.8}) {
-    final summitCoord = NavigationGeoUtils.findSummitCoordinate(
-      _gpxData,
-      _mountainCenter ?? _currentPosition,
-    );
-    final targetRotation = NavigationGeoUtils.calculateSummitUpRotation(
-      _currentPosition,
-      summitCoord,
-    );
-    if (mounted) {
-      setState(() {
-        _currentRotation = targetRotation;
-      });
-    }
+  void _focusGps({double zoom = 16}) {
     try {
-      _mapController.moveAndRotate(_currentPosition, zoom, targetRotation);
-    } catch (_) {
-      try {
-        _mapController.move(_currentPosition, zoom);
-        _mapController.rotate(targetRotation);
-      } catch (_) {}
-    }
+      _mapController.move(_currentPosition, zoom);
+    } catch (_) {}
   }
 
   void _focusMountain({double zoom = 14.0}) {
@@ -454,7 +436,6 @@ class _NavigationScreenState extends State<NavigationScreen>
 
   void _handleFindMeTap() {
     if (_isFarFromMountain) {
-      _focusMountain(zoom: 14.0);
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -468,7 +449,7 @@ class _NavigationScreenState extends State<NavigationScreen>
         ),
       );
     } else {
-      _focusGpsWithSummitUp(zoom: 15.8);
+      _focusGps();
     }
   }
 
