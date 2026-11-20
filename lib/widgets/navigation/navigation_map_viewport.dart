@@ -60,8 +60,8 @@ class NavigationMapViewport extends StatelessWidget {
         initialCenter: initialCenter,
         initialZoom: initialZoom,
         initialRotation: initialRotation,
-        minZoom: 12.0,
-        maxZoom: 16.5,
+        minZoom: 14,
+        maxZoom: 16,
         cameraConstraint: CameraConstraint.containCenter(
           bounds: _calculateBounds(),
         ),
@@ -79,11 +79,14 @@ class NavigationMapViewport extends StatelessWidget {
               ? OfflineFirstTileProvider(
                   mountainId: mountainId,
                   offlineBasePath: offlineBasePath!,
+                  enableNetworkFallback: false,
                 )
               : null,
           userAgentPackageName: 'ayo.mendaki.bersama',
-          maxNativeZoom: 17,
-          maxZoom: 18,
+          minZoom: 14,
+          maxZoom: 16,
+          minNativeZoom: 16,
+          maxNativeZoom: 16,
         ),
         if (polylines.isNotEmpty) PolylineLayer(polylines: polylines),
         if (markers.isNotEmpty) MarkerLayer(rotate: true, markers: markers),

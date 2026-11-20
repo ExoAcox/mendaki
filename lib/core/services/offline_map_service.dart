@@ -14,16 +14,29 @@ import 'package:path_provider/path_provider.dart';
 class OfflineFirstTileProvider extends TileProvider {
   final String mountainId;
   final String offlineBasePath;
-  final NetworkTileProvider _fallbackProvider;
+  final bool enableNetworkFallback;
+  final NetworkTileProvider? _fallbackProvider;
+
+  static final Uint8List transparentTileBytes = Uint8List.fromList(const [
+    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
+    0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+    0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00,
+    0x0A, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
+    0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49,
+    0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
+  ]);
 
   OfflineFirstTileProvider({
     required this.mountainId,
     required this.offlineBasePath,
+    this.enableNetworkFallback = true,
     Map<String, String>? headers,
-  }) : _fallbackProvider = NetworkTileProvider(
-         headers: Map<String, String>.of(headers ?? const {}),
-         silenceExceptions: true,
-       ),
+  }) : _fallbackProvider = enableNetworkFallback
+           ? NetworkTileProvider(
+               headers: Map<String, String>.of(headers ?? const {}),
+               silenceExceptions: true,
+             )
+           : null,
        super(headers: Map<String, String>.of(headers ?? const {}));
 
   @override
@@ -39,7 +52,11 @@ class OfflineFirstTileProvider extends TileProvider {
       return FileImage(offlineFile);
     }
 
-    return _fallbackProvider.getImage(coordinates, options);
+    if (enableNetworkFallback && _fallbackProvider != null) {
+      return _fallbackProvider.getImage(coordinates, options);
+    }
+
+    return MemoryImage(transparentTileBytes);
   }
 
   @override
@@ -56,11 +73,15 @@ class OfflineFirstTileProvider extends TileProvider {
       return FileImage(offlineFile);
     }
 
-    return _fallbackProvider.getImageWithCancelLoadingSupport(
-      coordinates,
-      options,
-      cancelLoading,
-    );
+    if (enableNetworkFallback && _fallbackProvider != null) {
+      return _fallbackProvider.getImageWithCancelLoadingSupport(
+        coordinates,
+        options,
+        cancelLoading,
+      );
+    }
+
+    return MemoryImage(transparentTileBytes);
   }
 }
 
@@ -80,6 +101,7 @@ class OfflineMapService {
   ) {
     _mapDownloadedCache[mountainId] = isDownloaded;
   }
+
   /// Mengonversi bujur (longitude) ke koordinat tile X
   static int lon2tileX(double lon, int z) =>
       ((lon + 180.0) / 360.0 * (1 << z)).floor();
@@ -101,7 +123,9 @@ class OfflineMapService {
       return Directory('$customOfflineBasePath/offline_tiles/$mountainId');
     }
     if (Platform.environment.containsKey('FLUTTER_TEST')) {
-      return Directory('${Directory.systemTemp.path}/offline_tiles/$mountainId');
+      return Directory(
+        '${Directory.systemTemp.path}/offline_tiles/$mountainId',
+      );
     }
     Directory appDir;
     try {
@@ -189,15 +213,16 @@ class OfflineMapService {
     }
   }
 
-  /// Mengunduh seluruh ubin peta OpenTopoMap di sekitar area gunung
-  /// untuk rentang zoom level 11 (tinjauan makro) sampai 15 (jalur rinci).
+  /// Mengunduh seluruh ubin peta OpenTopoMap di sekitar area gunung.
+  /// Secara default mengunduh zoom 16 (detail setapak).
   static Future<void> downloadOfflineMap({
     required String mountainId,
     required double centerLat,
     required double centerLng,
     List<LatLng>? trackPoints,
-    int minZoom = 11,
-    int maxZoom = 15,
+    int minZoom = 16,
+    int maxZoom = 16,
+    List<int>? zoomLevels,
     void Function(int downloaded, int total)? onProgress,
   }) async {
     // 1. Tentukan batas koordinat bounding box
@@ -232,8 +257,10 @@ class OfflineMapService {
     }
 
     // 2. Kumpulkan daftar tile yang perlu diunduh
+    final levels = zoomLevels ?? [for (int z = minZoom; z <= maxZoom; z++) z];
+
     final tiles = <({int z, int x, int y})>[];
-    for (int z = minZoom; z <= maxZoom; z++) {
+    for (final z in levels) {
       final minX = lon2tileX(minLng, z);
       final maxX = lon2tileX(maxLng, z);
       final minY = lat2tileY(
@@ -314,8 +341,7 @@ class OfflineMapService {
       jsonEncode({
         'mountainId': mountainId,
         'totalTiles': total,
-        'minZoom': minZoom,
-        'maxZoom': maxZoom,
+        'zoomLevels': levels,
         'downloadedAt': DateTime.now().toIso8601String(),
         'attribution':
             'Kartendaten: © OpenStreetMap-Mitwirkende, SRTM | Kartendarstellung: © OpenTopoMap (CC-BY-SA)',

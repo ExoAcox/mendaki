@@ -100,14 +100,14 @@ class _DetailScreenState extends State<DetailScreen> {
             .toList();
       }
 
-      // 4. Unduh seluruh ubin peta (tiles) area gunung zoom 11 sampai 15
+      // 4. Unduh ubin peta (tiles) area gunung: zoom 16 (detail)
       await OfflineMapService.downloadOfflineMap(
         mountainId: _mountain.id,
         centerLat: _mountain.latitude ?? -7.455,
         centerLng: _mountain.longitude ?? 110.435,
         trackPoints: trackPoints,
-        minZoom: 11,
-        maxZoom: 15,
+        minZoom: 16,
+        maxZoom: 16,
         onProgress: (downloaded, total) {
           if (mounted) {
             setState(() {

@@ -403,8 +403,8 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
             options: MapOptions(
               initialCenter: _mapCenter,
               initialZoom: 11.0,
-              minZoom: 9.0,
-              maxZoom: 16.5,
+              minZoom: 11,
+              maxZoom: 15,
               onTap: _onMapTap,
               cameraConstraint: CameraConstraint.containCenter(
                 bounds: _calculateBounds(),
@@ -418,8 +418,7 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
                 urlTemplate: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
                 subdomains: const ['a', 'b', 'c'],
                 userAgentPackageName: 'ayo.mendaki.bersama',
-                maxNativeZoom: 17,
-                maxZoom: 18,
+                maxNativeZoom: 15,
               ),
               if (_polylines.isNotEmpty) PolylineLayer(polylines: _polylines),
               if (_markers.isNotEmpty) MarkerLayer(markers: _markers),
