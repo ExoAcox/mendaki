@@ -48,7 +48,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 250));
 
       expect(find.byType(MoreScreen), findsOneWidget);
-      expect(find.text('Halaman dalam pengembangan'), findsOneWidget);
+      expect(find.text('GitHub Repository'), findsOneWidget);
 
       // Tap back to Home tab
       await tester.tap(find.text('Home'));

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mendaki/core/config/app_config.dart';
 import 'package:mendaki/screens/more_screen.dart';
 
 void main() {
   group('MoreScreen Widget Tests', () {
-    testWidgets('renders empty placeholder page with More title',
+    testWidgets('renders GitHub link, description, and Feedback button',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
@@ -12,11 +13,24 @@ void main() {
         ),
       );
 
-      // Verify title and placeholder elements
-      expect(find.text('More'), findsWidgets);
-      expect(find.text('Halaman dalam pengembangan'), findsOneWidget);
-      expect(find.byIcon(Icons.more_horiz_rounded), findsOneWidget);
+      // Verify app header info
+      expect(find.text('Mendaki'), findsOneWidget);
+      expect(find.text('v${AppConfig.currentVersion}'), findsOneWidget);
+
+      // Verify GitHub card and description
+      expect(find.text('GitHub Repository'), findsOneWidget);
+      expect(find.text('https://github.com/ExoAcox/mendaki'), findsOneWidget);
+      expect(
+        find.textContaining('Aplikasi panduan dan navigasi jalur pendakian gunung'),
+        findsOneWidget,
+      );
+
+      // Verify Feedback section and button
+      expect(find.text('Kirim Masukan & Request'), findsWidgets);
+      expect(find.byKey(const Key('more_feedback_button')), findsOneWidget);
+
+      // Verify Attribution section
+      expect(find.text('Data & Atribusi'), findsOneWidget);
     });
   });
 }
-

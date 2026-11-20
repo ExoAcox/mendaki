@@ -91,7 +91,7 @@ class FloatingNavBar extends StatelessWidget {
                           _buildNavItem(
                             key: const Key('nav_item_more'),
                             index: 2,
-                            activeIcon: Icons.more_horiz_rounded,
+                            activeIcon: Icons.more_horiz,
                             inactiveIcon: Icons.more_horiz,
                             label: 'More',
                           ),
