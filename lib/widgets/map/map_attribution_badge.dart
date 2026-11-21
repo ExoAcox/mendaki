@@ -29,21 +29,16 @@ class MapAttributionBadge extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Peta ini menggunakan OpenTopoMap berlisensi CC-BY-SA 3.0.',
-              style: TextStyle(color: Colors.white70, fontSize: 13),
-            ),
-            SizedBox(height: 12),
-            Text(
-              'Kartendaten: © OpenStreetMap-Mitwirkende, SRTM',
+              'Map Data: \n© OpenStreetMap contributors, SRTM',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            SizedBox(height: 4),
+            SizedBox(height: 12),
             Text(
-              'Kartendarstellung: © OpenTopoMap (CC-BY-SA)',
+              'Map Style: \n© OpenTopoMap (CC-BY-SA)',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 12,

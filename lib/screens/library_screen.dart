@@ -149,7 +149,10 @@ class LibraryScreenState extends State<LibraryScreen> {
         return Dialog(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(28),
@@ -198,10 +201,14 @@ class LibraryScreenState extends State<LibraryScreen> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFDC2626).withValues(alpha: 0.12),
+                              color: const Color(
+                                0xFFDC2626,
+                              ).withValues(alpha: 0.12),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: const Color(0xFFDC2626).withValues(alpha: 0.20),
+                                color: const Color(
+                                  0xFFDC2626,
+                                ).withValues(alpha: 0.20),
                                 width: 1,
                               ),
                             ),
@@ -227,7 +234,7 @@ class LibraryScreenState extends State<LibraryScreen> {
                       ),
                       const SizedBox(height: 14),
                       Text(
-                        'Data jalur GPX dan peta offline yang tersimpan di perangkat akan dihapus dari library.',
+                        'Data GPX dan map offline yang tersimpan di perangkat akan dihapus dari library.',
                         style: const TextStyle(
                           fontSize: 14,
                           color: AppTheme.onSurfaceVariant,
@@ -255,7 +262,9 @@ class LibraryScreenState extends State<LibraryScreen> {
                                   backgroundColor: Colors.white.withValues(
                                     alpha: 0.35,
                                   ),
-                                  padding: const EdgeInsets.symmetric(vertical: 13),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 13,
+                                  ),
                                   side: BorderSide(
                                     color: Colors.white.withValues(alpha: 0.7),
                                     width: 1,
@@ -282,9 +291,9 @@ class LibraryScreenState extends State<LibraryScreen> {
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFFDC2626).withValues(
-                                      alpha: 0.35,
-                                    ),
+                                    color: const Color(
+                                      0xFFDC2626,
+                                    ).withValues(alpha: 0.35),
                                     blurRadius: 14,
                                     offset: const Offset(0, 4),
                                   ),
@@ -308,15 +317,15 @@ class LibraryScreenState extends State<LibraryScreen> {
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
                                           colors: [
-                                            const Color(0xFFEF4444).withValues(
-                                              alpha: 0.90,
-                                            ),
-                                            const Color(0xFFDC2626).withValues(
-                                              alpha: 0.85,
-                                            ),
-                                            const Color(0xFFB91C1C).withValues(
-                                              alpha: 0.90,
-                                            ),
+                                            const Color(
+                                              0xFFEF4444,
+                                            ).withValues(alpha: 0.90),
+                                            const Color(
+                                              0xFFDC2626,
+                                            ).withValues(alpha: 0.85),
+                                            const Color(
+                                              0xFFB91C1C,
+                                            ).withValues(alpha: 0.90),
                                           ],
                                           stops: const [0.0, 0.5, 1.0],
                                         ),
@@ -554,9 +563,7 @@ class LibraryScreenState extends State<LibraryScreen> {
                   ),
                 ),
               ],
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 96),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 96)),
             ],
           ),
         ),

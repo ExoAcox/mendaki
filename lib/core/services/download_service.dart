@@ -237,7 +237,7 @@ class DownloadService extends ChangeNotifier {
         mountain,
         DownloadType.gpx,
         'GPX Berhasil Diunduh',
-        'Data GPX ${mountain.name} berhasil disimpan ke device.',
+        'Data GPX ${mountain.name} berhasil disimpan ke perangkat.',
         notifId,
       );
       return true;
@@ -345,7 +345,7 @@ class DownloadService extends ChangeNotifier {
         mountain,
         DownloadType.map,
         'Map Berhasil Diunduh',
-        'Map ${mountain.name} berhasil disimpan ke device.',
+        'Map ${mountain.name} berhasil disimpan ke perangkat.',
         notifId,
       );
       return true;

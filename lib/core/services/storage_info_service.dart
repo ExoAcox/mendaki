@@ -20,4 +20,3 @@ class StorageInfoService {
     return null;
   }
 }
-

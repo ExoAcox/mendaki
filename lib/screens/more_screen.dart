@@ -491,7 +491,7 @@ class MoreScreen extends StatelessWidget {
           Text(
             '• GPX Data: Astacala, Wikiloc, Gunung Bagging\n'
             '• Map Data: © OpenStreetMap contributors\n'
-            '• Map Design: © OpenTopoMap',
+            '• Map Style: © OpenTopoMap',
             style: TextStyle(
               fontSize: 12.5,
               height: 1.6,
