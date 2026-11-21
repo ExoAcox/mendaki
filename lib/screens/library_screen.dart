@@ -79,9 +79,6 @@ class LibraryScreenState extends State<LibraryScreen> {
       final list = await GpxStorageService.getDownloadedMountains(
         onlyFullyReady: true,
       );
-      final gpxBytes = await GpxStorageService.getTotalGpxSizeBytes();
-      final mapBytes = await OfflineMapService.getTotalOfflineMapsSizeBytes();
-      final availableBytes = await StorageInfoService.getAvailableDiskSpaceBytes();
 
       if (mounted) {
         setState(() {
@@ -89,12 +86,12 @@ class LibraryScreenState extends State<LibraryScreen> {
           _downloadedMountains = list
               .where((m) => m.isGpxReady && m.isMapReady)
               .toList();
-          _gpxBytes = gpxBytes;
-          _mapBytes = mapBytes;
-          _availableBytes = availableBytes;
           _isLoading = false;
         });
       }
+
+      // Ambil metrik penyimpanan secara paralel di latar belakang tanpa menahan daftar gunung
+      _loadStorageMetrics();
     } catch (e) {
       debugPrint('Error loading downloaded mountains: $e');
       if (mounted) {
@@ -102,6 +99,28 @@ class LibraryScreenState extends State<LibraryScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _loadStorageMetrics() async {
+    try {
+      final gpxFuture = GpxStorageService.getTotalGpxSizeBytes();
+      final mapFuture = OfflineMapService.getTotalOfflineMapsSizeBytes();
+      final diskFuture = StorageInfoService.getAvailableDiskSpaceBytes();
+
+      final gpxBytes = await gpxFuture;
+      final mapBytes = await mapFuture;
+      final availableBytes = await diskFuture;
+
+      if (mounted) {
+        setState(() {
+          _gpxBytes = gpxBytes;
+          _mapBytes = mapBytes;
+          _availableBytes = availableBytes;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading storage metrics: $e');
     }
   }
 
@@ -361,7 +380,10 @@ class LibraryScreenState extends State<LibraryScreen> {
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
-          onRefresh: _loadDownloadedMountains,
+          onRefresh: () async {
+            await _loadDownloadedMountains();
+            await _loadStorageMetrics();
+          },
           color: AppTheme.primary,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),

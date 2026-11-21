@@ -88,6 +88,7 @@ class OfflineFirstTileProvider extends TileProvider {
 /// Layanan untuk mengunduh, mengecek status, dan mengelola paket peta offline gunung.
 class OfflineMapService {
   static final Map<String, bool> _mapDownloadedCache = {};
+  static final Map<String, int> _mountainMapSizesBytes = {};
 
   /// Mengambil status download peta dari memori cache (sinkron tanpa async disk I/O)
   static bool? isOfflineMapDownloadedCached(String mountainId) {
@@ -117,15 +118,13 @@ class OfflineMapService {
   @visibleForTesting
   static String? customOfflineBasePath;
 
-  /// Mendapatkan direktori folder ubin offline untuk gunung tertentu
-  static Future<Directory> getOfflineTilesDir(String mountainId) async {
+  /// Mendapatkan path direktori dasar folder offline_tiles
+  static Future<String> getOfflineBaseDir() async {
     if (customOfflineBasePath != null) {
-      return Directory('$customOfflineBasePath/offline_tiles/$mountainId');
+      return '$customOfflineBasePath/offline_tiles';
     }
     if (Platform.environment.containsKey('FLUTTER_TEST')) {
-      return Directory(
-        '${Directory.systemTemp.path}/offline_tiles/$mountainId',
-      );
+      return '${Directory.systemTemp.path}/offline_tiles';
     }
     Directory appDir;
     try {
@@ -133,8 +132,13 @@ class OfflineMapService {
     } catch (_) {
       appDir = Directory.systemTemp;
     }
-    final dir = Directory('${appDir.path}/offline_tiles/$mountainId');
-    return dir;
+    return '${appDir.path}/offline_tiles';
+  }
+
+  /// Mendapatkan direktori folder ubin offline untuk gunung tertentu
+  static Future<Directory> getOfflineTilesDir(String mountainId) async {
+    final basePath = await getOfflineBaseDir();
+    return Directory('$basePath/$mountainId');
   }
 
   /// Memeriksa apakah paket peta offline untuk gunung ini sudah diunduh
@@ -155,12 +159,33 @@ class OfflineMapService {
     }
   }
 
-  /// Menghitung total ukuran berkas peta offline dalam Megabyte (MB)
-  static Future<double> getOfflineMapSizeMb(String mountainId) async {
+  /// Menghitung ukuran berkas peta offline suatu gunung (dalam bytes) dengan caching
+  static Future<int> getOfflineMapSizeBytes(String mountainId) async {
+    if (_mountainMapSizesBytes.containsKey(mountainId)) {
+      return _mountainMapSizesBytes[mountainId]!;
+    }
+
     try {
       final dir = await getOfflineTilesDir(mountainId);
-      if (!await dir.exists()) return 0.0;
+      if (!await dir.exists()) {
+        _mountainMapSizesBytes[mountainId] = 0;
+        return 0;
+      }
 
+      final metaFile = File('${dir.path}/.metadata.json');
+      if (await metaFile.exists()) {
+        try {
+          final content = await metaFile.readAsString();
+          final data = jsonDecode(content) as Map<String, dynamic>;
+          if (data['totalBytes'] is num) {
+            final bytes = (data['totalBytes'] as num).toInt();
+            _mountainMapSizesBytes[mountainId] = bytes;
+            return bytes;
+          }
+        } catch (_) {}
+      }
+
+      // Fallback: hitung satu gunung, lalu simpan ke .metadata.json jika metaFile ada
       int totalBytes = 0;
       await for (final entity in dir.list(
         recursive: true,
@@ -170,40 +195,47 @@ class OfflineMapService {
           totalBytes += await entity.length();
         }
       }
-      return totalBytes / (1024 * 1024);
+
+      _mountainMapSizesBytes[mountainId] = totalBytes;
+
+      if (await metaFile.exists()) {
+        try {
+          final content = await metaFile.readAsString();
+          final data = jsonDecode(content) as Map<String, dynamic>;
+          data['totalBytes'] = totalBytes;
+          await metaFile.writeAsString(jsonEncode(data));
+        } catch (_) {}
+      }
+
+      return totalBytes;
     } catch (_) {
-      return 0.0;
+      return 0;
     }
+  }
+
+  /// Menghitung total ukuran berkas peta offline dalam Megabyte (MB)
+  static Future<double> getOfflineMapSizeMb(String mountainId) async {
+    final bytes = await getOfflineMapSizeBytes(mountainId);
+    return bytes / (1024 * 1024);
   }
 
   /// Menghitung total ukuran seluruh ubin peta offline yang tersimpan (dalam bytes)
   static Future<int> getTotalOfflineMapsSizeBytes() async {
     try {
-      String basePath;
-      if (customOfflineBasePath != null) {
-        basePath = '$customOfflineBasePath/offline_tiles';
-      } else if (Platform.environment.containsKey('FLUTTER_TEST')) {
-        basePath = '${Directory.systemTemp.path}/offline_tiles';
-      } else {
-        Directory appDir;
-        try {
-          appDir = await getApplicationDocumentsDirectory();
-        } catch (_) {
-          appDir = Directory.systemTemp;
-        }
-        basePath = '${appDir.path}/offline_tiles';
-      }
-
+      final basePath = await getOfflineBaseDir();
       final dir = Directory(basePath);
       if (!await dir.exists()) return 0;
 
       int totalBytes = 0;
       await for (final entity in dir.list(
-        recursive: true,
+        recursive: false,
         followLinks: false,
       )) {
-        if (entity is File) {
-          totalBytes += await entity.length();
+        if (entity is Directory) {
+          final mountainId = entity.uri.pathSegments
+              .where((segment) => segment.isNotEmpty)
+              .last;
+          totalBytes += await getOfflineMapSizeBytes(mountainId);
         }
       }
       return totalBytes;
@@ -346,12 +378,25 @@ class OfflineMapService {
 
     client.close();
 
-    // 5. Simpan file metadata penanda unduhan selesai
+    // 5. Hitung ukuran total dan simpan file metadata penanda unduhan selesai
+    int totalBytes = 0;
+    try {
+      await for (final entity in mountainTilesDir.list(
+        recursive: true,
+        followLinks: false,
+      )) {
+        if (entity is File) {
+          totalBytes += await entity.length();
+        }
+      }
+    } catch (_) {}
+
     final metaFile = File('${mountainTilesDir.path}/.metadata.json');
     await metaFile.writeAsString(
       jsonEncode({
         'mountainId': mountainId,
         'totalTiles': total,
+        'totalBytes': totalBytes,
         'zoomLevels': levels,
         'downloadedAt': DateTime.now().toIso8601String(),
         'attribution':
@@ -359,11 +404,13 @@ class OfflineMapService {
       }),
     );
     _mapDownloadedCache[mountainId] = true;
+    _mountainMapSizesBytes[mountainId] = totalBytes;
   }
 
   /// Menghapus seluruh paket tile peta offline suatu gunung
   static Future<void> deleteOfflineMap(String mountainId) async {
     _mapDownloadedCache[mountainId] = false;
+    _mountainMapSizesBytes.remove(mountainId);
     try {
       final dir = await getOfflineTilesDir(mountainId);
       if (await dir.exists()) {

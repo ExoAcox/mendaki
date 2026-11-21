@@ -130,14 +130,31 @@ class OfflineStorageHeader extends StatelessWidget {
             ),
           ],
         ),
-        Text(
-          totalFormatted,
-          style: const TextStyle(
-            fontFamily: 'Plus Jakarta Sans',
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-            color: AppTheme.primary,
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              totalFormatted,
+              style: const TextStyle(
+                fontFamily: 'Plus Jakarta Sans',
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.primary,
+              ),
+            ),
+            if (availableFormatted != null) ...[
+              const SizedBox(width: 6),
+              Text(
+                '• Sisa $availableFormatted',
+                style: TextStyle(
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.onSurfaceVariant.withValues(alpha: 0.8),
+                ),
+              ),
+            ],
+          ],
         ),
       ],
     );
@@ -299,7 +316,7 @@ class OfflineStorageLegend extends StatelessWidget {
           if (availableBytes != null)
             OfflineStorageLegendItem(
               color: availableColor,
-              label: 'Available',
+              label: 'Tersedia',
               bytes: availableBytes!,
             ),
         ],
@@ -326,7 +343,7 @@ class OfflineStorageLegend extends StatelessWidget {
         if (availableBytes != null)
           OfflineStorageLegendItem(
             color: availableColor,
-            label: 'Available',
+            label: 'Tersedia',
             bytes: availableBytes!,
             percentage: 0,
           ),
