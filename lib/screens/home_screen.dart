@@ -294,99 +294,138 @@ class HomeScreenState extends State<HomeScreen> {
         child: RefreshIndicator(
           onRefresh: _loadMountains,
           color: AppTheme.primary,
-          child: SingleChildScrollView(
+          child: CustomScrollView(
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 12.0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                HomeSearchBar(
-                  controller: searchController,
-                  focusNode: searchFocusNode,
-                  onSubmitted: (_) => _loadMountains(),
-                  onClear: () {
-                    searchController.clear();
-                    _loadMountains();
-                  },
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 0),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      HomeSearchBar(
+                        controller: searchController,
+                        focusNode: searchFocusNode,
+                        onSubmitted: (_) => _loadMountains(),
+                        onClear: () {
+                          searchController.clear();
+                          _loadMountains();
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      HomeFilterChips(
+                        filters: filters,
+                        selectedFilter: selectedFilter,
+                        onSelected: (filter) {
+                          setState(() {
+                            selectedFilter = filter;
+                          });
+                          _loadMountains();
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 14),
-                HomeFilterChips(
-                  filters: filters,
-                  selectedFilter: selectedFilter,
-                  onSelected: (filter) {
-                    setState(() {
-                      selectedFilter = filter;
-                    });
-                    _loadMountains();
-                  },
+              ),
+              if (_hasError)
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  sliver: SliverToBoxAdapter(
+                    child: HomeErrorView(
+                      isOffline: _isOffline,
+                      downloadedCount: _downloadedCount,
+                      onOpenLibrary: _openLibrary,
+                      onRetry: _loadMountains,
+                    ),
+                  ),
+                )
+              else ...[
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader(),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 20),
-                if (_hasError)
-                  HomeErrorView(
-                    isOffline: _isOffline,
-                    downloadedCount: _downloadedCount,
-                    onOpenLibrary: _openLibrary,
-                    onRetry: _loadMountains,
-                  )
-                else ...[
-                  _buildSectionHeader(),
-                  const SizedBox(height: 12),
-                  if (isLoading)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(40.0),
+                if (isLoading)
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(40.0),
+                      child: Center(
                         child: CircularProgressIndicator(
                           color: AppTheme.primary,
                         ),
                       ),
-                    )
-                  else if (mountains.isEmpty) ...[
-                    const EmptyMountainView(),
-                    const SizedBox(height: 16),
-                    _buildFeedbackPrompt(),
-                  ] else ...[
-                    for (final mountain in mountains) ...[
-                      if (_viewMode == ViewPreferenceService.viewModeCompact)
-                        MountainCardCompact(
-                          mountain: mountain,
-                          onDetailTap: () async {
-                            await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    DetailScreen(mountain: mountain),
-                              ),
-                            );
-                            _checkDownloadedCount();
-                          },
-                          onDownloaded: _checkDownloadedCount,
-                        )
-                      else
-                        MountainCard(
-                          mountain: mountain,
-                          onDetailTap: () async {
-                            await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    DetailScreen(mountain: mountain),
-                              ),
-                            );
-                            _checkDownloadedCount();
-                          },
-                          onDownloaded: _checkDownloadedCount,
-                        ),
-                      SizedBox(
+                    ),
+                  )
+                else if (mountains.isEmpty)
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    sliver: SliverToBoxAdapter(
+                      child: Column(
+                        children: [
+                          const EmptyMountainView(),
+                          const SizedBox(height: 16),
+                          _buildFeedbackPrompt(),
+                        ],
+                      ),
+                    ),
+                  )
+                else ...[
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    sliver: SliverList.separated(
+                      itemCount: mountains.length,
+                      itemBuilder: (context, index) {
+                        final mountain = mountains[index];
+                        if (_viewMode == ViewPreferenceService.viewModeCompact) {
+                          return MountainCardCompact(
+                            mountain: mountain,
+                            onDetailTap: () async {
+                              await Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      DetailScreen(mountain: mountain),
+                                ),
+                              );
+                              _checkDownloadedCount();
+                            },
+                            onDownloaded: _checkDownloadedCount,
+                          );
+                        } else {
+                          return MountainCard(
+                            mountain: mountain,
+                            onDetailTap: () async {
+                              await Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      DetailScreen(mountain: mountain),
+                                ),
+                              );
+                              _checkDownloadedCount();
+                            },
+                            onDownloaded: _checkDownloadedCount,
+                          );
+                        }
+                      },
+                      separatorBuilder: (context, index) => SizedBox(
                         height:
                             _viewMode == ViewPreferenceService.viewModeCompact
                             ? 10
                             : 16,
                       ),
-                    ],
-                    if (_isLoadingMore)
-                      const Padding(
+                    ),
+                  ),
+                  if (_isLoadingMore)
+                    const SliverToBoxAdapter(
+                      child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 16),
                         child: Center(
                           child: SizedBox(
@@ -399,13 +438,24 @@ class HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
-                    const SizedBox(height: 8),
-                    _buildFeedbackPrompt(),
-                  ],
+                    ),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    sliver: SliverToBoxAdapter(
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 8),
+                          _buildFeedbackPrompt(),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
-                const SizedBox(height: 96),
               ],
-            ),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 96),
+              ),
+            ],
           ),
         ),
       ),

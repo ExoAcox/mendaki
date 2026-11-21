@@ -83,7 +83,7 @@ class GpxStorageService {
     return '$dirPath/$mountainId.image.jpg';
   }
 
-  /// Menghitung total ukuran seluruh berkas GPX dan data terkait yang tersimpan offline (dalam bytes)
+  /// Menghitung total ukuran berkas GPX (.gpx dan .mountain.json) offline (dalam bytes)
   static Future<int> getTotalGpxSizeBytes() async {
     try {
       final dirPath = await getGpxDirectoryPath();
@@ -94,13 +94,53 @@ class GpxStorageService {
       await for (final entity
           in dir.list(recursive: false, followLinks: false)) {
         if (entity is File) {
-          totalBytes += await entity.length();
+          // Hanya hitung berkas GPX dan data metadata (tidak termasuk foto)
+          if (!entity.path.endsWith('.image.jpg')) {
+            totalBytes += await entity.length();
+          }
         }
       }
       return totalBytes;
     } catch (e) {
       debugPrint('Error calculating total GPX size: $e');
       return 0;
+    }
+  }
+
+  /// Menghitung total ukuran berkas foto/gambar gunung offline (dalam bytes)
+  static Future<int> getTotalImagesSizeBytes() async {
+    int totalBytes = 0;
+    try {
+      // 1. Gambar gunung yang diunduh offline (.image.jpg)
+      final dirPath = await getGpxDirectoryPath();
+      final dir = Directory(dirPath);
+      if (await dir.exists()) {
+        await for (final entity
+            in dir.list(recursive: false, followLinks: false)) {
+          if (entity is File && entity.path.endsWith('.image.jpg')) {
+            totalBytes += await entity.length();
+          }
+        }
+      }
+
+      // 2. Cache gambar network (MountainImageCacheManager)
+      try {
+        final tempDir = await getTemporaryDirectory();
+        final cacheDir = Directory('${tempDir.path}/mountain_image_cache');
+        if (await cacheDir.exists()) {
+          await for (final entity
+              in cacheDir.list(recursive: true, followLinks: false)) {
+            if (entity is File) {
+              totalBytes += await entity.length();
+            }
+          }
+        }
+      } catch (_) {}
+
+      return totalBytes;
+    } catch (e) {
+      debugPrint('Error calculating total images size: $e');
+      return totalBytes;
     }
   }
 

@@ -2,32 +2,39 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 
-/// Container utama untuk menampilkan ringkasan penyimpanan offline (GPX & Peta)
+/// Container utama untuk menampilkan ringkasan penyimpanan offline (GPX, Peta & Gambar)
 class OfflineStorageBar extends StatelessWidget {
   final int gpxBytes;
   final int mapBytes;
+  final int imageBytes;
   final int? availableBytes;
   final Color gpxColor;
   final Color mapColor;
+  final Color imageColor;
   final Color availableColor;
 
   const OfflineStorageBar({
     super.key,
     required this.gpxBytes,
     required this.mapBytes,
+    this.imageBytes = 0,
     this.availableBytes,
     this.gpxColor = const Color(0xFF2D6A4F),
     this.mapColor = const Color(0xFF1E88E5),
+    this.imageColor = const Color(0xFFD97706),
     this.availableColor = const Color(0xFFCBD5E1),
   });
 
-  int get totalBytes => gpxBytes + mapBytes;
+  int get totalBytes => gpxBytes + mapBytes + imageBytes;
 
   double get gpxPercentage =>
       totalBytes > 0 ? (gpxBytes / totalBytes) * 100 : 0.0;
 
   double get mapPercentage =>
       totalBytes > 0 ? (mapBytes / totalBytes) * 100 : 0.0;
+
+  double get imagePercentage =>
+      totalBytes > 0 ? (imageBytes / totalBytes) * 100 : 0.0;
 
   static String formatBytes(int bytes) {
     if (bytes <= 0) return '0 B';
@@ -74,22 +81,28 @@ class OfflineStorageBar extends StatelessWidget {
           OfflineStorageProgressBar(
             gpxBytes: gpxBytes,
             mapBytes: mapBytes,
+            imageBytes: imageBytes,
             availableBytes: availableBytes,
             gpxPercentage: gpxPercentage,
             mapPercentage: mapPercentage,
+            imagePercentage: imagePercentage,
             gpxColor: gpxColor,
             mapColor: mapColor,
+            imageColor: imageColor,
             availableColor: availableColor,
           ),
           const SizedBox(height: 10),
           OfflineStorageLegend(
             gpxBytes: gpxBytes,
             mapBytes: mapBytes,
+            imageBytes: imageBytes,
             availableBytes: availableBytes,
             gpxPercentage: gpxPercentage,
             mapPercentage: mapPercentage,
+            imagePercentage: imagePercentage,
             gpxColor: gpxColor,
             mapColor: mapColor,
+            imageColor: imageColor,
             availableColor: availableColor,
           ),
         ],
@@ -142,18 +155,6 @@ class OfflineStorageHeader extends StatelessWidget {
                 color: AppTheme.primary,
               ),
             ),
-            if (availableFormatted != null) ...[
-              const SizedBox(width: 6),
-              Text(
-                '• Sisa $availableFormatted',
-                style: TextStyle(
-                  fontFamily: 'Plus Jakarta Sans',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.onSurfaceVariant.withValues(alpha: 0.8),
-                ),
-              ),
-            ],
           ],
         ),
       ],
@@ -161,30 +162,36 @@ class OfflineStorageHeader extends StatelessWidget {
   }
 }
 
-/// Horizontal progress bar bersegmen proporsional untuk GPX, Peta, dan Ruang Tersedia
+/// Horizontal progress bar bersegmen proporsional untuk GPX, Peta, Gambar, dan Ruang Available
 class OfflineStorageProgressBar extends StatelessWidget {
   final int gpxBytes;
   final int mapBytes;
+  final int imageBytes;
   final int? availableBytes;
   final double gpxPercentage;
   final double mapPercentage;
+  final double imagePercentage;
   final Color gpxColor;
   final Color mapColor;
+  final Color imageColor;
   final Color availableColor;
 
   const OfflineStorageProgressBar({
     super.key,
     required this.gpxBytes,
     required this.mapBytes,
+    this.imageBytes = 0,
     required this.gpxPercentage,
     required this.mapPercentage,
+    this.imagePercentage = 0.0,
     this.availableBytes,
     this.gpxColor = const Color(0xFF2D6A4F),
     this.mapColor = const Color(0xFF1E88E5),
+    this.imageColor = const Color(0xFFD97706),
     this.availableColor = const Color(0xFFCBD5E1),
   });
 
-  int get totalBytes => gpxBytes + mapBytes;
+  int get totalBytes => gpxBytes + mapBytes + imageBytes;
 
   @override
   Widget build(BuildContext context) {
@@ -203,14 +210,17 @@ class OfflineStorageProgressBar extends StatelessWidget {
     }
 
     if (hasAvailable) {
-      final totalAll = gpxBytes + mapBytes + availableBytes!;
+      final totalAll = gpxBytes + mapBytes + imageBytes + availableBytes!;
       final int gpxFlex = gpxBytes > 0
           ? math.max(10, ((gpxBytes / totalAll) * 1000).round())
           : 0;
       final int mapFlex = mapBytes > 0
           ? math.max(20, ((mapBytes / totalAll) * 1000).round())
           : 0;
-      final int availableFlex = 1000 - gpxFlex - mapFlex;
+      final int imageFlex = imageBytes > 0
+          ? math.max(10, ((imageBytes / totalAll) * 1000).round())
+          : 0;
+      final int availableFlex = 1000 - gpxFlex - mapFlex - imageFlex;
 
       return ClipRRect(
         borderRadius: BorderRadius.circular(6),
@@ -225,14 +235,22 @@ class OfflineStorageProgressBar extends StatelessWidget {
                   flex: gpxFlex,
                   child: Container(color: gpxColor),
                 ),
-              if (gpxBytes > 0 && (mapBytes > 0 || hasAvailable))
+              if (gpxBytes > 0 &&
+                  (mapBytes > 0 || imageBytes > 0 || hasAvailable))
                 const SizedBox(width: 2),
               if (mapBytes > 0)
                 Expanded(
                   flex: mapFlex,
                   child: Container(color: mapColor),
                 ),
-              if (mapBytes > 0 && hasAvailable) const SizedBox(width: 2),
+              if (mapBytes > 0 && (imageBytes > 0 || hasAvailable))
+                const SizedBox(width: 2),
+              if (imageBytes > 0)
+                Expanded(
+                  flex: imageFlex,
+                  child: Container(color: imageColor),
+                ),
+              if (imageBytes > 0 && hasAvailable) const SizedBox(width: 2),
               if (hasAvailable)
                 Expanded(
                   flex: availableFlex,
@@ -259,11 +277,18 @@ class OfflineStorageProgressBar extends StatelessWidget {
                       flex: (gpxPercentage * 10).round().clamp(1, 1000),
                       child: Container(color: gpxColor),
                     ),
-                  if (gpxBytes > 0 && mapBytes > 0) const SizedBox(width: 2),
+                  if (gpxBytes > 0 && (mapBytes > 0 || imageBytes > 0))
+                    const SizedBox(width: 2),
                   if (mapBytes > 0)
                     Expanded(
                       flex: (mapPercentage * 10).round().clamp(1, 1000),
                       child: Container(color: mapColor),
+                    ),
+                  if (mapBytes > 0 && imageBytes > 0) const SizedBox(width: 2),
+                  if (imageBytes > 0)
+                    Expanded(
+                      flex: (imagePercentage * 10).round().clamp(1, 1000),
+                      child: Container(color: imageColor),
                     ),
                 ],
               ),
@@ -272,30 +297,36 @@ class OfflineStorageProgressBar extends StatelessWidget {
   }
 }
 
-/// Bagian keterangan legenda (persentase & ukuran) untuk GPX dan Peta
+/// Bagian keterangan legenda (persentase & ukuran) untuk GPX, Peta, dan Gambar
 class OfflineStorageLegend extends StatelessWidget {
   final int gpxBytes;
   final int mapBytes;
+  final int imageBytes;
   final int? availableBytes;
   final double gpxPercentage;
   final double mapPercentage;
+  final double imagePercentage;
   final Color gpxColor;
   final Color mapColor;
+  final Color imageColor;
   final Color availableColor;
 
   const OfflineStorageLegend({
     super.key,
     required this.gpxBytes,
     required this.mapBytes,
+    this.imageBytes = 0,
     required this.gpxPercentage,
     required this.mapPercentage,
+    this.imagePercentage = 0.0,
     this.availableBytes,
     this.gpxColor = const Color(0xFF2D6A4F),
     this.mapColor = const Color(0xFF1E88E5),
+    this.imageColor = const Color(0xFFD97706),
     this.availableColor = const Color(0xFFCBD5E1),
   });
 
-  int get totalBytes => gpxBytes + mapBytes;
+  int get totalBytes => gpxBytes + mapBytes + imageBytes;
 
   @override
   Widget build(BuildContext context) {
@@ -316,7 +347,7 @@ class OfflineStorageLegend extends StatelessWidget {
           if (availableBytes != null)
             OfflineStorageLegendItem(
               color: availableColor,
-              label: 'Tersedia',
+              label: 'Available',
               bytes: availableBytes!,
             ),
         ],
@@ -324,7 +355,7 @@ class OfflineStorageLegend extends StatelessWidget {
     }
 
     return Wrap(
-      spacing: 8,
+      spacing: 12,
       runSpacing: 4,
       children: [
         OfflineStorageLegendItem(
@@ -339,11 +370,17 @@ class OfflineStorageLegend extends StatelessWidget {
           bytes: mapBytes,
           percentage: mapPercentage,
         ),
+        OfflineStorageLegendItem(
+          color: imageColor,
+          label: 'Images',
+          bytes: imageBytes,
+          percentage: imagePercentage,
+        ),
 
         if (availableBytes != null)
           OfflineStorageLegendItem(
             color: availableColor,
-            label: 'Tersedia',
+            label: 'Available',
             bytes: availableBytes!,
             percentage: 0,
           ),

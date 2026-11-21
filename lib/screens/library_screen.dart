@@ -36,6 +36,7 @@ class LibraryScreenState extends State<LibraryScreen> {
   bool _isLoading = true;
   int _gpxBytes = 0;
   int _mapBytes = 0;
+  int _imageBytes = 0;
   int? _availableBytes;
   String _viewMode = ViewPreferenceService.libraryViewModeCached;
 
@@ -106,16 +107,19 @@ class LibraryScreenState extends State<LibraryScreen> {
     try {
       final gpxFuture = GpxStorageService.getTotalGpxSizeBytes();
       final mapFuture = OfflineMapService.getTotalOfflineMapsSizeBytes();
+      final imageFuture = GpxStorageService.getTotalImagesSizeBytes();
       final diskFuture = StorageInfoService.getAvailableDiskSpaceBytes();
 
       final gpxBytes = await gpxFuture;
       final mapBytes = await mapFuture;
+      final imageBytes = await imageFuture;
       final availableBytes = await diskFuture;
 
       if (mounted) {
         setState(() {
           _gpxBytes = gpxBytes;
           _mapBytes = mapBytes;
+          _imageBytes = imageBytes;
           _availableBytes = availableBytes;
         });
       }
@@ -385,137 +389,175 @@ class LibraryScreenState extends State<LibraryScreen> {
             await _loadStorageMetrics();
           },
           color: AppTheme.primary,
-          child: SingleChildScrollView(
+          child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 12.0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const OfflineStorageNotice(),
-                const SizedBox(height: 12),
-                // 1. Search Bar (tanpa filter provinsi)
-                HomeSearchBar(
-                  controller: _searchController,
-                  focusNode: _searchFocusNode,
-                  hintText: 'Cari gunung di library...',
-                  onChanged: (_) => setState(() {}),
-                  onSubmitted: (_) => setState(() {}),
-                  onClear: () {
-                    _searchController.clear();
-                    setState(() {});
-                  },
-                ),
-                const SizedBox(height: 12),
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 0),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const OfflineStorageNotice(),
+                      const SizedBox(height: 12),
+                      // 1. Search Bar (tanpa filter provinsi)
+                      HomeSearchBar(
+                        controller: _searchController,
+                        focusNode: _searchFocusNode,
+                        hintText: 'Cari gunung di library...',
+                        onChanged: (_) => setState(() {}),
+                        onSubmitted: (_) => setState(() {}),
+                        onClear: () {
+                          _searchController.clear();
+                          setState(() {});
+                        },
+                      ),
+                      const SizedBox(height: 12),
 
-                // 2.1 Indikator ukuran penyimpanan offline (GPX & Map)
-                OfflineStorageBar(
-                  gpxBytes: _gpxBytes,
-                  mapBytes: _mapBytes,
-                  availableBytes: _availableBytes,
+                      // 2.1 Indikator ukuran penyimpanan offline (GPX, Map & Images)
+                      OfflineStorageBar(
+                        gpxBytes: _gpxBytes,
+                        mapBytes: _mapBytes,
+                        imageBytes: _imageBytes,
+                        availableBytes: _availableBytes,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
+              ),
 
-                // 3. Mountain card seperti home
-                if (_isLoading)
-                  const Center(
+              // 3. Mountain card seperti home
+              if (_isLoading)
+                const SliverToBoxAdapter(
+                  child: Center(
                     child: Padding(
                       padding: EdgeInsets.all(40.0),
                       child: CircularProgressIndicator(color: AppTheme.primary),
                     ),
-                  )
-                else if (_downloadedMountains.isEmpty)
-                  EmptyMountainView(
-                    icon: Icons.folder_open_rounded,
-                    title: 'Belum Ada Gunung Tersimpan',
-                    message:
-                        'Data offline gunung yang telah Anda unduh akan muncul di sini untuk diakses tanpa koneksi internet.',
-                    action: ElevatedButton.icon(
-                      onPressed: () {
-                        if (widget.onExploreTap != null) {
-                          widget.onExploreTap!();
-                        } else if (Navigator.of(context).canPop()) {
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        foregroundColor: AppTheme.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      icon: const Icon(Icons.explore_rounded, size: 18),
-                      label: const Text('Jelajahi Gunung'),
-                    ),
-                  )
-                else if (filtered.isEmpty)
-                  EmptyMountainView(
-                    title: 'Gunung Tidak Ditemukan',
-                    message: 'Tidak ada gunung di library offline.',
-                    action: ElevatedButton.icon(
-                      onPressed: () {
-                        if (widget.onExploreTap != null) {
-                          widget.onExploreTap!();
-                        } else if (Navigator.of(context).canPop()) {
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        foregroundColor: AppTheme.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      icon: const Icon(Icons.explore_rounded, size: 18),
-                      label: const Text('Jelajahi Gunung'),
-                    ),
-                  )
-                else ...[
-                  _buildSectionHeader(filtered.length),
-                  const SizedBox(height: 12),
-                  for (final mountain in filtered) ...[
-                    if (_viewMode == ViewPreferenceService.viewModeCompact)
-                      MountainCardCompact(
-                        mountain: mountain,
-                        onDetailTap: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => DetailScreen(mountain: mountain),
-                            ),
-                          );
-                          _loadDownloadedMountains();
+                  ),
+                )
+              else if (_downloadedMountains.isEmpty)
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  sliver: SliverToBoxAdapter(
+                    child: EmptyMountainView(
+                      icon: Icons.folder_open_rounded,
+                      title: 'Belum Ada Gunung Tersimpan',
+                      message:
+                          'Data offline gunung yang telah Anda unduh akan muncul di sini untuk diakses tanpa koneksi internet.',
+                      action: ElevatedButton.icon(
+                        onPressed: () {
+                          if (widget.onExploreTap != null) {
+                            widget.onExploreTap!();
+                          } else if (Navigator.of(context).canPop()) {
+                            Navigator.of(context).pop();
+                          }
                         },
-                        onDownloaded: _loadDownloadedMountains,
-                        onDeleteTap: () => _showDeleteDialog(mountain),
-                      )
-                    else
-                      MountainCard(
-                        mountain: mountain,
-                        onDetailTap: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => DetailScreen(mountain: mountain),
-                            ),
-                          );
-                          _loadDownloadedMountains();
-                        },
-                        onDownloaded: _loadDownloadedMountains,
-                        onDeleteTap: () => _showDeleteDialog(mountain),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: AppTheme.onPrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.explore_rounded, size: 18),
+                        label: const Text('Jelajahi Gunung'),
                       ),
-                    SizedBox(
+                    ),
+                  ),
+                )
+              else if (filtered.isEmpty)
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  sliver: SliverToBoxAdapter(
+                    child: EmptyMountainView(
+                      title: 'Gunung Tidak Ditemukan',
+                      message: 'Tidak ada gunung di library offline.',
+                      action: ElevatedButton.icon(
+                        onPressed: () {
+                          if (widget.onExploreTap != null) {
+                            widget.onExploreTap!();
+                          } else if (Navigator.of(context).canPop()) {
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: AppTheme.onPrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.explore_rounded, size: 18),
+                        label: const Text('Jelajahi Gunung'),
+                      ),
+                    ),
+                  ),
+                )
+              else ...[
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader(filtered.length),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  sliver: SliverList.separated(
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      final mountain = filtered[index];
+                      if (_viewMode == ViewPreferenceService.viewModeCompact) {
+                        return MountainCardCompact(
+                          mountain: mountain,
+                          onDetailTap: () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    DetailScreen(mountain: mountain),
+                              ),
+                            );
+                            _loadDownloadedMountains();
+                          },
+                          onDownloaded: _loadDownloadedMountains,
+                          onDeleteTap: () => _showDeleteDialog(mountain),
+                        );
+                      } else {
+                        return MountainCard(
+                          mountain: mountain,
+                          onDetailTap: () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    DetailScreen(mountain: mountain),
+                              ),
+                            );
+                            _loadDownloadedMountains();
+                          },
+                          onDownloaded: _loadDownloadedMountains,
+                          onDeleteTap: () => _showDeleteDialog(mountain),
+                        );
+                      }
+                    },
+                    separatorBuilder: (context, index) => SizedBox(
                       height: _viewMode == ViewPreferenceService.viewModeCompact
                           ? 10
                           : 16,
                     ),
-                  ],
-                ],
-                const SizedBox(height: 96),
+                  ),
+                ),
               ],
-            ),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 96),
+              ),
+            ],
           ),
         ),
       ),

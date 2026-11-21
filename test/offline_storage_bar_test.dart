@@ -49,6 +49,37 @@ void main() {
       // Verify legend contains GPX and Map with their sizes
       expect(find.textContaining('GPX:'), findsOneWidget);
       expect(find.textContaining('Map:'), findsOneWidget);
+      expect(find.textContaining('Images:'), findsOneWidget);
+    });
+
+    testWidgets(
+        'renders horizontal bar with GPX, Map, and Images percentages and sizes',
+        (WidgetTester tester) async {
+      const gpx = 500 * 1024;
+      const map = 9000 * 1024;
+      const images = 500 * 1024;
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: OfflineStorageBar(
+              gpxBytes: gpx,
+              mapBytes: map,
+              imageBytes: images,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Penyimpanan Offline'), findsOneWidget);
+      expect(
+        find.text(OfflineStorageBar.formatBytes(gpx + map + images)),
+        findsOneWidget,
+      );
+
+      expect(find.textContaining('GPX:'), findsOneWidget);
+      expect(find.textContaining('Map:'), findsOneWidget);
+      expect(find.textContaining('Images:'), findsOneWidget);
     });
 
     testWidgets('renders available storage in header and legend when provided',

@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:mendaki/core/services/download_service.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
+import 'package:mendaki/core/services/image_cache_manager.dart';
 import 'package:mendaki/core/services/offline_map_service.dart';
 import 'package:mendaki/core/services/supabase_service.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
@@ -225,10 +227,14 @@ class _MountainCardCompactState extends State<MountainCardCompact> {
                               )
                             else if (mountain.imageUrl != null &&
                                 mountain.imageUrl!.isNotEmpty)
-                              Image.network(
-                                mountain.imageUrl!,
+                              CachedNetworkImage(
+                                cacheManager:
+                                    MountainImageCacheManager.instance,
+                                imageUrl: mountain.imageUrl!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
+                                placeholder: (context, url) =>
+                                    _buildPlaceholder(),
+                                errorWidget: (context, url, error) =>
                                     _buildPlaceholder(),
                               )
                             else
