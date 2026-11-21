@@ -127,7 +127,10 @@ class _FeedbackModalState extends State<FeedbackModal> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+        borderSide: BorderSide(
+          color: AppTheme.primary.withValues(alpha: 0.5),
+          width: 1,
+        ),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -135,7 +138,7 @@ class _FeedbackModalState extends State<FeedbackModal> {
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppTheme.error, width: 1.5),
+        borderSide: const BorderSide(color: AppTheme.error, width: 1),
       ),
     );
   }

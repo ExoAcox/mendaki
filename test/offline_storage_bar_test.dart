@@ -51,6 +51,37 @@ void main() {
       expect(find.textContaining('Map:'), findsOneWidget);
     });
 
+    testWidgets('renders available storage in header and legend when provided',
+        (WidgetTester tester) async {
+      const gpx = 500 * 1024;
+      const map = 9500 * 1024;
+      const available = 50 * 1024 * 1024 * 1024; // 50 GB
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: OfflineStorageBar(
+              gpxBytes: gpx,
+              mapBytes: map,
+              availableBytes: available,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.textContaining('Sisa 50.0 GB'), findsOneWidget);
+      expect(find.textContaining('Tersedia: 50.0 GB'), findsOneWidget);
+
+      // Verify that the progress bar contains 3 segments (Expanded widgets for GPX, Map, and Tersedia)
+      final progressBarFinder = find.byType(OfflineStorageProgressBar);
+      expect(progressBarFinder, findsOneWidget);
+      final expandedWidgets = find.descendant(
+        of: progressBarFinder,
+        matching: find.byType(Expanded),
+      );
+      expect(expandedWidgets, findsNWidgets(3));
+    });
+
     test('formatBytes formats different byte sizes correctly', () {
       expect(OfflineStorageBar.formatBytes(0), '0 B');
       expect(OfflineStorageBar.formatBytes(512), '512 B');

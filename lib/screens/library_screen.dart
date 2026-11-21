@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
 import 'package:mendaki/core/services/offline_map_service.dart';
+import 'package:mendaki/core/services/storage_info_service.dart';
 import 'package:mendaki/core/services/view_preference_service.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/models/mountain.dart';
@@ -12,6 +13,7 @@ import 'package:mendaki/widgets/home/home_search_bar.dart';
 import 'package:mendaki/widgets/home/mountain_card.dart';
 import 'package:mendaki/widgets/home/mountain_card_compact.dart';
 import 'package:mendaki/widgets/home/offline_storage_bar.dart';
+import 'package:mendaki/widgets/home/view_mode_toggle.dart';
 
 class LibraryScreen extends StatefulWidget {
   final bool showBackButton;
@@ -34,6 +36,7 @@ class LibraryScreenState extends State<LibraryScreen> {
   bool _isLoading = true;
   int _gpxBytes = 0;
   int _mapBytes = 0;
+  int? _availableBytes;
   String _viewMode = ViewPreferenceService.libraryViewModeCached;
 
   void refreshDownloadedMountains() {
@@ -78,6 +81,7 @@ class LibraryScreenState extends State<LibraryScreen> {
       );
       final gpxBytes = await GpxStorageService.getTotalGpxSizeBytes();
       final mapBytes = await OfflineMapService.getTotalOfflineMapsSizeBytes();
+      final availableBytes = await StorageInfoService.getAvailableDiskSpaceBytes();
 
       if (mounted) {
         setState(() {
@@ -87,6 +91,7 @@ class LibraryScreenState extends State<LibraryScreen> {
               .toList();
           _gpxBytes = gpxBytes;
           _mapBytes = mapBytes;
+          _availableBytes = availableBytes;
           _isLoading = false;
         });
       }
@@ -384,7 +389,11 @@ class LibraryScreenState extends State<LibraryScreen> {
                 const SizedBox(height: 12),
 
                 // 2.1 Indikator ukuran penyimpanan offline (GPX & Map)
-                OfflineStorageBar(gpxBytes: _gpxBytes, mapBytes: _mapBytes),
+                OfflineStorageBar(
+                  gpxBytes: _gpxBytes,
+                  mapBytes: _mapBytes,
+                  availableBytes: _availableBytes,
+                ),
                 const SizedBox(height: 16),
 
                 // 3. Mountain card seperti home
@@ -505,92 +514,16 @@ class LibraryScreenState extends State<LibraryScreen> {
             letterSpacing: -0.2,
           ),
         ),
-        Container(
-          height: 34,
-          padding: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppTheme.outlineVariant.withValues(alpha: 0.5),
-              width: 0.8,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildViewModeToggleItem(
-                label: 'Detail',
-                icon: Icons.web,
-                isSelected: _viewMode == ViewPreferenceService.viewModeDetail,
-                onTap: () {
-                  if (_viewMode != ViewPreferenceService.viewModeDetail) {
-                    setState(() {
-                      _viewMode = ViewPreferenceService.viewModeDetail;
-                    });
-                    ViewPreferenceService.setLibraryViewMode(
-                      ViewPreferenceService.viewModeDetail,
-                    );
-                  }
-                },
-              ),
-              _buildViewModeToggleItem(
-                label: 'Simple',
-                icon: Icons.format_list_bulleted,
-                isSelected: _viewMode == ViewPreferenceService.viewModeCompact,
-                onTap: () {
-                  if (_viewMode != ViewPreferenceService.viewModeCompact) {
-                    setState(() {
-                      _viewMode = ViewPreferenceService.viewModeCompact;
-                    });
-                    ViewPreferenceService.setLibraryViewMode(
-                      ViewPreferenceService.viewModeCompact,
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
+        ViewModeToggle(
+          currentMode: _viewMode,
+          onModeChanged: (newMode) {
+            setState(() {
+              _viewMode = newMode;
+            });
+            ViewPreferenceService.setLibraryViewMode(newMode);
+          },
         ),
       ],
-    );
-  }
-
-  Widget _buildViewModeToggleItem({
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      key: Key('toggle_mode_${label.toLowerCase()}'),
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeInOut,
-        width: 32,
-        height: 28,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ]
-              : null,
-        ),
-        child: Icon(
-          icon,
-          size: 16,
-          color: isSelected ? AppTheme.primary : AppTheme.outline,
-        ),
-      ),
     );
   }
 }

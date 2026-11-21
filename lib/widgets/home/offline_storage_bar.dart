@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 
@@ -5,15 +6,19 @@ import 'package:mendaki/core/theme/app_theme.dart';
 class OfflineStorageBar extends StatelessWidget {
   final int gpxBytes;
   final int mapBytes;
+  final int? availableBytes;
   final Color gpxColor;
   final Color mapColor;
+  final Color availableColor;
 
   const OfflineStorageBar({
     super.key,
     required this.gpxBytes,
     required this.mapBytes,
+    this.availableBytes,
     this.gpxColor = const Color(0xFF2D6A4F),
     this.mapColor = const Color(0xFF1E88E5),
+    this.availableColor = const Color(0xFFCBD5E1),
   });
 
   int get totalBytes => gpxBytes + mapBytes;
@@ -59,24 +64,33 @@ class OfflineStorageBar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          OfflineStorageHeader(totalFormatted: formatBytes(totalBytes)),
+          OfflineStorageHeader(
+            totalFormatted: formatBytes(totalBytes),
+            availableFormatted: availableBytes != null
+                ? formatBytes(availableBytes!)
+                : null,
+          ),
           const SizedBox(height: 10),
           OfflineStorageProgressBar(
             gpxBytes: gpxBytes,
             mapBytes: mapBytes,
+            availableBytes: availableBytes,
             gpxPercentage: gpxPercentage,
             mapPercentage: mapPercentage,
             gpxColor: gpxColor,
             mapColor: mapColor,
+            availableColor: availableColor,
           ),
           const SizedBox(height: 10),
           OfflineStorageLegend(
             gpxBytes: gpxBytes,
             mapBytes: mapBytes,
+            availableBytes: availableBytes,
             gpxPercentage: gpxPercentage,
             mapPercentage: mapPercentage,
             gpxColor: gpxColor,
             mapColor: mapColor,
+            availableColor: availableColor,
           ),
         ],
       ),
@@ -87,13 +101,19 @@ class OfflineStorageBar extends StatelessWidget {
 /// Header baris judul dan ukuran total penyimpanan offline
 class OfflineStorageHeader extends StatelessWidget {
   final String totalFormatted;
+  final String? availableFormatted;
 
-  const OfflineStorageHeader({super.key, required this.totalFormatted});
+  const OfflineStorageHeader({
+    super.key,
+    required this.totalFormatted,
+    this.availableFormatted,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const Row(
           children: [
@@ -124,14 +144,16 @@ class OfflineStorageHeader extends StatelessWidget {
   }
 }
 
-/// Horizontal progress bar bersegmen proporsional untuk GPX dan Peta
+/// Horizontal progress bar bersegmen proporsional untuk GPX, Peta, dan Ruang Tersedia
 class OfflineStorageProgressBar extends StatelessWidget {
   final int gpxBytes;
   final int mapBytes;
+  final int? availableBytes;
   final double gpxPercentage;
   final double mapPercentage;
   final Color gpxColor;
   final Color mapColor;
+  final Color availableColor;
 
   const OfflineStorageProgressBar({
     super.key,
@@ -139,14 +161,72 @@ class OfflineStorageProgressBar extends StatelessWidget {
     required this.mapBytes,
     required this.gpxPercentage,
     required this.mapPercentage,
+    this.availableBytes,
     this.gpxColor = const Color(0xFF2D6A4F),
     this.mapColor = const Color(0xFF1E88E5),
+    this.availableColor = const Color(0xFFCBD5E1),
   });
 
   int get totalBytes => gpxBytes + mapBytes;
 
   @override
   Widget build(BuildContext context) {
+    final hasOffline = totalBytes > 0;
+    final hasAvailable = availableBytes != null && availableBytes! > 0;
+
+    if (!hasOffline && !hasAvailable) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          height: 8,
+          width: double.infinity,
+          color: AppTheme.surfaceContainer,
+        ),
+      );
+    }
+
+    if (hasAvailable) {
+      final totalAll = gpxBytes + mapBytes + availableBytes!;
+      final int gpxFlex = gpxBytes > 0
+          ? math.max(10, ((gpxBytes / totalAll) * 1000).round())
+          : 0;
+      final int mapFlex = mapBytes > 0
+          ? math.max(20, ((mapBytes / totalAll) * 1000).round())
+          : 0;
+      final int availableFlex = 1000 - gpxFlex - mapFlex;
+
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          height: 8,
+          width: double.infinity,
+          color: AppTheme.surfaceContainer,
+          child: Row(
+            children: [
+              if (gpxBytes > 0)
+                Expanded(
+                  flex: gpxFlex,
+                  child: Container(color: gpxColor),
+                ),
+              if (gpxBytes > 0 && (mapBytes > 0 || hasAvailable))
+                const SizedBox(width: 2),
+              if (mapBytes > 0)
+                Expanded(
+                  flex: mapFlex,
+                  child: Container(color: mapColor),
+                ),
+              if (mapBytes > 0 && hasAvailable) const SizedBox(width: 2),
+              if (hasAvailable)
+                Expanded(
+                  flex: availableFlex,
+                  child: Container(color: availableColor),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(6),
       child: Container(
@@ -179,10 +259,12 @@ class OfflineStorageProgressBar extends StatelessWidget {
 class OfflineStorageLegend extends StatelessWidget {
   final int gpxBytes;
   final int mapBytes;
+  final int? availableBytes;
   final double gpxPercentage;
   final double mapPercentage;
   final Color gpxColor;
   final Color mapColor;
+  final Color availableColor;
 
   const OfflineStorageLegend({
     super.key,
@@ -190,8 +272,10 @@ class OfflineStorageLegend extends StatelessWidget {
     required this.mapBytes,
     required this.gpxPercentage,
     required this.mapPercentage,
+    this.availableBytes,
     this.gpxColor = const Color(0xFF2D6A4F),
     this.mapColor = const Color(0xFF1E88E5),
+    this.availableColor = const Color(0xFFCBD5E1),
   });
 
   int get totalBytes => gpxBytes + mapBytes;
@@ -199,18 +283,32 @@ class OfflineStorageLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (totalBytes == 0) {
-      return const Text(
-        'Belum ada data yang tersimpan secara offline.',
-        style: TextStyle(
-          fontSize: 11,
-          color: AppTheme.outline,
-          fontWeight: FontWeight.w500,
-        ),
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Expanded(
+            child: Text(
+              'Belum ada data yang tersimpan secara offline.',
+              style: TextStyle(
+                fontSize: 11,
+                color: AppTheme.outline,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          if (availableBytes != null)
+            OfflineStorageLegendItem(
+              color: availableColor,
+              label: 'Available',
+              bytes: availableBytes!,
+            ),
+        ],
       );
     }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
       children: [
         OfflineStorageLegendItem(
           color: gpxColor,
@@ -224,6 +322,14 @@ class OfflineStorageLegend extends StatelessWidget {
           bytes: mapBytes,
           percentage: mapPercentage,
         ),
+
+        if (availableBytes != null)
+          OfflineStorageLegendItem(
+            color: availableColor,
+            label: 'Available',
+            bytes: availableBytes!,
+            percentage: 0,
+          ),
       ],
     );
   }
@@ -234,14 +340,14 @@ class OfflineStorageLegendItem extends StatelessWidget {
   final Color color;
   final String label;
   final int bytes;
-  final double percentage;
+  final double? percentage;
 
   const OfflineStorageLegendItem({
     super.key,
     required this.color,
     required this.label,
     required this.bytes,
-    required this.percentage,
+    this.percentage,
   });
 
   @override

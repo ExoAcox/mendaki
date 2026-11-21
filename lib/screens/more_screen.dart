@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mendaki/core/config/app_config.dart';
@@ -34,29 +36,88 @@ class MoreScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      body: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. App Header Info Card
-              _buildAppHeaderCard(),
-              const SizedBox(height: 8),
+      body: Stack(
+        children: [
+          // Main scrollable content
+          SafeArea(
+            bottom: false,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. App Header Info Card
+                  _buildAppHeaderCard(),
+                  const SizedBox(height: 8),
 
-              // 3. GitHub Card
-              _buildGitHubCard(context),
-              const SizedBox(height: 16),
+                  // 2. GitHub Card
+                  _buildGitHubCard(context),
+                  const SizedBox(height: 16),
 
-              // 5. Feedback Card
-              _buildFeedbackCard(context),
-              const SizedBox(height: 16),
+                  // 3. Feedback Card
+                  _buildFeedbackCard(context),
+                  const SizedBox(height: 16),
 
-              // 6. Data & Atribusi Card
-              _buildAttributionCard(),
-            ],
+                  // 4. Data & Atribusi Card
+                  _buildAttributionCard(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCard({
+    required Widget child,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(18),
+    BorderRadius? borderRadius,
+  }) {
+    final radius = borderRadius ?? BorderRadius.circular(22);
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: AppTheme.primary.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: radius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withValues(alpha: 0.88),
+                  Colors.white.withValues(alpha: 0.65),
+                  Colors.white.withValues(alpha: 0.78),
+                ],
+                stops: const [0.0, 0.5, 1.0],
+              ),
+              borderRadius: radius,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.8),
+                width: 1.2,
+              ),
+            ),
+            padding: padding,
+            child: child,
           ),
         ),
       ),
@@ -67,20 +128,6 @@ class MoreScreen extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-      // decoration: BoxDecoration(
-      //   // color: Colors.white,
-      //   borderRadius: BorderRadius.circular(16),
-      //   border: Border.all(
-      //     color: AppTheme.outlineVariant.withValues(alpha: 0.35),
-      //   ),
-      //   boxShadow: [
-      //     BoxShadow(
-      //       color: Colors.black.withValues(alpha: 0.04),
-      //       blurRadius: 10,
-      //       offset: const Offset(0, 3),
-      //     ),
-      //   ],
-      // ),
       child: Column(
         children: [
           ClipRRect(
@@ -139,30 +186,18 @@ class MoreScreen extends StatelessWidget {
   }
 
   Widget _buildGitHubCard(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.outlineVariant.withValues(alpha: 0.35),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+    return _buildCard(
+      padding: EdgeInsets.zero,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           key: const Key('more_github_card'),
           onTap: () => _launchGitHub(context),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(22),
           splashColor: AppTheme.primary.withValues(alpha: 0.08),
+          highlightColor: AppTheme.primary.withValues(alpha: 0.04),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -172,8 +207,19 @@ class MoreScreen extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.1),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppTheme.primary.withValues(alpha: 0.16),
+                            AppTheme.primary.withValues(alpha: 0.06),
+                          ],
+                        ),
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          width: 1.2,
+                        ),
                       ),
                       child: const Center(
                         child: Icon(
@@ -197,6 +243,7 @@ class MoreScreen extends StatelessWidget {
                               fontFamily: 'Plus Jakarta Sans',
                             ),
                           ),
+                          SizedBox(height: 2),
                           Text(
                             'Kontribusi langsung ke Mendaki',
                             style: TextStyle(
@@ -207,10 +254,21 @@ class MoreScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const Icon(
-                      Icons.open_in_new_rounded,
-                      size: 18,
-                      color: AppTheme.outline,
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.6),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.open_in_new_rounded,
+                        size: 16,
+                        color: AppTheme.outline,
+                      ),
                     ),
                   ],
                 ),
@@ -223,15 +281,24 @@ class MoreScreen extends StatelessWidget {
                     height: 1.45,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+                    horizontal: 12,
+                    vertical: 7,
                   ),
                   decoration: BoxDecoration(
-                    color: AppTheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(8),
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.primary.withValues(alpha: 0.10),
+                        AppTheme.primary.withValues(alpha: 0.04),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppTheme.primary.withValues(alpha: 0.18),
+                      width: 1,
+                    ),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
@@ -241,7 +308,7 @@ class MoreScreen extends StatelessWidget {
                         size: 15,
                         color: AppTheme.primary,
                       ),
-                      SizedBox(width: 5),
+                      SizedBox(width: 6),
                       Text(
                         'https://github.com/ExoAcox/mendaki',
                         style: TextStyle(
@@ -262,22 +329,8 @@ class MoreScreen extends StatelessWidget {
   }
 
   Widget _buildFeedbackCard(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.outlineVariant.withValues(alpha: 0.35),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
+    return _buildCard(
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -287,8 +340,19 @@ class MoreScreen extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.1),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppTheme.primary.withValues(alpha: 0.16),
+                      AppTheme.primary.withValues(alpha: 0.06),
+                    ],
+                  ),
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    width: 1.2,
+                  ),
                 ),
                 child: const Center(
                   child: Icon(
@@ -312,6 +376,7 @@ class MoreScreen extends StatelessWidget {
                         fontFamily: 'Plus Jakarta Sans',
                       ),
                     ),
+                    SizedBox(height: 2),
                     Text(
                       'Bantu kembangkan aplikasi Mendaki',
                       style: TextStyle(fontSize: 12, color: AppTheme.outline),
@@ -330,29 +395,55 @@ class MoreScreen extends StatelessWidget {
               height: 1.45,
             ),
           ),
-          const SizedBox(height: 14),
-          SizedBox(
+          const SizedBox(height: 16),
+          Container(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              key: const Key('more_feedback_button'),
-              onPressed: () =>
-                  FeedbackModal.show(context, initialType: 'request'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppTheme.primary, Color(0xFF1B4332)],
               ),
-              icon: const Icon(Icons.send_rounded, size: 16),
-              label: const Text(
-                'Kirim Masukan & Request',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13.5,
-                  fontFamily: 'Plus Jakarta Sans',
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.25),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primary.withValues(alpha: 0.30),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: const Key('more_feedback_button'),
+                onTap: () =>
+                    FeedbackModal.show(context, initialType: 'request'),
+                borderRadius: BorderRadius.circular(14),
+                splashColor: Colors.white.withValues(alpha: 0.15),
+                highlightColor: Colors.white.withValues(alpha: 0.08),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.send_rounded, size: 16, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        'Kirim Masukan & Request',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13.5,
+                          fontFamily: 'Plus Jakarta Sans',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -363,35 +454,36 @@ class MoreScreen extends StatelessWidget {
   }
 
   Widget _buildAttributionCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.outlineVariant.withValues(alpha: 0.35),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+    return _buildCard(
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(
-                Icons.info_outline_rounded,
-                size: 18,
-                color: AppTheme.primary,
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primary.withValues(alpha: 0.14),
+                      AppTheme.primary.withValues(alpha: 0.05),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    width: 1,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: AppTheme.primary,
+                ),
               ),
-              SizedBox(width: 8),
-              Text(
+              const SizedBox(width: 10),
+              const Text(
                 'Data & Atribusi',
                 style: TextStyle(
                   fontSize: 14,
@@ -402,7 +494,7 @@ class MoreScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             '• GPX Data: Astacala, Wikiloc, Gunung Bagging\n'
             '• Map Data: © OpenStreetMap contributors (ODbL)\n'

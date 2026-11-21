@@ -22,6 +22,7 @@ import 'package:mendaki/widgets/home/home_search_bar.dart';
 import 'package:mendaki/widgets/home/mountain_card.dart';
 import 'package:mendaki/widgets/home/mountain_card_compact.dart';
 import 'package:mendaki/widgets/home/version_update_dialog.dart';
+import 'package:mendaki/widgets/home/view_mode_toggle.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onOpenLibrary;
@@ -108,7 +109,10 @@ class HomeScreenState extends State<HomeScreen> {
         if (latestVersion == null || !mounted) return;
 
         // Cek apakah versi saat ini lebih rendah dari versi terbaru di database
-        if (AppVersion.isVersionBelow(AppConfig.currentVersion, latestVersion.id)) {
+        if (AppVersion.isVersionBelow(
+          AppConfig.currentVersion,
+          latestVersion.id,
+        )) {
           // Cek apakah dialog masih dalam masa tunda 7 hari sejak ditutup oleh pengguna
           final shouldShow = await VersionStateService.shouldShowUpdateDialog(
             latestVersion.id,
@@ -151,8 +155,9 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _checkDownloadedCount() async {
-    final list =
-        await GpxStorageService.getDownloadedMountains(onlyFullyReady: false);
+    final list = await GpxStorageService.getDownloadedMountains(
+      onlyFullyReady: false,
+    );
     for (final m in list) {
       GpxStorageService.setGpxDownloadedCache(m.id, m.isGpxReady);
       OfflineMapService.setOfflineMapDownloadedCache(m.id, m.isMapReady);
@@ -374,7 +379,8 @@ class HomeScreenState extends State<HomeScreen> {
                           onDownloaded: _checkDownloadedCount,
                         ),
                       SizedBox(
-                        height: _viewMode == ViewPreferenceService.viewModeCompact
+                        height:
+                            _viewMode == ViewPreferenceService.viewModeCompact
                             ? 10
                             : 16,
                       ),
@@ -472,92 +478,16 @@ class HomeScreenState extends State<HomeScreen> {
           ),
         ),
 
-        Container(
-          height: 34,
-          padding: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppTheme.outlineVariant.withValues(alpha: 0.5),
-              width: 0.8,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildViewModeToggleItem(
-                label: 'Detail',
-                icon: Icons.web,
-                isSelected: _viewMode == ViewPreferenceService.viewModeDetail,
-                onTap: () {
-                  if (_viewMode != ViewPreferenceService.viewModeDetail) {
-                    setState(() {
-                      _viewMode = ViewPreferenceService.viewModeDetail;
-                    });
-                    ViewPreferenceService.setHomeViewMode(
-                      ViewPreferenceService.viewModeDetail,
-                    );
-                  }
-                },
-              ),
-              _buildViewModeToggleItem(
-                label: 'Simple',
-                icon: Icons.format_list_bulleted,
-                isSelected: _viewMode == ViewPreferenceService.viewModeCompact,
-                onTap: () {
-                  if (_viewMode != ViewPreferenceService.viewModeCompact) {
-                    setState(() {
-                      _viewMode = ViewPreferenceService.viewModeCompact;
-                    });
-                    ViewPreferenceService.setHomeViewMode(
-                      ViewPreferenceService.viewModeCompact,
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
+        ViewModeToggle(
+          currentMode: _viewMode,
+          onModeChanged: (newMode) {
+            setState(() {
+              _viewMode = newMode;
+            });
+            ViewPreferenceService.setHomeViewMode(newMode);
+          },
         ),
       ],
-    );
-  }
-
-  Widget _buildViewModeToggleItem({
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      key: Key('toggle_mode_${label.toLowerCase()}'),
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeInOut,
-        width: 32,
-        height: 28,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ]
-              : null,
-        ),
-        child: Icon(
-          icon,
-          size: 16,
-          color: isSelected ? AppTheme.primary : AppTheme.outline,
-        ),
-      ),
     );
   }
 }
