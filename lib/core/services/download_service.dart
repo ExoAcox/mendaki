@@ -15,10 +15,16 @@ void downloadNotificationTapBackground(NotificationResponse response) {
   if (response.actionId != null) {
     if (response.actionId!.startsWith('cancel_gpx_')) {
       final mountainId = response.actionId!.replaceFirst('cancel_gpx_', '');
-      DownloadService.instance.cancelDownload(mountainId, type: DownloadType.gpx);
+      DownloadService.instance.cancelDownload(
+        mountainId,
+        type: DownloadType.gpx,
+      );
     } else if (response.actionId!.startsWith('cancel_map_')) {
       final mountainId = response.actionId!.replaceFirst('cancel_map_', '');
-      DownloadService.instance.cancelDownload(mountainId, type: DownloadType.map);
+      DownloadService.instance.cancelDownload(
+        mountainId,
+        type: DownloadType.map,
+      );
     }
   }
 }
@@ -38,8 +44,8 @@ class DownloadTask {
     this.progress = 0.0,
     this.isCancelled = false,
     this.statusText = '',
-  })  : lastNotificationTime = DateTime.fromMillisecondsSinceEpoch(0),
-        lastNotificationProgress = -1;
+  }) : lastNotificationTime = DateTime.fromMillisecondsSinceEpoch(0),
+       lastNotificationProgress = -1;
 }
 
 /// Layanan terpusat untuk mengelola unduhan terpisah antara data GPX dan Peta Offline
@@ -67,8 +73,9 @@ class DownloadService extends ChangeNotifier {
     }
 
     try {
-      const androidSettings =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidSettings = AndroidInitializationSettings(
+        '@mipmap/ic_launcher',
+      );
       const darwinSettings = DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
@@ -85,12 +92,16 @@ class DownloadService extends ChangeNotifier {
         onDidReceiveNotificationResponse: (response) {
           if (response.actionId != null) {
             if (response.actionId!.startsWith('cancel_gpx_')) {
-              final mountainId =
-                  response.actionId!.replaceFirst('cancel_gpx_', '');
+              final mountainId = response.actionId!.replaceFirst(
+                'cancel_gpx_',
+                '',
+              );
               cancelDownload(mountainId, type: DownloadType.gpx);
             } else if (response.actionId!.startsWith('cancel_map_')) {
-              final mountainId =
-                  response.actionId!.replaceFirst('cancel_map_', '');
+              final mountainId = response.actionId!.replaceFirst(
+                'cancel_map_',
+                '',
+              );
               cancelDownload(mountainId, type: DownloadType.map);
             }
           }
@@ -101,7 +112,8 @@ class DownloadService extends ChangeNotifier {
 
       final androidImpl = _notificationsPlugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (androidImpl != null) {
         await androidImpl.requestNotificationsPermission();
         const channel = AndroidNotificationChannel(
@@ -117,13 +129,10 @@ class DownloadService extends ChangeNotifier {
 
       final iosImpl = _notificationsPlugin
           .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>();
+            IOSFlutterLocalNotificationsPlugin
+          >();
       if (iosImpl != null) {
-        await iosImpl.requestPermissions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
+        await iosImpl.requestPermissions(alert: true, badge: true, sound: true);
       }
       _isInitialized = true;
     } catch (e) {
@@ -181,7 +190,7 @@ class DownloadService extends ChangeNotifier {
 
     try {
       await _showStartedNotification(task, notifId);
-      await _updateNotificationProgress(task, 'Mengunduh jalur GPX...', 0.2);
+      await _updateNotificationProgress(task, 'Mengunduh data GPX...', 0.2);
 
       if (task.isCancelled) {
         await _handleCancelled(task, notifId);
@@ -228,7 +237,7 @@ class DownloadService extends ChangeNotifier {
         mountain,
         DownloadType.gpx,
         'GPX Berhasil Diunduh',
-        'Data jalur GPX ${mountain.name} siap digunakan secara offline.',
+        'Data GPX ${mountain.name} berhasil disimpan ke device.',
         notifId,
       );
       return true;
@@ -335,8 +344,8 @@ class DownloadService extends ChangeNotifier {
       await _showCompletedNotification(
         mountain,
         DownloadType.map,
-        'Map Offline Tersimpan',
-        'Map offline ${mountain.name} siap digunakan tanpa internet.',
+        'Map Berhasil Diunduh',
+        'Map ${mountain.name} berhasil disimpan ke device.',
         notifId,
       );
       return true;
@@ -428,7 +437,7 @@ class DownloadService extends ChangeNotifier {
         final typeLabel = task.type == DownloadType.gpx ? 'GPX' : 'Map';
         final title = 'Mengunduh $typeLabel ${task.mountain.name}';
         final body = task.type == DownloadType.gpx
-            ? 'Mulai mengunduh data jalur GPX...'
+            ? 'Mulai mengunduh data GPX...'
             : 'Mulai mengunduh map offline...';
 
         const darwinDetails = DarwinNotificationDetails(

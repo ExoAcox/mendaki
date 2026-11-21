@@ -113,7 +113,9 @@ class _MountainCardCompactState extends State<MountainCardCompact> {
         }
       }
 
-      final success = await DownloadService.instance.startGpxDownload(fullMountain);
+      final success = await DownloadService.instance.startGpxDownload(
+        fullMountain,
+      );
       if (success && mounted) {
         await _checkDownloadStatus();
         widget.onDownloaded?.call();
@@ -419,13 +421,13 @@ class _MountainCardCompactState extends State<MountainCardCompact> {
                         borderRadius: BorderRadius.circular(18),
                         child: Container(
                           padding: const EdgeInsets.all(7),
-                          decoration: const BoxDecoration(
-                            color: AppTheme.primary,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
                             Icons.download_rounded,
-                            color: Colors.white,
+                            color: AppTheme.primary,
                             size: 16,
                           ),
                         ),
@@ -434,12 +436,12 @@ class _MountainCardCompactState extends State<MountainCardCompact> {
                       Container(
                         padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
-                          color: AppTheme.surfaceContainerHigh,
+                          color: AppTheme.primary,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.chevron_right_rounded,
-                          color: AppTheme.primary,
+                          color: Colors.white,
                           size: 18,
                         ),
                       ),

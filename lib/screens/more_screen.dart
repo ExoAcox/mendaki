@@ -243,7 +243,6 @@ class MoreScreen extends StatelessWidget {
                               fontFamily: 'Plus Jakarta Sans',
                             ),
                           ),
-                          SizedBox(height: 2),
                           Text(
                             'Kontribusi langsung ke Mendaki',
                             style: TextStyle(
@@ -368,7 +367,7 @@ class MoreScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Kirim Masukan & Request',
+                      'Masukan & Request',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -376,7 +375,6 @@ class MoreScreen extends StatelessWidget {
                         fontFamily: 'Plus Jakarta Sans',
                       ),
                     ),
-                    SizedBox(height: 2),
                     Text(
                       'Bantu kembangkan aplikasi Mendaki',
                       style: TextStyle(fontSize: 12, color: AppTheme.outline),
@@ -428,21 +426,16 @@ class MoreScreen extends StatelessWidget {
                 highlightColor: Colors.white.withValues(alpha: 0.08),
                 child: const Padding(
                   padding: EdgeInsets.symmetric(vertical: 14),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.send_rounded, size: 16, color: Colors.white),
-                      SizedBox(width: 8),
-                      Text(
-                        'Kirim Masukan & Request',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13.5,
-                          fontFamily: 'Plus Jakarta Sans',
-                        ),
+                  child: Center(
+                    child: Text(
+                      'Kirim Masukan & Request',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.5,
+                        fontFamily: 'Plus Jakarta Sans',
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -497,8 +490,8 @@ class MoreScreen extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             '• GPX Data: Astacala, Wikiloc, Gunung Bagging\n'
-            '• Map Data: © OpenStreetMap contributors (ODbL)\n'
-            '• Map Design: © OpenTopoMap (CC-BY-SA 3.0)',
+            '• Map Data: © OpenStreetMap contributors\n'
+            '• Map Design: © OpenTopoMap',
             style: TextStyle(
               fontSize: 12.5,
               height: 1.6,

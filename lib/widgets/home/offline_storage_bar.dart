@@ -366,7 +366,7 @@ class OfflineStorageLegend extends StatelessWidget {
         ),
         OfflineStorageLegendItem(
           color: mapColor,
-          label: 'Map',
+          label: 'Maps',
           bytes: mapBytes,
           percentage: mapPercentage,
         ),

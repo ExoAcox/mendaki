@@ -284,7 +284,7 @@ class _FeedbackModalState extends State<FeedbackModal> {
                           Row(
                             children: [
                               const Icon(
-                                Icons.feedback_outlined,
+                                Icons.rate_review_outlined,
                                 color: AppTheme.primary,
                                 size: 24,
                               ),
