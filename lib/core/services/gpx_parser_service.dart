@@ -139,6 +139,8 @@ class GpxParserService {
     }
 
     final List<HikingRoute> routes = [];
+    final Map<String, ({double distanceKm, double elevationGain})> measured =
+        {};
     double totalDistanceKm = 0.0;
     double totalElevationGain = 0.0;
     int routeCounter = 1;
@@ -206,6 +208,7 @@ class GpxParserService {
       if (existingIndex != -1) {
         final existing = routes[existingIndex];
         final ePts = existing.trackPoints;
+        final prev = measured[existing.id]!;
 
         // 1. Cek apakah ini benar-benar duplikat geometris identik (titik awal dan akhir sama)
         final isExactDuplicate = ePts.isNotEmpty &&
@@ -253,14 +256,18 @@ class GpxParserService {
         if (dTailToHead < 0.2) {
           // Menyambung di belakang (existing -> coords)
           final mergedCoords = [...ePts, ...coords];
-          final mergedDistance = existing.distanceKm + routeDistance;
-          final mergedGain = existing.elevationGainMeters + routeElevationGain.toInt();
+          final mergedDistance = prev.distanceKm + routeDistance;
+          final mergedGain = prev.elevationGain + routeElevationGain;
+          measured[existing.id] = (
+            distanceKm: mergedDistance,
+            elevationGain: mergedGain,
+          );
           routes[existingIndex] = _buildHikingRoute(
             id: existing.id,
             name: existing.name,
             trackCoords: mergedCoords,
             routeDistance: mergedDistance,
-            routeElevationGain: mergedGain.toDouble(),
+            routeElevationGain: mergedGain,
             allWaypoints: waypoints,
           );
           totalDistanceKm += routeDistance;
@@ -269,14 +276,18 @@ class GpxParserService {
         } else if (dHeadToTail < 0.2) {
           // Menyambung di depan (coords -> existing)
           final mergedCoords = [...coords, ...ePts];
-          final mergedDistance = existing.distanceKm + routeDistance;
-          final mergedGain = existing.elevationGainMeters + routeElevationGain.toInt();
+          final mergedDistance = prev.distanceKm + routeDistance;
+          final mergedGain = prev.elevationGain + routeElevationGain;
+          measured[existing.id] = (
+            distanceKm: mergedDistance,
+            elevationGain: mergedGain,
+          );
           routes[existingIndex] = _buildHikingRoute(
             id: existing.id,
             name: existing.name,
             trackCoords: mergedCoords,
             routeDistance: mergedDistance,
-            routeElevationGain: mergedGain.toDouble(),
+            routeElevationGain: mergedGain,
             allWaypoints: waypoints,
           );
           totalDistanceKm += routeDistance;
@@ -284,10 +295,14 @@ class GpxParserService {
           return;
         } else if (coords.length > ePts.length * 2) {
           // Segmen baru jauh lebih lengkap/panjang daripada rintisan segmen awal
-          totalDistanceKm -= existing.distanceKm;
-          totalElevationGain -= existing.elevationGainMeters;
+          totalDistanceKm -= prev.distanceKm;
+          totalElevationGain -= prev.elevationGain;
           totalDistanceKm += routeDistance;
           totalElevationGain += routeElevationGain;
+          measured[existing.id] = (
+            distanceKm: routeDistance,
+            elevationGain: routeElevationGain,
+          );
           routes[existingIndex] = _buildHikingRoute(
             id: existing.id,
             name: routeName,
@@ -320,6 +335,10 @@ class GpxParserService {
 
       totalDistanceKm += routeDistance;
       totalElevationGain += routeElevationGain;
+      measured['route_$routeCounter'] = (
+        distanceKm: routeDistance,
+        elevationGain: routeElevationGain,
+      );
 
       routes.add(
         _buildHikingRoute(

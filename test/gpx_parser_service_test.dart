@@ -289,5 +289,70 @@ void main() {
       }
     });
   });
+
+  group('Same-name track merge totals', () {
+    test('Merging a segment uses measured values instead of placeholders', () {
+      const gpxContent = '''<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1">
+  <trk>
+    <name>Jalur Merge</name>
+    <trkseg>
+      <trkpt lat="-7.500" lon="110.400"></trkpt>
+      <trkpt lat="-7.500" lon="110.400"></trkpt>
+    </trkseg>
+  </trk>
+  <trk>
+    <name>Jalur Merge</name>
+    <trkseg>
+      <trkpt lat="-7.500" lon="110.400"><ele>1000</ele></trkpt>
+      <trkpt lat="-7.501" lon="110.400"><ele>1100</ele></trkpt>
+      <trkpt lat="-7.502" lon="110.400"><ele>1200</ele></trkpt>
+    </trkseg>
+  </trk>
+</gpx>''';
+
+      final result = GpxParserService.parseString(gpxContent);
+
+      expect(result.tracks.length, 1);
+      final route = result.tracks.first;
+      expect(route.trackPoints.length, 5);
+      expect(route.elevationGainMeters, 200);
+      expect(route.distanceKm, closeTo(result.totalDistanceKm, 0.05));
+      expect(result.totalElevationGain, 200);
+    });
+
+    test('Replacing a stub segment subtracts its measured values', () {
+      const gpxContent = '''<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1">
+  <trk>
+    <name>Jalur Replace</name>
+    <trkseg>
+      <trkpt lat="-7.500" lon="110.400"></trkpt>
+      <trkpt lat="-7.500" lon="110.400"></trkpt>
+    </trkseg>
+  </trk>
+  <trk>
+    <name>Jalur Replace</name>
+    <trkseg>
+      <trkpt lat="-7.600" lon="110.500"><ele>1000</ele></trkpt>
+      <trkpt lat="-7.601" lon="110.500"><ele>1100</ele></trkpt>
+      <trkpt lat="-7.602" lon="110.500"><ele>1200</ele></trkpt>
+      <trkpt lat="-7.603" lon="110.500"><ele>1250</ele></trkpt>
+      <trkpt lat="-7.604" lon="110.500"><ele>1300</ele></trkpt>
+    </trkseg>
+  </trk>
+</gpx>''';
+
+      final result = GpxParserService.parseString(gpxContent);
+
+      expect(result.tracks.length, 1);
+      final route = result.tracks.first;
+      expect(route.trackPoints.length, 5);
+      expect(route.elevationGainMeters, 300);
+      expect(result.totalElevationGain, 300);
+      expect(result.totalDistanceKm, greaterThan(0));
+      expect(route.distanceKm, closeTo(result.totalDistanceKm, 0.05));
+    });
+  });
 }
 
