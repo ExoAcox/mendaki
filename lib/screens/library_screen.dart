@@ -1,6 +1,6 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
+import 'package:mendaki/core/services/mountain_sort_service.dart';
 import 'package:mendaki/core/services/offline_map_service.dart';
 import 'package:mendaki/core/services/storage_info_service.dart';
 import 'package:mendaki/core/services/view_preference_service.dart';
@@ -12,8 +12,10 @@ import 'package:mendaki/widgets/home/home_app_bar.dart';
 import 'package:mendaki/widgets/home/home_search_bar.dart';
 import 'package:mendaki/widgets/home/mountain_card.dart';
 import 'package:mendaki/widgets/home/mountain_card_compact.dart';
-import 'package:mendaki/widgets/home/offline_storage_bar.dart';
-import 'package:mendaki/widgets/home/view_mode_toggle.dart';
+import 'package:mendaki/widgets/home/mountain_section_header.dart';
+import 'package:mendaki/widgets/library/delete_mountain_dialog.dart';
+import 'package:mendaki/widgets/library/delete_storage_dialog.dart';
+import 'package:mendaki/widgets/library/offline_storage_bar.dart';
 
 class LibraryScreen extends StatefulWidget {
   final bool showBackButton;
@@ -39,6 +41,7 @@ class LibraryScreenState extends State<LibraryScreen> {
   int _imageBytes = 0;
   int? _availableBytes;
   String _viewMode = ViewPreferenceService.libraryViewModeCached;
+  MountainSortOption _sortOption = MountainSortService.librarySortCached;
 
   void refreshDownloadedMountains() {
     _loadDownloadedMountains();
@@ -52,7 +55,18 @@ class LibraryScreenState extends State<LibraryScreen> {
   void initState() {
     super.initState();
     _loadViewPreference();
+    _loadSortPreference();
+    MountainSortService.sortNotifier.addListener(_onSortNotifierChanged);
     _loadDownloadedMountains();
+  }
+
+  void _onSortNotifierChanged() {
+    final newSort = MountainSortService.sortNotifier.value;
+    if (_sortOption != newSort && mounted) {
+      setState(() {
+        _sortOption = newSort;
+      });
+    }
   }
 
   Future<void> _loadViewPreference() async {
@@ -64,8 +78,18 @@ class LibraryScreenState extends State<LibraryScreen> {
     }
   }
 
+  Future<void> _loadSortPreference() async {
+    final sort = await MountainSortService.getSort();
+    if (mounted && _sortOption != sort) {
+      setState(() {
+        _sortOption = sort;
+      });
+    }
+  }
+
   @override
   void dispose() {
+    MountainSortService.sortNotifier.removeListener(_onSortNotifierChanged);
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -130,239 +154,20 @@ class LibraryScreenState extends State<LibraryScreen> {
 
   List<Mountain> get _filteredMountains {
     final query = _searchController.text.trim().toLowerCase();
-    if (query.isEmpty) return _downloadedMountains;
-
-    return _downloadedMountains.where((m) {
-      return m.name.toLowerCase().contains(query) ||
-          m.location.toLowerCase().contains(query) ||
-          m.province.toLowerCase().contains(query) ||
-          m.cities.any((c) => c.toLowerCase().contains(query));
-    }).toList();
+    List<Mountain> result = _downloadedMountains;
+    if (query.isNotEmpty) {
+      result = _downloadedMountains.where((m) {
+        return m.name.toLowerCase().contains(query) ||
+            m.location.toLowerCase().contains(query) ||
+            m.province.toLowerCase().contains(query) ||
+            m.cities.any((c) => c.toLowerCase().contains(query));
+      }).toList();
+    }
+    return MountainSortService.sort(result, _sortOption);
   }
 
-  Future<void> _showDeleteDialog(Mountain mountain) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      barrierDismissible: true,
-      barrierColor: Colors.black.withValues(alpha: 0.35),
-      builder: (ctx) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 24,
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.12),
-                  blurRadius: 30,
-                  offset: const Offset(0, 10),
-                ),
-                BoxShadow(
-                  color: const Color(0xFFDC2626).withValues(alpha: 0.10),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-                child: Container(
-                  padding: const EdgeInsets.all(22),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.white.withValues(alpha: 0.88),
-                        Colors.white.withValues(alpha: 0.60),
-                        Colors.white.withValues(alpha: 0.78),
-                      ],
-                      stops: const [0.0, 0.5, 1.0],
-                    ),
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.6),
-                      width: 1.2,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFFDC2626,
-                              ).withValues(alpha: 0.12),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: const Color(
-                                  0xFFDC2626,
-                                ).withValues(alpha: 0.20),
-                                width: 1,
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.delete_outline_rounded,
-                              color: Color(0xFFDC2626),
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Hapus ${mountain.name}?',
-                              style: const TextStyle(
-                                fontFamily: 'Plus Jakarta Sans',
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.onSurface,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        'Data GPX dan map offline yang tersimpan di perangkat akan dihapus dari library.',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.onSurfaceVariant,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 22),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.03),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: OutlinedButton(
-                                onPressed: () => Navigator.of(ctx).pop(false),
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: Colors.white.withValues(
-                                    alpha: 0.35,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 13,
-                                  ),
-                                  side: BorderSide(
-                                    color: Colors.white.withValues(alpha: 0.7),
-                                    width: 1,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Batal',
-                                  style: TextStyle(
-                                    color: AppTheme.onSurface,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(
-                                      0xFFDC2626,
-                                    ).withValues(alpha: 0.35),
-                                    blurRadius: 14,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () => Navigator.of(ctx).pop(true),
-                                    splashColor: Colors.white.withValues(
-                                      alpha: 0.2,
-                                    ),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 13,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: [
-                                            const Color(
-                                              0xFFEF4444,
-                                            ).withValues(alpha: 0.90),
-                                            const Color(
-                                              0xFFDC2626,
-                                            ).withValues(alpha: 0.85),
-                                            const Color(
-                                              0xFFB91C1C,
-                                            ).withValues(alpha: 0.90),
-                                          ],
-                                          stops: const [0.0, 0.5, 1.0],
-                                        ),
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.35,
-                                          ),
-                                          width: 1.2,
-                                        ),
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: const Text(
-                                        'Hapus',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
+  Future<void> _handleDeleteMountain(Mountain mountain) async {
+    final confirmed = await DeleteMountainDialog.show(context, mountain);
 
     if (confirmed == true) {
       await GpxStorageService.deleteDownloadedMountain(mountain.id);
@@ -373,6 +178,42 @@ class LibraryScreenState extends State<LibraryScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${mountain.name} berhasil dihapus dari library'),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleDeleteStorage() async {
+    final result = await DeleteStorageFlow.show(
+      context,
+      gpxBytes: _gpxBytes,
+      mapBytes: _mapBytes,
+      imageBytes: _imageBytes,
+    );
+
+    if (result != null) {
+      if (result.gpx) {
+        await GpxStorageService.deleteAllGpxFiles();
+      }
+      if (result.maps) {
+        await OfflineMapService.deleteAllOfflineMaps();
+      }
+      if (result.images) {
+        await GpxStorageService.deleteAllImages();
+      }
+
+      await _loadDownloadedMountains();
+      await _loadStorageMetrics();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Data offline terpilih berhasil dihapus'),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
@@ -423,12 +264,13 @@ class LibraryScreenState extends State<LibraryScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // 2.1 Indikator ukuran penyimpanan offline (GPX, Map & Images)
+                      // 2. Indikator ukuran penyimpanan offline (GPX, Map & Images)
                       OfflineStorageBar(
                         gpxBytes: _gpxBytes,
                         mapBytes: _mapBytes,
                         imageBytes: _imageBytes,
                         availableBytes: _availableBytes,
+                        onDeletePressed: _handleDeleteStorage,
                       ),
                       const SizedBox(height: 16),
                     ],
@@ -436,7 +278,7 @@ class LibraryScreenState extends State<LibraryScreen> {
                 ),
               ),
 
-              // 3. Mountain card seperti home
+              // 3. Mountain card list atau empty state
               if (_isLoading)
                 const SliverToBoxAdapter(
                   child: Center(
@@ -511,7 +353,20 @@ class LibraryScreenState extends State<LibraryScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionHeader(filtered.length),
+                        MountainSectionHeader(
+                          count: filtered.length,
+                          currentSort: _sortOption,
+                          onSortChanged: (newSort) {
+                            MountainSortService.setSort(newSort);
+                          },
+                          currentViewMode: _viewMode,
+                          onViewModeChanged: (newMode) {
+                            setState(() {
+                              _viewMode = newMode;
+                            });
+                            ViewPreferenceService.setLibraryViewMode(newMode);
+                          },
+                        ),
                         const SizedBox(height: 12),
                       ],
                     ),
@@ -536,7 +391,7 @@ class LibraryScreenState extends State<LibraryScreen> {
                             _loadDownloadedMountains();
                           },
                           onDownloaded: _loadDownloadedMountains,
-                          onDeleteTap: () => _showDeleteDialog(mountain),
+                          onDeleteTap: () => _handleDeleteMountain(mountain),
                         );
                       } else {
                         return MountainCard(
@@ -551,7 +406,7 @@ class LibraryScreenState extends State<LibraryScreen> {
                             _loadDownloadedMountains();
                           },
                           onDownloaded: _loadDownloadedMountains,
-                          onDeleteTap: () => _showDeleteDialog(mountain),
+                          onDeleteTap: () => _handleDeleteMountain(mountain),
                         );
                       }
                     },
@@ -568,33 +423,6 @@ class LibraryScreenState extends State<LibraryScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildSectionHeader(int count) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          '$count Gunung Tersedia',
-          style: const TextStyle(
-            fontSize: 14.5,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.onSurface,
-            letterSpacing: -0.2,
-          ),
-        ),
-        ViewModeToggle(
-          currentMode: _viewMode,
-          onModeChanged: (newMode) {
-            setState(() {
-              _viewMode = newMode;
-            });
-            ViewPreferenceService.setLibraryViewMode(newMode);
-          },
-        ),
-      ],
     );
   }
 }

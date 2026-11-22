@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:mendaki/core/config/supabase_config.dart';
 import 'package:mendaki/core/services/gpx_parser_service.dart';
+import 'package:mendaki/core/services/image_cache_manager.dart';
 import 'package:mendaki/core/services/offline_map_service.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:path_provider/path_provider.dart';
@@ -305,6 +306,71 @@ class GpxStorageService {
   }) async {
     final list = await getDownloadedMountains(onlyFullyReady: onlyFullyReady);
     return list.length;
+  }
+
+  /// Menghapus semua berkas GPX dan data gunung offline (.gpx, .json)
+  static Future<void> deleteAllGpxFiles() async {
+    _gpxDownloadedCache.clear();
+    try {
+      final dirPath = await getGpxDirectoryPath();
+      final dir = Directory(dirPath);
+      if (!await dir.exists()) return;
+
+      final entities = dir.listSync(recursive: false, followLinks: false);
+      for (final entity in entities) {
+        if (entity is File) {
+          // Jangan hapus gambar jika user hanya menghapus kategori GPX
+          if (!entity.path.endsWith('.image.jpg')) {
+            try {
+              entity.deleteSync();
+            } catch (e) {
+              debugPrint('Error deleting GPX file ${entity.path}: $e');
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error deleting all GPX files: $e');
+    }
+  }
+
+  /// Menghapus semua foto gunung lokal dan mengosongkan cache gambar network
+  static Future<void> deleteAllImages() async {
+    try {
+      // 1. Hapus gambar lokal .image.jpg di folder gpx
+      final dirPath = await getGpxDirectoryPath();
+      final dir = Directory(dirPath);
+      if (await dir.exists()) {
+        final entities = dir.listSync(recursive: false, followLinks: false);
+        for (final entity in entities) {
+          if (entity is File && entity.path.endsWith('.image.jpg')) {
+            try {
+              entity.deleteSync();
+            } catch (e) {
+              debugPrint('Error deleting image file ${entity.path}: $e');
+            }
+          }
+        }
+      }
+
+      // 2. Kosongkan cache manager gambar network
+      try {
+        await MountainImageCacheManager.instance.emptyCache();
+      } catch (e) {
+        debugPrint('Error emptying MountainImageCacheManager: $e');
+      }
+
+      // 3. Bersihkan direktori temporary cache jika ada
+      try {
+        final tempDir = await getTemporaryDirectory();
+        final cacheDir = Directory('${tempDir.path}/mountain_image_cache');
+        if (await cacheDir.exists()) {
+          await cacheDir.delete(recursive: true);
+        }
+      } catch (_) {}
+    } catch (e) {
+      debugPrint('Error deleting all images: $e');
+    }
   }
 
   /// Menghapus paket data gunung offline (gpx, metadata, mountain json, foto)

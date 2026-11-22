@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mendaki/core/config/app_config.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
+import 'package:mendaki/core/services/mountain_sort_service.dart';
 import 'package:mendaki/core/services/navigation_session_service.dart';
 import 'package:mendaki/core/services/network_service.dart';
 import 'package:mendaki/core/services/offline_map_service.dart';
@@ -21,8 +22,8 @@ import 'package:mendaki/widgets/home/home_filter_chips.dart';
 import 'package:mendaki/widgets/home/home_search_bar.dart';
 import 'package:mendaki/widgets/home/mountain_card.dart';
 import 'package:mendaki/widgets/home/mountain_card_compact.dart';
+import 'package:mendaki/widgets/home/mountain_section_header.dart';
 import 'package:mendaki/widgets/home/version_update_dialog.dart';
-import 'package:mendaki/widgets/home/view_mode_toggle.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onOpenLibrary;
@@ -50,6 +51,7 @@ class HomeScreenState extends State<HomeScreen> {
   int _downloadedCount = 0;
   int _totalCount = 0;
   String _viewMode = ViewPreferenceService.homeViewModeCached;
+  MountainSortOption _sortOption = MountainSortService.homeSortCached;
 
   void refreshDownloadedCount() {
     _checkDownloadedCount();
@@ -78,11 +80,26 @@ class HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadViewPreference();
+    _loadSortPreference();
+    MountainSortService.sortNotifier.addListener(_onSortNotifierChanged);
     _scrollController.addListener(_onScroll);
     _checkActiveNavigationSession();
     _checkDownloadedCount();
     _loadMountains();
     _checkAppVersion();
+  }
+
+  void _onSortNotifierChanged() {
+    final newSort = MountainSortService.sortNotifier.value;
+    if (_sortOption != newSort && mounted) {
+      setState(() {
+        _sortOption = newSort;
+        if (mountains.isNotEmpty) {
+          mountains = MountainSortService.sort(mountains, newSort);
+        }
+      });
+      _loadMountains();
+    }
   }
 
   Future<void> _loadViewPreference() async {
@@ -94,8 +111,26 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _loadSortPreference() async {
+    final sort = await MountainSortService.getSort();
+    if (mounted && _sortOption != sort) {
+      setState(() {
+        _sortOption = sort;
+        if (mountains.isNotEmpty) {
+          mountains = MountainSortService.sort(mountains, sort);
+        }
+      });
+    }
+  }
+
+  void _onSortChanged(MountainSortOption newSort) {
+    if (_sortOption == newSort) return;
+    MountainSortService.setSort(newSort);
+  }
+
   @override
   void dispose() {
+    MountainSortService.sortNotifier.removeListener(_onSortNotifierChanged);
     _scrollController.dispose();
     searchController.dispose();
     searchFocusNode.dispose();
@@ -226,11 +261,12 @@ class HomeScreenState extends State<HomeScreen> {
             : searchController.text.trim(),
         page: 1,
         pageSize: _pageSize,
+        sortOption: _sortOption,
       );
 
       if (mounted) {
         setState(() {
-          mountains = result.mountains;
+          mountains = MountainSortService.sort(result.mountains, _sortOption);
           _totalCount = result.totalCount;
           isLoading = false;
           _hasError = false;
@@ -266,11 +302,13 @@ class HomeScreenState extends State<HomeScreen> {
             : searchController.text.trim(),
         page: nextPage,
         pageSize: _pageSize,
+        sortOption: _sortOption,
       );
 
       setState(() {
         _currentPage = nextPage;
         mountains.addAll(result.mountains);
+        mountains = MountainSortService.sort(mountains, _sortOption);
         _totalCount = result.totalCount;
         _isLoadingMore = false;
         _hasMore = result.mountains.length >= _pageSize;
@@ -348,7 +386,18 @@ class HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionHeader(),
+                        MountainSectionHeader(
+                          count: _totalCount > 0 ? _totalCount : mountains.length,
+                          currentSort: _sortOption,
+                          onSortChanged: _onSortChanged,
+                          currentViewMode: _viewMode,
+                          onViewModeChanged: (newMode) {
+                            setState(() {
+                              _viewMode = newMode;
+                            });
+                            ViewPreferenceService.setHomeViewMode(newMode);
+                          },
+                        ),
                         const SizedBox(height: 12),
                       ],
                     ),
@@ -509,35 +558,6 @@ class HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSectionHeader() {
-    final countToDisplay = _totalCount > 0 ? _totalCount : mountains.length;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          '$countToDisplay Gunung Tersedia',
-          style: TextStyle(
-            fontSize: 14.5,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.onSurface,
-            letterSpacing: -0.2,
-          ),
-        ),
-
-        ViewModeToggle(
-          currentMode: _viewMode,
-          onModeChanged: (newMode) {
-            setState(() {
-              _viewMode = newMode;
-            });
-            ViewPreferenceService.setHomeViewMode(newMode);
-          },
-        ),
-      ],
     );
   }
 }

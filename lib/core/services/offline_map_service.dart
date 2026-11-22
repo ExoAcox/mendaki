@@ -407,6 +407,21 @@ class OfflineMapService {
     _mountainMapSizesBytes[mountainId] = totalBytes;
   }
 
+  /// Menghapus seluruh tile dan paket peta offline semua gunung
+  static Future<void> deleteAllOfflineMaps() async {
+    _mapDownloadedCache.clear();
+    _mountainMapSizesBytes.clear();
+    try {
+      final basePath = await getOfflineBaseDir();
+      final dir = Directory(basePath);
+      if (await dir.exists()) {
+        await dir.delete(recursive: true);
+      }
+    } catch (e) {
+      debugPrint('Error deleting all offline maps: $e');
+    }
+  }
+
   /// Menghapus seluruh paket tile peta offline suatu gunung
   static Future<void> deleteOfflineMap(String mountainId) async {
     _mapDownloadedCache[mountainId] = false;

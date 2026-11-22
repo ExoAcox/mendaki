@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/services/download_service.dart';
 import 'core/services/supabase_service.dart';
+import 'core/services/mountain_sort_service.dart';
 import 'core/services/view_preference_service.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/main_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {
@@ -16,6 +21,7 @@ void main() async {
   await DownloadService.instance.initialize();
   await SupabaseService.initialize();
   await ViewPreferenceService.init();
+  await MountainSortService.init();
   runApp(const MendakiApp());
 }
 

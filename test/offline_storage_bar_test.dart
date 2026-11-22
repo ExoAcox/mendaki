@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mendaki/widgets/home/offline_storage_bar.dart';
+import 'package:mendaki/widgets/library/offline_storage_bar.dart';
 
 void main() {
   group('OfflineStorageBar Widget Tests', () {
-    testWidgets('renders empty state when totalBytes is 0',
-        (WidgetTester tester) async {
+    testWidgets('renders empty state when totalBytes is 0', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
-          home: Scaffold(
-            body: OfflineStorageBar(
-              gpxBytes: 0,
-              mapBytes: 0,
-            ),
-          ),
+          home: Scaffold(body: OfflineStorageBar(gpxBytes: 0, mapBytes: 0)),
         ),
       );
 
@@ -25,65 +21,69 @@ void main() {
       );
     });
 
-    testWidgets('renders horizontal bar with GPX and Map percentages and sizes',
-        (WidgetTester tester) async {
-      // 500 KB GPX, 9.5 MB Map -> Total 10 MB
-      const gpx = 500 * 1024;
-      const map = 9500 * 1024;
+    testWidgets(
+      'renders horizontal bar with GPX and Map percentages and sizes',
+      (WidgetTester tester) async {
+        // 500 KB GPX, 9.5 MB Map -> Total 10 MB
+        const gpx = 500 * 1024;
+        const map = 9500 * 1024;
 
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: OfflineStorageBar(
-              gpxBytes: gpx,
-              mapBytes: map,
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: OfflineStorageBar(gpxBytes: gpx, mapBytes: map),
             ),
           ),
-        ),
-      );
+        );
 
-      expect(find.text('Penyimpanan Offline'), findsOneWidget);
-      // Total 10.0 MB (was 9500 + 500 = 10000 KB ~= 9.8 MB)
-      expect(find.text(OfflineStorageBar.formatBytes(gpx + map)), findsOneWidget);
+        expect(find.text('Penyimpanan Offline'), findsOneWidget);
+        // Total 10.0 MB (was 9500 + 500 = 10000 KB ~= 9.8 MB)
+        expect(
+          find.text(OfflineStorageBar.formatBytes(gpx + map)),
+          findsOneWidget,
+        );
 
-      // Verify legend contains GPX and Map with their sizes
-      expect(find.textContaining('GPX:'), findsOneWidget);
-      expect(find.textContaining('Map:'), findsOneWidget);
-      expect(find.textContaining('Images:'), findsOneWidget);
-    });
+        // Verify legend contains GPX and Map with their sizes
+        expect(find.textContaining('GPX:'), findsOneWidget);
+        expect(find.textContaining('Maps:'), findsOneWidget);
+        expect(find.textContaining('Images:'), findsOneWidget);
+      },
+    );
 
     testWidgets(
-        'renders horizontal bar with GPX, Map, and Images percentages and sizes',
-        (WidgetTester tester) async {
-      const gpx = 500 * 1024;
-      const map = 9000 * 1024;
-      const images = 500 * 1024;
+      'renders horizontal bar with GPX, Map, and Images percentages and sizes',
+      (WidgetTester tester) async {
+        const gpx = 500 * 1024;
+        const map = 9000 * 1024;
+        const images = 500 * 1024;
 
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: OfflineStorageBar(
-              gpxBytes: gpx,
-              mapBytes: map,
-              imageBytes: images,
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: OfflineStorageBar(
+                gpxBytes: gpx,
+                mapBytes: map,
+                imageBytes: images,
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      expect(find.text('Penyimpanan Offline'), findsOneWidget);
-      expect(
-        find.text(OfflineStorageBar.formatBytes(gpx + map + images)),
-        findsOneWidget,
-      );
+        expect(find.text('Penyimpanan Offline'), findsOneWidget);
+        expect(
+          find.text(OfflineStorageBar.formatBytes(gpx + map + images)),
+          findsOneWidget,
+        );
 
-      expect(find.textContaining('GPX:'), findsOneWidget);
-      expect(find.textContaining('Map:'), findsOneWidget);
-      expect(find.textContaining('Images:'), findsOneWidget);
-    });
+        expect(find.textContaining('GPX:'), findsOneWidget);
+        expect(find.textContaining('Maps:'), findsOneWidget);
+        expect(find.textContaining('Images:'), findsOneWidget);
+      },
+    );
 
-    testWidgets('renders available storage in header and legend when provided',
-        (WidgetTester tester) async {
+    testWidgets('renders available storage in progress bar and legend when provided', (
+      WidgetTester tester,
+    ) async {
       const gpx = 500 * 1024;
       const map = 9500 * 1024;
       const available = 50 * 1024 * 1024 * 1024; // 50 GB
@@ -100,7 +100,7 @@ void main() {
         ),
       );
 
-      expect(find.textContaining('Sisa 50.0 GB'), findsOneWidget);
+      expect(find.text(OfflineStorageBar.formatBytes(gpx + map)), findsOneWidget);
       expect(find.textContaining('Tersedia: 50.0 GB'), findsOneWidget);
 
       // Verify that the progress bar contains 3 segments (Expanded widgets for GPX, Map, and Tersedia)
@@ -119,18 +119,21 @@ void main() {
       expect(OfflineStorageBar.formatBytes(1024), '1.0 KB');
       expect(OfflineStorageBar.formatBytes(1536), '1.5 KB');
       expect(OfflineStorageBar.formatBytes(1024 * 1024), '1.0 MB');
-      expect(OfflineStorageBar.formatBytes((15.5 * 1024 * 1024).round()), '15.5 MB');
-      expect(OfflineStorageBar.formatBytes((1.2 * 1024 * 1024 * 1024).round()), '1.2 GB');
+      expect(
+        OfflineStorageBar.formatBytes((15.5 * 1024 * 1024).round()),
+        '15.5 MB',
+      );
+      expect(
+        OfflineStorageBar.formatBytes((1.2 * 1024 * 1024 * 1024).round()),
+        '1.2 GB',
+      );
     });
 
-    testWidgets('OfflineStorageNotice renders notice text and icon',
-        (WidgetTester tester) async {
+    testWidgets('OfflineStorageNotice renders notice text and icon', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: OfflineStorageNotice(),
-          ),
-        ),
+        const MaterialApp(home: Scaffold(body: OfflineStorageNotice())),
       );
 
       expect(find.byIcon(Icons.offline_pin_rounded), findsOneWidget);
@@ -140,8 +143,9 @@ void main() {
       );
     });
 
-    testWidgets('split sub-widgets render properly in isolation',
-        (WidgetTester tester) async {
+    testWidgets('split sub-widgets render properly in isolation', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -168,8 +172,54 @@ void main() {
 
       expect(find.text('25.0 MB'), findsOneWidget);
       expect(find.textContaining('GPX:'), findsOneWidget);
-      expect(find.textContaining('Map:'), findsOneWidget);
+      expect(find.textContaining('Maps:'), findsOneWidget);
+    });
+
+    testWidgets(
+      'delete button renders and triggers callback when onDeletePressed is provided',
+      (WidgetTester tester) async {
+        bool deleted = false;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: OfflineStorageBar(
+                gpxBytes: 1024,
+                mapBytes: 2048,
+                onDeletePressed: () {
+                  deleted = true;
+                },
+              ),
+            ),
+          ),
+        );
+
+        final deleteIcon = find.byIcon(Icons.delete_outline_rounded);
+        expect(deleteIcon, findsOneWidget);
+
+        await tester.tap(deleteIcon);
+        await tester.pump();
+
+        expect(deleted, isTrue);
+      },
+    );
+
+    testWidgets('delete button does not render when onDeletePressed is null', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: OfflineStorageBar(
+              gpxBytes: 1024,
+              mapBytes: 2048,
+              onDeletePressed: null,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.delete_outline_rounded), findsNothing);
     });
   });
 }
-

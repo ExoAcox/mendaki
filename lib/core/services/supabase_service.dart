@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mendaki/core/config/supabase_config.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
+import 'package:mendaki/core/services/mountain_sort_service.dart';
 import 'package:mendaki/models/app_version.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/models/route.dart';
@@ -102,6 +103,7 @@ class SupabaseService {
     String? search,
     int page = 1,
     int pageSize = 10,
+    MountainSortOption sortOption = MountainSortOption.elevationDesc,
   }) async {
     if (!isReady) {
       throw StateError(
@@ -133,17 +135,37 @@ class SupabaseService {
         }
       }
 
-      final PostgrestResponse<dynamic> response = await query
-          .order('elevation', ascending: false)
+      // Pengurutan pada level query Supabase jika memungkinkan
+      PostgrestTransformBuilder<PostgrestList> orderedQuery;
+      switch (sortOption) {
+        case MountainSortOption.elevationAsc:
+          orderedQuery = query.order('elevation', ascending: true);
+          break;
+        case MountainSortOption.alphabeticalAsc:
+          orderedQuery = query.order('name', ascending: true);
+          break;
+        case MountainSortOption.alphabeticalDesc:
+          orderedQuery = query.order('name', ascending: false);
+          break;
+        case MountainSortOption.elevationDesc:
+        default:
+          orderedQuery = query.order('elevation', ascending: false);
+          break;
+      }
+
+      final PostgrestResponse<dynamic> response = await orderedQuery
           .range(from, to)
           .count(CountOption.exact);
 
       final List<dynamic> mountainRows = response.data as List<dynamic>;
       final int totalCount = response.count;
 
-      final list = mountainRows
+      var list = mountainRows
           .map((mData) => _mapJsonToMountain(mData as Map<String, dynamic>))
           .toList();
+
+      // Pastikan sorting konsisten di client-side (terutama difficulty & estimated time)
+      list = MountainSortService.sort(list, sortOption);
 
       return MountainQueryResult(
         mountains: list,
@@ -161,12 +183,14 @@ class SupabaseService {
     String? search,
     int page = 1,
     int pageSize = 10,
+    MountainSortOption sortOption = MountainSortOption.elevationDesc,
   }) async {
     final result = await getMountainsResult(
       province: province,
       search: search,
       page: page,
       pageSize: pageSize,
+      sortOption: sortOption,
     );
     return result.mountains;
   }
