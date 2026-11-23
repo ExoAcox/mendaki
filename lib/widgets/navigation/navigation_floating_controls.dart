@@ -189,16 +189,21 @@ class NavigationMetricsChip extends StatelessWidget {
 }
 
 /// Kolom kontrol melayang di sebelah kanan atas chip navigasi:
-/// - Bagian atas: Button Compass
+/// - Bagian atas: Button Toggle Label Marker
+/// - Bagian tengah: Button Compass
 /// - Bagian bawah: Button Find Me
 class NavigationFloatingControls extends StatelessWidget {
   final double currentRotation;
+  final bool showAllLabels;
+  final VoidCallback? onToggleLabelsTap;
   final VoidCallback onCompassTap;
   final VoidCallback onFindMeTap;
 
   const NavigationFloatingControls({
     super.key,
     required this.currentRotation,
+    this.showAllLabels = false,
+    this.onToggleLabelsTap,
     required this.onCompassTap,
     required this.onFindMeTap,
   });
@@ -209,14 +214,24 @@ class NavigationFloatingControls extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        // 1. Floating Compass Button (Di Atas)
+        // 1. Floating Toggle Label Button (Di Atas Compass)
+        NavigationFloatingButton(
+          icon: showAllLabels
+              ? Icons.label_rounded
+              : Icons.label_outline_rounded,
+          color: showAllLabels ? AppTheme.primary : AppTheme.onSurface,
+          onTap: onToggleLabelsTap ?? () {},
+        ),
+        const SizedBox(height: 10),
+
+        // 2. Floating Compass Button (Di Tengah)
         NavigationFloatingButton(
           customChild: CompassNeedle(rotationDegrees: currentRotation),
           onTap: onCompassTap,
         ),
         const SizedBox(height: 10),
 
-        // 2. Floating Find Me Button (Di Bawah Compass)
+        // 3. Floating Find Me Button (Di Bawah Compass)
         NavigationFloatingButton(
           icon: Icons.my_location_rounded,
           color: AppTheme.primary,

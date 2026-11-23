@@ -23,6 +23,7 @@ import 'package:mendaki/widgets/home/home_search_bar.dart';
 import 'package:mendaki/widgets/home/mountain_card.dart';
 import 'package:mendaki/widgets/home/mountain_card_compact.dart';
 import 'package:mendaki/widgets/home/mountain_section_header.dart';
+import 'package:mendaki/widgets/home/responsive_mountain_sliver.dart';
 import 'package:mendaki/widgets/home/version_update_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -430,11 +431,17 @@ class HomeScreenState extends State<HomeScreen> {
                 else ...[
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    sliver: SliverList.separated(
+                    sliver: ResponsiveMountainSliver(
                       itemCount: mountains.length,
+                      mainAxisSpacing:
+                          _viewMode == ViewPreferenceService.viewModeCompact
+                              ? 10
+                              : 16,
+                      crossAxisSpacing: 16,
                       itemBuilder: (context, index) {
                         final mountain = mountains[index];
-                        if (_viewMode == ViewPreferenceService.viewModeCompact) {
+                        if (_viewMode ==
+                            ViewPreferenceService.viewModeCompact) {
                           return MountainCardCompact(
                             mountain: mountain,
                             onDetailTap: () async {
@@ -464,12 +471,6 @@ class HomeScreenState extends State<HomeScreen> {
                           );
                         }
                       },
-                      separatorBuilder: (context, index) => SizedBox(
-                        height:
-                            _viewMode == ViewPreferenceService.viewModeCompact
-                            ? 10
-                            : 16,
-                      ),
                     ),
                   ),
                   if (_isLoadingMore)

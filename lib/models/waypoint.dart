@@ -3,7 +3,7 @@ class Waypoint {
   final double latitude;
   final double longitude;
   final double? elevation;
-  final String type; // post, basecamp, camp, summit, danger
+  final String type; // post, basecamp, camp, summit, danger, helipad
   final String? description;
   final String? comment;
   final bool hasWater;
@@ -22,7 +22,10 @@ class Waypoint {
     final cmt = (comment ?? '').trim().toLowerCase();
     return type == 'danger' || cmt == 'danger';
   }
-  bool get isPost => !isBasecamp && !isCamp && !isSummit && !isDanger;
+  bool get isHelipad =>
+      type == 'helipad' || (comment ?? '').trim().toLowerCase() == 'helipad';
+  bool get isPost =>
+      !isBasecamp && !isCamp && !isSummit && !isDanger && !isHelipad;
 
   const Waypoint({
     required this.name,

@@ -255,7 +255,7 @@ class SupabaseService {
           distanceKm: distanceVal,
           estimatedDuration: estimatedDuration,
           elevationGainMeters: eleGain,
-          difficulty: eleGain > 1500 ? 'Curam' : 'Sedang',
+          difficulty: eleGain > 1500 ? 'Sulit' : 'Sedang',
           hasWater: hasWater,
           city: cityVal,
           waypoints: const [],
@@ -303,24 +303,28 @@ class SupabaseService {
       estimatedTimeStr = rawEstimatedTime;
     }
 
-    // Tingkat Kesulitan
-    final rawDiff = (json['difficulty']?.toString() ?? 'medium').toLowerCase();
+    // Tingkat Kesulitan: hanya easy, medium, hard, very_hard
+    final rawDiff = (json['difficulty']?.toString() ?? 'medium').toLowerCase().trim();
     String difficultyStr;
     switch (rawDiff) {
       case 'easy':
+      case 'mudah':
         difficultyStr = 'Mudah';
         break;
       case 'hard':
+      case 'sulit':
         difficultyStr = 'Sulit';
         break;
-      case 'challenging':
-        difficultyStr = 'Menantang';
+      case 'very_hard':
+      case 'very hard':
+      case 'sangat sulit':
+      case 'sangat_sulit':
+        difficultyStr = 'Sangat Sulit';
         break;
       case 'medium':
-        difficultyStr = 'Sedang';
-        break;
+      case 'sedang':
       default:
-        difficultyStr = json['difficulty']?.toString() ?? 'Sedang';
+        difficultyStr = 'Sedang';
         break;
     }
 

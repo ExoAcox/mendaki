@@ -51,10 +51,12 @@ class NavigationLayerBuilder {
     required LatLng currentPosition,
     required Animation<double> pulseAnimation,
     required double? userHeading,
+    bool showAllLabels = false,
     void Function(Waypoint wpt)? onWaypointTap,
   }) {
     final regularMarkers = <Marker>[];
     final campMarkers = <Marker>[];
+    final helipadMarkers = <Marker>[];
     final dangerMarkers = <Marker>[];
     final summitMarkers = <Marker>[];
     final basecampMarkers = <Marker>[];
@@ -66,7 +68,8 @@ class NavigationLayerBuilder {
         final isSummit = wpt.isSummit;
         final isBasecamp = !isSummit && wpt.isBasecamp;
         final isDanger = !isSummit && !isBasecamp && wpt.isDanger;
-        final isCamp = !isSummit && !isBasecamp && !isDanger && wpt.isCamp;
+        final isHelipad = !isSummit && !isBasecamp && !isDanger && wpt.isHelipad;
+        final isCamp = !isSummit && !isBasecamp && !isDanger && !isHelipad && wpt.isCamp;
 
         final marker = buildWaypointMapMarker(
           waypoint: wpt,
@@ -75,9 +78,12 @@ class NavigationLayerBuilder {
           isBasecamp: isBasecamp,
           isCamp: isCamp,
           isDanger: isDanger,
-          showCampLabel: false,
-          showSummitLabel: false,
-          showDangerLabel: false,
+          isHelipad: isHelipad,
+          showCampLabel: showAllLabels,
+          showSummitLabel: showAllLabels,
+          showDangerLabel: showAllLabels,
+          showHelipadLabel: showAllLabels,
+          showRegularLabel: showAllLabels,
           rotate: true,
           onTap: onWaypointTap != null ? () => onWaypointTap(wpt) : null,
         );
@@ -90,6 +96,8 @@ class NavigationLayerBuilder {
           summitMarkers.add(marker);
         } else if (isDanger) {
           dangerMarkers.add(marker);
+        } else if (isHelipad) {
+          helipadMarkers.add(marker);
         } else if (isCamp) {
           campMarkers.add(marker);
         } else {
@@ -102,6 +110,7 @@ class NavigationLayerBuilder {
       ...dangerMarkers,
       ...regularMarkers,
       ...campMarkers,
+      ...helipadMarkers,
       ...summitMarkers,
       ...basecampMarkers,
     ];

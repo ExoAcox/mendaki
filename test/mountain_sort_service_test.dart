@@ -40,7 +40,7 @@ void main() {
       elevation: 3088,
       location: 'Probolinggo',
       province: 'Jawa Timur',
-      difficulty: 'Menantang',
+      difficulty: 'Sangat Sulit',
       estimatedTime: '24 - 36 Jam',
     ),
   ];
@@ -98,7 +98,7 @@ void main() {
       ]);
     });
 
-    test('sorts by difficulty ascending (Mudah -> Sedang -> Sulit -> Menantang)', () {
+    test('sorts by difficulty ascending (Mudah -> Sedang -> Sulit -> Sangat Sulit)', () {
       final sorted = MountainSortService.sort(
         dummyMountains,
         MountainSortOption.difficultyAsc,
@@ -107,17 +107,17 @@ void main() {
         'prau', // Mudah (1)
         'merbabu', // Sedang (2)
         'slamet', // Sulit (3)
-        'argopuro', // Menantang (4)
+        'argopuro', // Sangat Sulit (4)
       ]);
     });
 
-    test('sorts by difficulty descending (Menantang -> Sulit -> Sedang -> Mudah)', () {
+    test('sorts by difficulty descending (Sangat Sulit -> Sulit -> Sedang -> Mudah)', () {
       final sorted = MountainSortService.sort(
         dummyMountains,
         MountainSortOption.difficultyDesc,
       );
       expect(sorted.map((m) => m.id).toList(), [
-        'argopuro', // Menantang (4)
+        'argopuro', // Sangat Sulit (4)
         'slamet', // Sulit (3)
         'merbabu', // Sedang (2)
         'prau', // Mudah (1)
@@ -164,8 +164,13 @@ void main() {
       expect(MountainSortService.getDifficultyRank('medium'), 2);
       expect(MountainSortService.getDifficultyRank('Sulit'), 3);
       expect(MountainSortService.getDifficultyRank('hard'), 3);
-      expect(MountainSortService.getDifficultyRank('Menantang'), 4);
-      expect(MountainSortService.getDifficultyRank('challenging'), 4);
+      expect(MountainSortService.getDifficultyRank('Sangat Sulit'), 4);
+      expect(MountainSortService.getDifficultyRank('very_hard'), 4);
+      expect(MountainSortService.getDifficultyRank('very hard'), 4);
+      expect(MountainSortService.getDifficultyRank('sangat_sulit'), 4);
+      // Nilai selain easy, medium, hard, very_hard fallback ke rank 2 (Sedang)
+      expect(MountainSortService.getDifficultyRank('unknown'), 2);
+      expect(MountainSortService.getDifficultyRank('challenging'), 2);
     });
 
     test('estimated hours parsing extracts min-max average and single numbers', () {

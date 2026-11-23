@@ -12,9 +12,11 @@ class NavigationOverlayControls extends StatelessWidget {
   final double? currentAltitude;
   final double distanceTraveledKm;
   final double currentRotation;
+  final bool showAllLabels;
   final VoidCallback onFinishTap;
   final VoidCallback onCompassTap;
   final VoidCallback onFindMeTap;
+  final VoidCallback? onToggleLabelsTap;
 
   const NavigationOverlayControls({
     super.key,
@@ -24,9 +26,11 @@ class NavigationOverlayControls extends StatelessWidget {
     this.currentAltitude,
     required this.distanceTraveledKm,
     required this.currentRotation,
+    this.showAllLabels = false,
     required this.onFinishTap,
     required this.onCompassTap,
     required this.onFindMeTap,
+    this.onToggleLabelsTap,
   });
 
   @override
@@ -84,6 +88,8 @@ class NavigationOverlayControls extends StatelessWidget {
           bottom: bottomPadding + 68,
           child: NavigationFloatingControls(
             currentRotation: currentRotation,
+            showAllLabels: showAllLabels,
+            onToggleLabelsTap: onToggleLabelsTap,
             onCompassTap: onCompassTap,
             onFindMeTap: onFindMeTap,
           ),
@@ -92,4 +98,3 @@ class NavigationOverlayControls extends StatelessWidget {
     );
   }
 }
-

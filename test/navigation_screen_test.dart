@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:mendaki/core/services/gpx_parser_service.dart';
 import 'package:mendaki/core/services/navigation_session_service.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/models/route.dart';
 import 'package:mendaki/models/waypoint.dart';
 import 'package:mendaki/screens/navigation_screen.dart';
 import 'package:mendaki/widgets/map/map_marker.dart';
+import 'package:mendaki/widgets/navigation/navigation_layer_builder.dart';
 import 'package:mendaki/widgets/navigation/navigation_map_viewport.dart';
 
 void main() {
@@ -59,6 +61,7 @@ void main() {
         expect(find.text('Finish'), findsOneWidget);
         expect(find.byKey(const Key('finish_button')), findsOneWidget);
         expect(find.byType(CompassNeedle), findsOneWidget);
+        expect(find.byIcon(Icons.label_outline_rounded), findsOneWidget);
         expect(find.byIcon(Icons.my_location_rounded), findsOneWidget);
 
         // Verify floating message shows warning when far from mountain
@@ -92,6 +95,7 @@ void main() {
         expect(find.text('Finish'), findsOneWidget);
         expect(find.byKey(const Key('finish_button')), findsOneWidget);
         expect(find.byType(CompassNeedle), findsOneWidget);
+        expect(find.byIcon(Icons.label_outline_rounded), findsOneWidget);
         expect(find.byIcon(Icons.my_location_rounded), findsOneWidget);
 
         // Verify NO far-distance floating message
@@ -366,6 +370,89 @@ void main() {
     );
 
     testWidgets(
+      'Renders NavigationHelipadMarkerWidget and HelipadIcon with blue letter H for waypoint with helipad comment',
+      (tester) async {
+        const helipadWaypoint = Waypoint(
+          name: 'Helipad Pos 4',
+          latitude: -7.4540,
+          longitude: 110.4390,
+          comment: 'helipad',
+        );
+
+        expect(helipadWaypoint.isHelipad, isTrue);
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: NavigationHelipadMarkerWidget(
+                waypoint: helipadWaypoint,
+                showLabel: true,
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('Helipad Pos 4'), findsOneWidget);
+        expect(find.byType(HelipadIcon), findsOneWidget);
+
+        final helipadIcon = tester.widget<HelipadIcon>(find.byType(HelipadIcon));
+        expect(helipadIcon.color, const Color(0xFF0288D1));
+      },
+    );
+
+    testWidgets(
+      'Helipad marker buildWaypointMapMarker toggles label correctly on selection',
+      (tester) async {
+        const helipadWpt = Waypoint(
+          name: 'Helipad Darurat',
+          latitude: -7.45,
+          longitude: 110.44,
+          comment: 'helipad',
+        );
+
+        final defaultMarker = buildWaypointMapMarker(
+          waypoint: helipadWpt,
+          isSelected: false,
+          isSummit: false,
+          isBasecamp: false,
+          isCamp: false,
+          isHelipad: true,
+        );
+        expect(defaultMarker.width, 28.0);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: defaultMarker.child,
+            ),
+          ),
+        );
+        expect(find.text('Helipad Darurat'), findsNothing);
+        expect(find.byType(HelipadIcon), findsOneWidget);
+
+        final selectedMarker = buildWaypointMapMarker(
+          waypoint: helipadWpt,
+          isSelected: true,
+          isSummit: false,
+          isBasecamp: false,
+          isCamp: false,
+          isHelipad: true,
+        );
+        expect(selectedMarker.width, 280.0);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: selectedMarker.child,
+            ),
+          ),
+        );
+        expect(find.text('Helipad Darurat'), findsOneWidget);
+        expect(find.byType(HelipadIcon), findsOneWidget);
+      },
+    );
+
+    testWidgets(
       'Tapping anywhere on map closes active selected waypoint label',
       (tester) async {
         Waypoint? selectedWpt;
@@ -586,6 +673,149 @@ void main() {
 
         expect(tracePolylines, hasLength(1));
         expect(tracePolylines.first.points, equals(mockPath));
+      },
+    );
+
+    testWidgets(
+      'NavigationRegularWaypointMarkerWidget displays label when showLabel is true',
+      (tester) async {
+        const regularWpt = Waypoint(
+          name: 'Pos 1 Pemancar',
+          latitude: -7.4542,
+          longitude: 110.4397,
+        );
+
+        // 1. showLabel = false (default)
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: NavigationRegularWaypointMarkerWidget(
+                waypoint: regularWpt,
+                showLabel: false,
+              ),
+            ),
+          ),
+        );
+        expect(find.text('Pos 1 Pemancar'), findsNothing);
+
+        // 2. showLabel = true
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: NavigationRegularWaypointMarkerWidget(
+                waypoint: regularWpt,
+                showLabel: true,
+              ),
+            ),
+          ),
+        );
+        expect(find.text('Pos 1 Pemancar'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Tapping label button in NavigationScreen toggles all marker labels',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: NavigationScreen(
+              mountain: testMountain,
+              selectedRoute: testRoute,
+              mockDistanceKm: 2.0,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        // Initial state: outline icon
+        expect(find.byIcon(Icons.label_outline_rounded), findsOneWidget);
+        expect(find.byIcon(Icons.label_rounded), findsNothing);
+
+        // Tap toggle label button
+        await tester.tap(find.byIcon(Icons.label_outline_rounded));
+        await tester.pump();
+
+        // State after tap: solid label icon
+        expect(find.byIcon(Icons.label_rounded), findsOneWidget);
+        expect(find.byIcon(Icons.label_outline_rounded), findsNothing);
+
+        // Tap again: toggle back to outline
+        await tester.tap(find.byIcon(Icons.label_rounded));
+        await tester.pump();
+
+        expect(find.byIcon(Icons.label_outline_rounded), findsOneWidget);
+        expect(find.byIcon(Icons.label_rounded), findsNothing);
+      },
+    );
+
+    test(
+      'buildNavigationMarkers passes showAllLabels correctly to all waypoint types',
+      () {
+        const summitWpt = Waypoint(
+          name: 'Puncak Merapi',
+          latitude: -7.5407,
+          longitude: 110.4457,
+          type: 'summit',
+        );
+        const campWpt = Waypoint(
+          name: 'Pasar Bubrah',
+          latitude: -7.5420,
+          longitude: 110.4440,
+          comment: 'camp',
+        );
+        const dangerWpt = Waypoint(
+          name: 'Kawah Aktif',
+          latitude: -7.5400,
+          longitude: 110.4460,
+          comment: 'danger',
+        );
+        const helipadWpt = Waypoint(
+          name: 'Helipad Pos 4',
+          latitude: -7.5430,
+          longitude: 110.4430,
+          comment: 'helipad',
+        );
+        const regularWpt = Waypoint(
+          name: 'Pos 2',
+          latitude: -7.5450,
+          longitude: 110.4420,
+        );
+
+        final gpx = GpxData(
+          name: 'Merapi',
+          waypoints: [summitWpt, campWpt, dangerWpt, helipadWpt, regularWpt],
+          tracks: [],
+        );
+
+        // When showAllLabels is false
+        final markersHidden = NavigationLayerBuilder.buildNavigationMarkers(
+          gpxData: gpx,
+          selectedWaypoint: null,
+          hasUserPosition: false,
+          currentPosition: const LatLng(-7.54, 110.44),
+          pulseAnimation: const AlwaysStoppedAnimation(1.0),
+          userHeading: null,
+          showAllLabels: false,
+        );
+
+        for (final m in markersHidden) {
+          expect(m.width, lessThanOrEqualTo(28.0));
+        }
+
+        // When showAllLabels is true
+        final markersShown = NavigationLayerBuilder.buildNavigationMarkers(
+          gpxData: gpx,
+          selectedWaypoint: null,
+          hasUserPosition: false,
+          currentPosition: const LatLng(-7.54, 110.44),
+          pulseAnimation: const AlwaysStoppedAnimation(1.0),
+          userHeading: null,
+          showAllLabels: true,
+        );
+
+        for (final m in markersShown) {
+          expect(m.width, 280.0);
+        }
       },
     );
   });

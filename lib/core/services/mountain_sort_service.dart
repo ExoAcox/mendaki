@@ -133,13 +133,22 @@ class MountainSortService {
     return defaultSort;
   }
 
-  /// Mengonversi teks kesulitan ke ranking numerik (1: Mudah, 2: Sedang, 3: Sulit, 4: Menantang)
+  /// Mengonversi teks kesulitan ke ranking numerik:
+  /// 1: Mudah (easy)
+  /// 2: Sedang (medium)
+  /// 3: Sulit (hard)
+  /// 4: Sangat Sulit (very_hard)
   static int getDifficultyRank(String difficulty) {
     final d = difficulty.toLowerCase().trim();
     if (d.contains('mudah') || d == 'easy') return 1;
     if (d.contains('sedang') || d == 'medium') return 2;
+    if (d.contains('sangat sulit') ||
+        d.contains('sangat_sulit') ||
+        d.contains('very_hard') ||
+        d.contains('very hard')) {
+      return 4;
+    }
     if (d.contains('sulit') || d == 'hard') return 3;
-    if (d.contains('menantang') || d == 'challenging') return 4;
     return 2;
   }
 

@@ -62,6 +62,7 @@ class _NavigationScreenState extends State<NavigationScreen>
   final List<LatLng> _breadcrumbPath = [];
   List<Marker> _markers = [];
   Waypoint? _selectedWaypoint;
+  bool _showAllLabels = false;
 
   // Pulse animation untuk radar GPS pin pengguna
   late AnimationController _pulseController;
@@ -381,8 +382,16 @@ class _NavigationScreenState extends State<NavigationScreen>
       currentPosition: _currentPosition,
       pulseAnimation: _pulseAnimation,
       userHeading: _userHeading,
+      showAllLabels: _showAllLabels,
       onWaypointTap: _onWaypointTap,
     );
+  }
+
+  void _toggleAllLabels() {
+    setState(() {
+      _showAllLabels = !_showAllLabels;
+      _rebuildMarkers();
+    });
   }
 
   @override
@@ -505,7 +514,9 @@ class _NavigationScreenState extends State<NavigationScreen>
                 _breadcrumbPath,
               ),
               currentRotation: _currentRotation,
+              showAllLabels: _showAllLabels,
               onFinishTap: _showFinishConfirmationDialog,
+              onToggleLabelsTap: _toggleAllLabels,
               onCompassTap: () {
                 setState(() {
                   _currentRotation = 0.0;

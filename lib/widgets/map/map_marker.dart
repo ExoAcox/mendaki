@@ -647,18 +647,20 @@ class NavigationRegularWaypointMarkerWidget extends StatelessWidget {
 
   final Waypoint waypoint;
   final bool isSelected;
+  final bool showLabel;
 
   const NavigationRegularWaypointMarkerWidget({
     super.key,
     required this.waypoint,
     this.isSelected = false,
+    this.showLabel = false,
   });
 
   @override
   Widget build(BuildContext context) {
     const regularColor = Color(0xFF0F5238);
 
-    if (isSelected) {
+    if (isSelected || showLabel) {
       return SizedBox(
         width: labeledWidth,
         height: labeledHeight,
@@ -760,6 +762,156 @@ class NavigationRegularWaypointMarkerWidget extends StatelessWidget {
   }
 }
 
+class HelipadIcon extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const HelipadIcon({super.key, this.size = 10, this.color = Colors.white});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(size, size),
+      painter: _HelipadPainter(color: color),
+    );
+  }
+}
+
+class _HelipadPainter extends CustomPainter {
+  final Color color;
+
+  const _HelipadPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final strokeWidth = w * 0.22;
+
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    final left = strokeWidth / 2 + w * 0.08;
+    final right = w - strokeWidth / 2 - w * 0.08;
+    final top = strokeWidth / 2 + h * 0.04;
+    final bottom = h - strokeWidth / 2 - h * 0.04;
+    final midY = h / 2;
+
+    // Left vertical line
+    canvas.drawLine(Offset(left, top), Offset(left, bottom), paint);
+    // Right vertical line
+    canvas.drawLine(Offset(right, top), Offset(right, bottom), paint);
+    // Center horizontal crossbar
+    canvas.drawLine(Offset(left, midY), Offset(right, midY), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _HelipadPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
+class NavigationHelipadMarkerWidget extends StatelessWidget {
+  static const double labeledWidth = 280.0;
+  static const double labeledHeight = 54.0;
+  static final Alignment labeledAlignment = Marker.computePixelAlignment(
+    width: labeledWidth,
+    height: labeledHeight,
+    left: 140.0,
+    top: 38.0,
+  );
+
+  static const double unselectedSize = 28.0;
+  static const Alignment unselectedAlignment = Alignment.center;
+
+  final Waypoint waypoint;
+  final bool isSelected;
+  final bool showLabel;
+
+  const NavigationHelipadMarkerWidget({
+    super.key,
+    required this.waypoint,
+    this.isSelected = false,
+    this.showLabel = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const helipadColor = Color(0xFF1565C0);
+
+    final pinWidget = Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        color: helipadColor,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: const Center(child: HelipadIcon()),
+    );
+
+    // Default label tidak muncul; hanya muncul saat di-klik (isSelected == true) atau showLabel == true
+    if (!isSelected && !showLabel) {
+      return Center(child: pinWidget);
+    }
+
+    final label = waypoint.name.trim();
+
+    return SizedBox(
+      width: labeledWidth,
+      height: labeledHeight,
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: helipadColor.withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Colors.white, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Text(
+              label,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.visible,
+              textScaler: TextScaler.noScaling,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+                height: 1.1,
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          pinWidget,
+          const SizedBox(height: 4),
+        ],
+      ),
+    );
+  }
+}
+
 /// Helper function to build a [Marker] for any waypoint with pixel-perfect alignment.
 ///
 /// Ensures the pin/dot icon's center is precisely placed on [waypoint.latitude, waypoint.longitude],
@@ -771,9 +923,12 @@ Marker buildWaypointMapMarker({
   required bool isBasecamp,
   required bool isCamp,
   bool isDanger = false,
+  bool isHelipad = false,
   bool showCampLabel = false,
   bool showSummitLabel = false,
   bool showDangerLabel = false,
+  bool showHelipadLabel = false,
+  bool showRegularLabel = false,
   bool rotate = false,
   bool useSkull = true,
   VoidCallback? onTap,
@@ -784,6 +939,7 @@ Marker buildWaypointMapMarker({
   final Widget child;
 
   final bool danger = isDanger || waypoint.isDanger;
+  final bool helipad = isHelipad || waypoint.isHelipad;
 
   if (isSummit) {
     if (isSelected || showSummitLabel) {
@@ -836,6 +992,26 @@ Marker buildWaypointMapMarker({
         useSkull: useSkull,
       );
     }
+  } else if (helipad) {
+    if (isSelected || showHelipadLabel) {
+      width = NavigationHelipadMarkerWidget.labeledWidth;
+      height = NavigationHelipadMarkerWidget.labeledHeight;
+      alignment = NavigationHelipadMarkerWidget.labeledAlignment;
+      child = NavigationHelipadMarkerWidget(
+        waypoint: waypoint,
+        isSelected: isSelected,
+        showLabel: true,
+      );
+    } else {
+      width = NavigationHelipadMarkerWidget.unselectedSize;
+      height = NavigationHelipadMarkerWidget.unselectedSize;
+      alignment = NavigationHelipadMarkerWidget.unselectedAlignment;
+      child = NavigationHelipadMarkerWidget(
+        waypoint: waypoint,
+        isSelected: false,
+        showLabel: false,
+      );
+    }
   } else if (isCamp) {
     if (isSelected || showCampLabel) {
       width = NavigationCampMarkerWidget.labeledWidth;
@@ -857,19 +1033,25 @@ Marker buildWaypointMapMarker({
       );
     }
   } else {
-    if (isSelected) {
+    if (isSelected || showRegularLabel) {
       width = NavigationRegularWaypointMarkerWidget.labeledWidth;
       height = NavigationRegularWaypointMarkerWidget.labeledHeight;
       alignment = NavigationRegularWaypointMarkerWidget.labeledAlignment;
+      child = NavigationRegularWaypointMarkerWidget(
+        waypoint: waypoint,
+        isSelected: isSelected,
+        showLabel: showRegularLabel,
+      );
     } else {
       width = NavigationRegularWaypointMarkerWidget.unselectedSize;
       height = NavigationRegularWaypointMarkerWidget.unselectedSize;
       alignment = NavigationRegularWaypointMarkerWidget.unselectedAlignment;
+      child = NavigationRegularWaypointMarkerWidget(
+        waypoint: waypoint,
+        isSelected: false,
+        showLabel: false,
+      );
     }
-    child = NavigationRegularWaypointMarkerWidget(
-      waypoint: waypoint,
-      isSelected: isSelected,
-    );
   }
 
   return Marker(

@@ -70,6 +70,15 @@ void main() {
       );
       expect(explicitDanger.isDanger, isTrue);
       expect(explicitDanger.isPost, isFalse);
+
+      const explicitHelipad = Waypoint(
+        name: 'Helipad Area',
+        latitude: -7.46,
+        longitude: 110.44,
+        comment: 'helipad',
+      );
+      expect(explicitHelipad.isHelipad, isTrue);
+      expect(explicitHelipad.isPost, isFalse);
     });
 
     test('GpxParserService parses types strictly from <cmt> tag including danger', () {
@@ -98,6 +107,10 @@ void main() {
     <name>Tebing Curam</name>
     <cmt>danger</cmt>
   </wpt>
+  <wpt lat="-7.42" lon="110.43">
+    <name>Helipad Pos 4</name>
+    <cmt>helipad</cmt>
+  </wpt>
   <trk>
     <name>Jalur Selo</name>
     <trkseg>
@@ -108,7 +121,7 @@ void main() {
 </gpx>''';
 
       final result = GpxParserService.parseString(gpxContent);
-      expect(result.waypoints.length, 6);
+      expect(result.waypoints.length, 7);
 
       // Basecamp with <cmt>basecamp</cmt>
       final bc = result.waypoints[0];
@@ -142,6 +155,12 @@ void main() {
       expect(danger.type, 'danger');
       expect(danger.isDanger, isTrue);
       expect(danger.isPost, isFalse);
+
+      // Helipad Pos 4 with <cmt>helipad</cmt> -> helipad
+      final helipad = result.waypoints[6];
+      expect(helipad.type, 'helipad');
+      expect(helipad.isHelipad, isTrue);
+      expect(helipad.isPost, isFalse);
     });
   });
 

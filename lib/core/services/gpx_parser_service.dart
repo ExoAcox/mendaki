@@ -497,13 +497,13 @@ class GpxParserService {
       distanceKm: roundedDistance,
       estimatedDuration: '$estHours - ${estHours + 2} Jam',
       elevationGainMeters: roundedGain > 0 ? roundedGain : 1000,
-      difficulty: roundedGain > 1500 ? 'Sangat Curam' : 'Sedang',
+      difficulty: roundedGain > 1500 ? 'Sulit' : 'Sedang',
       waypoints: matchingWaypoints.isNotEmpty ? matchingWaypoints : allWaypoints,
       trackPoints: trackCoords,
     );
   }
 
-  // --- Helper Klasifikasi Umum (Tipe: post, basecamp, camp, summit, danger) ---
+  // --- Helper Klasifikasi Umum (Tipe: post, basecamp, camp, summit, danger, helipad) ---
 
   static String _classifyWaypointType(String? cmt) {
     final comment = (cmt ?? '').trim().toLowerCase();
@@ -515,6 +515,8 @@ class GpxParserService {
       return 'summit';
     } else if (comment == 'danger') {
       return 'danger';
+    } else if (comment == 'helipad') {
+      return 'helipad';
     }
     return 'post';
   }

@@ -44,10 +44,10 @@ class _MountainCardState extends State<MountainCard> {
     super.initState();
     _isGpxDownloaded =
         GpxStorageService.isGpxDownloadedCached(widget.mountain.id) ??
-            widget.mountain.isGpxReady;
+        widget.mountain.isGpxReady;
     _isMapDownloaded =
         OfflineMapService.isOfflineMapDownloadedCached(widget.mountain.id) ??
-            widget.mountain.isMapReady;
+        widget.mountain.isMapReady;
     DownloadService.instance.addListener(_onDownloadServiceUpdate);
     _checkDownloadStatus();
   }
@@ -116,7 +116,9 @@ class _MountainCardState extends State<MountainCard> {
         }
       }
 
-      final success = await DownloadService.instance.startGpxDownload(fullMountain);
+      final success = await DownloadService.instance.startGpxDownload(
+        fullMountain,
+      );
       if (success && mounted) {
         await _checkDownloadStatus();
         widget.onDownloaded?.call();
@@ -226,15 +228,19 @@ class _MountainCardState extends State<MountainCard> {
                       ),
                     ),
 
-                  // Gradient Overlay untuk keterbacaan teks
-                  Positioned.fill(
+                  // Gradient Overlay di bagian bawah untuk keterbacaan teks
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: 100,
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Colors.black.withValues(alpha: 0),
+                            Colors.transparent,
                             Colors.black.withValues(
-                              alpha: mountain.imageUrl != null ? 0.75 : 0.45,
+                              alpha: mountain.imageUrl != null ? 0.8 : 0.45,
                             ),
                           ],
                           begin: Alignment.topCenter,
@@ -364,7 +370,6 @@ class _MountainCardState extends State<MountainCard> {
                             letterSpacing: -0.4,
                           ),
                         ),
-                        // const SizedBox(height: 3),
                         Row(
                           children: [
                             const Icon(
@@ -415,9 +420,7 @@ class _MountainCardState extends State<MountainCard> {
                     ),
                     TelemetryItem(
                       label: 'ESTIMASI',
-                      value: mountain.estimatedTime.isNotEmpty
-                          ? mountain.estimatedTime
-                          : '6-8 Jam',
+                      value: mountain.estimatedTime,
                     ),
                   ],
                 ),

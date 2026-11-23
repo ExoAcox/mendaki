@@ -62,16 +62,21 @@ void main() {
     );
 
     testWidgets(
-      'NavigationFloatingControls renders CompassNeedle and Find Me button',
+      'NavigationFloatingControls renders CompassNeedle, Find Me, and Label toggle button',
       (tester) async {
         bool compassTapped = false;
         bool findMeTapped = false;
+        bool toggleLabelsTapped = false;
 
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
               body: NavigationFloatingControls(
                 currentRotation: 45.0,
+                showAllLabels: false,
+                onToggleLabelsTap: () {
+                  toggleLabelsTapped = true;
+                },
                 onCompassTap: () {
                   compassTapped = true;
                 },
@@ -88,9 +93,13 @@ void main() {
         expect(find.text('S'), findsOneWidget);
         expect(find.text('W'), findsOneWidget);
         expect(find.text('E'), findsOneWidget);
+        expect(find.byIcon(Icons.label_outline_rounded), findsOneWidget);
         expect(find.byIcon(Icons.my_location_rounded), findsOneWidget);
 
-        await tester.tap(find.byType(NavigationFloatingButton).at(0));
+        await tester.tap(find.byIcon(Icons.label_outline_rounded));
+        expect(toggleLabelsTapped, isTrue);
+
+        await tester.tap(find.byType(NavigationFloatingButton).at(1));
         expect(compassTapped, isTrue);
 
         await tester.tap(find.byIcon(Icons.my_location_rounded));

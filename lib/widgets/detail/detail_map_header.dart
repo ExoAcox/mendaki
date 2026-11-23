@@ -267,12 +267,14 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
   bool _isBasecamp(Waypoint wpt) => wpt.isBasecamp;
   bool _isCamp(Waypoint wpt) => wpt.isCamp;
   bool _isDanger(Waypoint wpt) => wpt.isDanger;
+  bool _isHelipad(Waypoint wpt) => wpt.isHelipad;
 
   void _rebuildMarkers() {
     if (_gpxData == null) return;
 
     final regularMarkers = <Marker>[];
     final campMarkers = <Marker>[];
+    final helipadMarkers = <Marker>[];
     final dangerMarkers = <Marker>[];
     final summitMarkers = <Marker>[];
     final basecampMarkers = <Marker>[];
@@ -283,7 +285,8 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
       final isSummit = _isSummit(wpt);
       final isBasecamp = !isSummit && _isBasecamp(wpt);
       final isDanger = !isSummit && !isBasecamp && _isDanger(wpt);
-      final isCamp = !isSummit && !isBasecamp && !isDanger && _isCamp(wpt);
+      final isHelipad = !isSummit && !isBasecamp && !isDanger && _isHelipad(wpt);
+      final isCamp = !isSummit && !isBasecamp && !isDanger && !isHelipad && _isCamp(wpt);
 
       final marker = buildWaypointMapMarker(
         waypoint: wpt,
@@ -292,9 +295,11 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
         isBasecamp: isBasecamp,
         isCamp: isCamp,
         isDanger: isDanger,
+        isHelipad: isHelipad,
         showCampLabel: false,
         showSummitLabel: false,
         showDangerLabel: false,
+        showHelipadLabel: false,
         rotate: false,
         onTap: () => _onWaypointTap(wpt),
       );
@@ -307,6 +312,8 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
         summitMarkers.add(marker);
       } else if (isDanger) {
         dangerMarkers.add(marker);
+      } else if (isHelipad) {
+        helipadMarkers.add(marker);
       } else if (isCamp) {
         campMarkers.add(marker);
       } else {
@@ -318,13 +325,15 @@ class _DetailMapHeaderState extends State<DetailMapHeader> {
     // 1. Danger markers
     // 2. Regular markers
     // 3. Camp markers
-    // 4. Summit markers
-    // 5. Basecamp markers
-    // 6. Marker yang sedang aktif
+    // 4. Helipad markers
+    // 5. Summit markers
+    // 6. Basecamp markers
+    // 7. Marker yang sedang aktif
     final markers = <Marker>[
       ...dangerMarkers,
       ...regularMarkers,
       ...campMarkers,
+      ...helipadMarkers,
       ...summitMarkers,
       ...basecampMarkers,
     ];
