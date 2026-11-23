@@ -406,12 +406,12 @@ class _MountainCardCompactState extends State<MountainCardCompact> {
                           color: AppTheme.primary.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const SizedBox(
+                        child: SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppTheme.primary,
+                            color: AppTheme.primary.withValues(alpha: 0.8),
                           ),
                         ),
                       )
@@ -425,9 +425,9 @@ class _MountainCardCompactState extends State<MountainCardCompact> {
                             color: AppTheme.primary.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.download_rounded,
-                            color: AppTheme.primary,
+                            color: AppTheme.primary.withValues(alpha: 0.8),
                             size: 16,
                           ),
                         ),
@@ -436,7 +436,7 @@ class _MountainCardCompactState extends State<MountainCardCompact> {
                       Container(
                         padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
-                          color: AppTheme.primary,
+                          color: AppTheme.primary.withValues(alpha: 0.8),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(

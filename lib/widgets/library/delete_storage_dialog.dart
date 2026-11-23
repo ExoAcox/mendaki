@@ -85,9 +85,9 @@ class DeleteStorageDialog extends StatefulWidget {
 }
 
 class _DeleteStorageDialogState extends State<DeleteStorageDialog> {
-  bool _deleteGpx = true;
-  bool _deleteMaps = true;
-  bool _deleteImages = true;
+  bool _deleteGpx = false;
+  bool _deleteMaps = false;
+  bool _deleteImages = false;
 
   @override
   Widget build(BuildContext context) {

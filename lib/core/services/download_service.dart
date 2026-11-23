@@ -74,7 +74,7 @@ class DownloadService extends ChangeNotifier {
 
     try {
       const androidSettings = AndroidInitializationSettings(
-        '@mipmap/ic_launcher',
+        '@drawable/ic_notification',
       );
       const darwinSettings = DarwinInitializationSettings(
         requestAlertPermission: true,

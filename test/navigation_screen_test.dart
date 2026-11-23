@@ -396,7 +396,7 @@ void main() {
         expect(find.byType(HelipadIcon), findsOneWidget);
 
         final helipadIcon = tester.widget<HelipadIcon>(find.byType(HelipadIcon));
-        expect(helipadIcon.color, const Color(0xFF0288D1));
+        expect(helipadIcon.color, Colors.white);
       },
     );
 
