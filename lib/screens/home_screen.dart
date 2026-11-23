@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mendaki/core/config/app_config.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
+import 'package:mendaki/core/services/image_cache_manager.dart';
 import 'package:mendaki/core/services/mountain_sort_service.dart';
 import 'package:mendaki/core/services/navigation_session_service.dart';
 import 'package:mendaki/core/services/network_service.dart';
@@ -22,6 +23,7 @@ import 'package:mendaki/widgets/home/home_filter_chips.dart';
 import 'package:mendaki/widgets/home/home_search_bar.dart';
 import 'package:mendaki/widgets/home/mountain_card.dart';
 import 'package:mendaki/widgets/home/mountain_card_compact.dart';
+import 'package:mendaki/widgets/home/mountain_category_button.dart';
 import 'package:mendaki/widgets/home/mountain_section_header.dart';
 import 'package:mendaki/widgets/home/responsive_mountain_sliver.dart';
 import 'package:mendaki/widgets/home/version_update_dialog.dart';
@@ -37,6 +39,7 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
   String selectedFilter = 'Semua';
+  String? selectedCategory;
   final TextEditingController searchController = TextEditingController();
   final FocusNode searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
@@ -257,6 +260,7 @@ class HomeScreenState extends State<HomeScreen> {
     try {
       final result = await SupabaseService.getMountainsResult(
         province: selectedFilter == 'Semua' ? null : selectedFilter,
+        category: selectedCategory,
         search: searchController.text.trim().isEmpty
             ? null
             : searchController.text.trim(),
@@ -298,6 +302,7 @@ class HomeScreenState extends State<HomeScreen> {
       final nextPage = _currentPage + 1;
       final result = await SupabaseService.getMountainsResult(
         province: selectedFilter == 'Semua' ? null : selectedFilter,
+        category: selectedCategory,
         search: searchController.text.trim().isEmpty
             ? null
             : searchController.text.trim(),
@@ -322,6 +327,11 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _onRefresh() async {
+    await MountainImageCacheManager.resetStaleTime();
+    await _loadMountains();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -331,7 +341,7 @@ class HomeScreenState extends State<HomeScreen> {
         top: false,
         bottom: false,
         child: RefreshIndicator(
-          onRefresh: _loadMountains,
+          onRefresh: _onRefresh,
           color: AppTheme.primary,
           child: CustomScrollView(
             controller: _scrollController,
@@ -353,15 +363,36 @@ class HomeScreenState extends State<HomeScreen> {
                         },
                       ),
                       const SizedBox(height: 14),
-                      HomeFilterChips(
-                        filters: filters,
-                        selectedFilter: selectedFilter,
-                        onSelected: (filter) {
-                          setState(() {
-                            selectedFilter = filter;
-                          });
-                          _loadMountains();
-                        },
+                      Row(
+                        children: [
+                          MountainCategoryButton(
+                            selectedCategory: selectedCategory,
+                            onCategoryChanged: (category) {
+                              setState(() {
+                                selectedCategory = category;
+                                if (category != null) {
+                                  selectedFilter = 'Semua';
+                                }
+                              });
+                              _loadMountains();
+                            },
+                          ),
+                          if (selectedCategory == null || selectedCategory!.isEmpty) ...[
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: HomeFilterChips(
+                                filters: filters,
+                                selectedFilter: selectedFilter,
+                                onSelected: (filter) {
+                                  setState(() {
+                                    selectedFilter = filter;
+                                  });
+                                  _loadMountains();
+                                },
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 20),
                     ],

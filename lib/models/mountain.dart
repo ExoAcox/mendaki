@@ -17,6 +17,7 @@ class Mountain {
   final double? latitude;
   final double? longitude;
   final List<String> cities;
+  final List<String> categories;
   final List<HikingRoute> _routes;
   final List<String> rawRoutes;
   final List<Waypoint> allWaypoints;
@@ -24,6 +25,7 @@ class Mountain {
 
   // Backward-compatible getters
   int get elevationMdpl => elevation;
+  List<String> get category => categories;
 
   /// Daftar rute terurut sesuai dengan urutan array rawRoutes dari API
   List<HikingRoute> get routes {
@@ -108,6 +110,7 @@ class Mountain {
     this.latitude,
     this.longitude,
     this.cities = const [],
+    this.categories = const [],
     this.allWaypoints = const [],
     this.localImagePath,
   }) : _routes = routes;
@@ -130,6 +133,7 @@ class Mountain {
     double? latitude,
     double? longitude,
     List<String>? cities,
+    List<String>? categories,
     List<Waypoint>? allWaypoints,
     String? localImagePath,
   }) {
@@ -151,6 +155,7 @@ class Mountain {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       cities: cities ?? this.cities,
+      categories: categories ?? this.categories,
       allWaypoints: allWaypoints ?? this.allWaypoints,
       localImagePath: localImagePath ?? this.localImagePath,
     );
@@ -173,6 +178,7 @@ class Mountain {
       'latitude': latitude,
       'longitude': longitude,
       'cities': cities,
+      'category': categories,
       'routes': routes.map((r) => r.toJson()).toList(),
       'rawRoutes': rawRoutes,
       'allWaypoints': allWaypoints.map((w) => w.toJson()).toList(),
@@ -198,6 +204,14 @@ class Mountain {
       longitude: (json['longitude'] as num?)?.toDouble(),
       cities:
           (json['cities'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      categories:
+          (json['category'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          (json['categories'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],

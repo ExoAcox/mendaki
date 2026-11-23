@@ -5,6 +5,7 @@ import 'package:mendaki/core/services/gpx_storage_service.dart';
 import 'package:mendaki/core/services/mountain_sort_service.dart';
 import 'package:mendaki/models/app_version.dart';
 import 'package:mendaki/models/mountain.dart';
+import 'package:mendaki/models/mountain_category.dart';
 import 'package:mendaki/models/route.dart';
 
 /// Hasil query daftar gunung beserta total baris hasil pencarian/filter
@@ -100,6 +101,7 @@ class SupabaseService {
   /// Mengambil daftar gunung beserta total count dengan pagination (ringan dan cepat)
   static Future<MountainQueryResult> getMountainsResult({
     String? province,
+    String? category,
     String? search,
     int page = 1,
     int pageSize = 10,
@@ -119,6 +121,16 @@ class SupabaseService {
 
       if (search != null && search.isNotEmpty) {
         query = query.ilike('name', '%$search%');
+      }
+
+      // Filter kategori langsung di sisi API / Database Supabase
+      if (category != null && category.isNotEmpty && category != 'Semua') {
+        final catObj = MountainCategory.fromSlugOrTitle(category);
+        if (catObj != null) {
+          query = query.overlaps('category', [catObj.slug, catObj.title]);
+        } else {
+          query = query.contains('category', [category]);
+        }
       }
 
       // Filter provinsi langsung di sisi API / Database Supabase
@@ -180,6 +192,7 @@ class SupabaseService {
   /// Mengambil daftar gunung dengan pagination (ringan dan cepat)
   static Future<List<Mountain>> getMountains({
     String? province,
+    String? category,
     String? search,
     int page = 1,
     int pageSize = 10,
@@ -187,6 +200,7 @@ class SupabaseService {
   }) async {
     final result = await getMountainsResult(
       province: province,
+      category: category,
       search: search,
       page: page,
       pageSize: pageSize,
@@ -218,6 +232,26 @@ class SupabaseService {
 
     // Fallback data lokal offline jika sedang tidak ada koneksi
     return await GpxStorageService.getDownloadedMountain(mountainId);
+  }
+
+  /// Mengambil seluruh URL gambar gunung aktif untuk validasi ETag
+  static Future<List<String>> getAllImageUrls() async {
+    if (!isReady) return [];
+    try {
+      final response = await client
+          .from('mountain')
+          .select('image_url')
+          .not('image_url', 'is', null);
+      final List<dynamic> data = response as List<dynamic>;
+      return data
+          .map((row) => row['image_url'] as String?)
+          .whereType<String>()
+          .where((url) => url.isNotEmpty)
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching all image URLs: $e');
+      return [];
+    }
   }
 
   /// Mapping response JSON dari Supabase (termasuk relasi `route`)
@@ -376,6 +410,12 @@ class SupabaseService {
     // URL Foto / Banner Gunung
     final String? imageUrl = json['image_url'] as String?;
 
+    // Kategori gunung
+    final List<String> categories =
+        (json['category'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+        (json['categories'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+        const [];
+
     return Mountain(
       id: json['id']?.toString() ?? 'unknown',
       name: json['name'] ?? 'Gunung',
@@ -391,6 +431,7 @@ class SupabaseService {
       latitude: latitude,
       longitude: longitude,
       cities: cities,
+      categories: categories,
       isGpxReady: false,
       isMapReady: false,
       assetUrl: json['asset_url'],
