@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart' hide Path;
 import 'package:mendaki/core/services/gpx_parser_service.dart';
 import 'package:mendaki/core/services/gpx_storage_service.dart';
 import 'package:mendaki/core/services/navigation_session_service.dart';
+import 'package:mendaki/core/theme/app_snack_bar.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/models/route.dart';
 import 'package:mendaki/models/waypoint.dart';
@@ -445,17 +446,13 @@ class _NavigationScreenState extends State<NavigationScreen>
 
   void _handleFindMeTap() {
     if (_isFarFromMountain) {
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _distanceToMountainKm != null
-                ? 'Lokasi Anda terlalu jauh (${_distanceToMountainKm!.toStringAsFixed(1)} km dari gunung)'
-                : 'Lokasi Anda terlalu jauh dari gunung',
-          ),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
+      final msg = _distanceToMountainKm != null
+          ? 'Lokasi Anda terlalu jauh (${_distanceToMountainKm!.toStringAsFixed(1)} km dari gunung)'
+          : 'Lokasi Anda terlalu jauh dari gunung';
+      AppSnackBar.showInfo(
+        context,
+        msg,
+        duration: const Duration(seconds: 2),
       );
     } else {
       _focusGps();

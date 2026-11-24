@@ -14,7 +14,7 @@ void main() {
         ),
       );
 
-      expect(find.text('Data gunung belum tersedia?'), findsOneWidget);
+      expect(find.text('Gunung belum tersedia?'), findsOneWidget);
       expect(find.text('Request di sini'), findsOneWidget);
       expect(find.byIcon(Icons.edit_note_rounded), findsOneWidget);
     });
@@ -24,14 +24,14 @@ void main() {
         const MaterialApp(
           home: Scaffold(
             body: FeedbackPrompt(
-              title: 'Data jalur belum tersedia?',
+              title: 'Jalur belum tersedia?',
               buttonLabel: 'Kirim Request',
             ),
           ),
         ),
       );
 
-      expect(find.text('Data jalur belum tersedia?'), findsOneWidget);
+      expect(find.text('Jalur belum tersedia?'), findsOneWidget);
       expect(find.text('Kirim Request'), findsOneWidget);
     });
 

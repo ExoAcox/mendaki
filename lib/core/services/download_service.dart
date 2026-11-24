@@ -190,7 +190,7 @@ class DownloadService extends ChangeNotifier {
 
     try {
       await _showStartedNotification(task, notifId);
-      await _updateNotificationProgress(task, 'Mengunduh data GPX...', 0.2);
+      await _updateNotificationProgress(task, 'Mengunduh data GPX...', 0.0);
 
       if (task.isCancelled) {
         await _handleCancelled(task, notifId);
@@ -270,7 +270,7 @@ class DownloadService extends ChangeNotifier {
 
     try {
       await _showStartedNotification(task, notifId);
-      await _updateNotificationProgress(task, 'Menghitung area map...', 0.05);
+      await _updateNotificationProgress(task, 'Menghitung area map...', 0.0);
 
       if (task.isCancelled) {
         await _handleCancelled(task, notifId);

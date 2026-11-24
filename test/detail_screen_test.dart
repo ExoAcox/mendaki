@@ -56,7 +56,7 @@ void main() {
       // Belum terunduh offline -> Menampilkan tombol Download Map Offline
       expect(find.text('Download Map Offline'), findsOneWidget);
       // Feedback prompt di bawah card rute
-      expect(find.text('Data jalur belum tersedia?'), findsOneWidget);
+      expect(find.text('Jalur belum tersedia?'), findsOneWidget);
       expect(find.text('Request di sini'), findsOneWidget);
     },
   );

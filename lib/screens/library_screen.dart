@@ -4,6 +4,7 @@ import 'package:mendaki/core/services/mountain_sort_service.dart';
 import 'package:mendaki/core/services/offline_map_service.dart';
 import 'package:mendaki/core/services/storage_info_service.dart';
 import 'package:mendaki/core/services/view_preference_service.dart';
+import 'package:mendaki/core/theme/app_snack_bar.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/screens/detail_screen.dart';
@@ -176,14 +177,9 @@ class LibraryScreenState extends State<LibraryScreen> {
       _loadDownloadedMountains();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${mountain.name} berhasil dihapus dari library'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
+        AppSnackBar.showSuccess(
+          context,
+          '${mountain.name} berhasil dihapus dari library',
         );
       }
     }
@@ -212,14 +208,9 @@ class LibraryScreenState extends State<LibraryScreen> {
       await _loadStorageMetrics();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Data offline terpilih berhasil dihapus'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
+        AppSnackBar.showSuccess(
+          context,
+          'Data offline terpilih berhasil dihapus',
         );
       }
     }

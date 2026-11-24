@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mendaki/core/services/version_state_service.dart';
+import 'package:mendaki/core/theme/app_snack_bar.dart';
 import 'package:mendaki/models/app_version.dart';
 
 class VersionUpdateDialog extends StatelessWidget {
@@ -43,11 +44,10 @@ class VersionUpdateDialog extends StatelessWidget {
     }
 
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tautan pembaruan belum tersedia saat ini.'),
-          duration: Duration(seconds: 2),
-        ),
+      AppSnackBar.showInfo(
+        context,
+        'Tautan pembaruan belum tersedia saat ini.',
+        duration: const Duration(seconds: 2),
       );
     }
   }

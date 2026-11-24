@@ -10,14 +10,13 @@ import 'screens/main_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {
     debugPrint("Info: .env file not loaded: $e");
   }
+
   await DownloadService.instance.initialize();
   await SupabaseService.initialize();
   await ViewPreferenceService.init();

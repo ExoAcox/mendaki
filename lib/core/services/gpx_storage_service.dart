@@ -467,12 +467,19 @@ class GpxStorageService {
     void Function(double progress)? onProgress,
   }) async {
     final url =
-        '${SupabaseConfig.supabaseUrl}/storage/v1/object/public/${SupabaseConfig.gpxBucket}/$mountainId.gpx';
+        '${SupabaseConfig.supabaseUrl}/storage/v1/object/authenticated/${SupabaseConfig.gpxBucket}/$mountainId.gpx';
 
     final client = HttpClient();
     try {
       // 1. Kirim HTTP HEAD request (ringan, 0 byte payload)
       final request = await client.openUrl('HEAD', Uri.parse(url));
+      if (SupabaseConfig.supabaseAnonKey.isNotEmpty) {
+        request.headers.set('apikey', SupabaseConfig.supabaseAnonKey);
+        request.headers.set(
+          'Authorization',
+          'Bearer ${SupabaseConfig.supabaseAnonKey}',
+        );
+      }
       final response = await request.close();
 
       if (response.statusCode != 200) {
@@ -544,18 +551,36 @@ class GpxStorageService {
     }
 
     final url =
-        '${SupabaseConfig.supabaseUrl}/storage/v1/object/public/${SupabaseConfig.gpxBucket}/$mountainId.gpx';
+        '${SupabaseConfig.supabaseUrl}/storage/v1/object/authenticated/${SupabaseConfig.gpxBucket}/$mountainId.gpx';
 
     final client = HttpClient();
     IOSink? sink;
 
     try {
       final request = await client.getUrl(Uri.parse(url));
+      if (SupabaseConfig.supabaseAnonKey.isNotEmpty) {
+        request.headers.set('apikey', SupabaseConfig.supabaseAnonKey);
+        request.headers.set(
+          'Authorization',
+          'Bearer ${SupabaseConfig.supabaseAnonKey}',
+        );
+      }
       final response = await request.close();
 
       if (response.statusCode != 200) {
+        String serverMessage = '';
+        try {
+          final errorBody = await response.transform(utf8.decoder).join();
+          if (errorBody.isNotEmpty) {
+            final json = jsonDecode(errorBody);
+            serverMessage =
+                (json is Map) ? (json['message'] ?? json['error'] ?? '') : '';
+          }
+        } catch (_) {}
+
+        final detail = serverMessage.isNotEmpty ? ': $serverMessage' : '';
         throw HttpException(
-          'Gagal mengunduh file GPX (HTTP ${response.statusCode})',
+          'Gagal mengunduh file GPX (HTTP ${response.statusCode}$detail)',
           uri: Uri.parse(url),
         );
       }

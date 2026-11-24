@@ -42,6 +42,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             )
           : null,
       title: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),

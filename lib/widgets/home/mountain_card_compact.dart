@@ -7,6 +7,7 @@ import 'package:mendaki/core/services/gpx_storage_service.dart';
 import 'package:mendaki/core/services/image_cache_manager.dart';
 import 'package:mendaki/core/services/offline_map_service.dart';
 import 'package:mendaki/core/services/supabase_service.dart';
+import 'package:mendaki/core/theme/app_snack_bar.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/models/mountain.dart';
 
@@ -121,43 +122,19 @@ class _MountainCardCompactState extends State<MountainCardCompact> {
         widget.onDownloaded?.call();
 
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: AppTheme.primary,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            content: Row(
-              children: [
-                const Icon(
-                  Icons.check_circle_rounded,
-                  color: Color(0xFF89EDBA),
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'GPX ${widget.mountain.name} berhasil disimpan!',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        AppSnackBar.showSuccess(
+          context,
+          'GPX ${widget.mountain.name} berhasil disimpan!',
+        );
+      } else if (!success && mounted) {
+        AppSnackBar.showError(
+          context,
+          'Gagal mengunduh GPX ${widget.mountain.name}',
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: const Color(0xFFBA1A1A),
-            content: Text('Gagal mengunduh: $e'),
-          ),
-        );
+        AppSnackBar.showError(context, 'Gagal mengunduh: $e');
       }
     }
   }

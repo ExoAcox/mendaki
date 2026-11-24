@@ -74,6 +74,11 @@ class AppTheme {
           return null;
         }),
       ),
+      snackBarTheme: const SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+      ),
     );
   }
 }

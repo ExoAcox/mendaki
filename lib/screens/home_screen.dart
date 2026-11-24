@@ -356,7 +356,13 @@ class HomeScreenState extends State<HomeScreen> {
                       HomeSearchBar(
                         controller: searchController,
                         focusNode: searchFocusNode,
-                        onSubmitted: (_) => _loadMountains(),
+                        onSubmitted: (_) {
+                          setState(() {
+                            selectedFilter = 'Semua';
+                            selectedCategory = null;
+                          });
+                          _loadMountains();
+                        },
                         onClear: () {
                           searchController.clear();
                           _loadMountains();
@@ -368,6 +374,7 @@ class HomeScreenState extends State<HomeScreen> {
                           MountainCategoryButton(
                             selectedCategory: selectedCategory,
                             onCategoryChanged: (category) {
+                              searchController.clear();
                               setState(() {
                                 selectedCategory = category;
                                 if (category != null) {
@@ -385,6 +392,7 @@ class HomeScreenState extends State<HomeScreen> {
                                 filters: filters,
                                 selectedFilter: selectedFilter,
                                 onSelected: (filter) {
+                                  searchController.clear();
                                   setState(() {
                                     selectedFilter = filter;
                                   });

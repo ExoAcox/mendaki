@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:mendaki/core/services/supabase_service.dart';
+import 'package:mendaki/core/theme/app_snack_bar.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 
 class FeedbackModal extends StatefulWidget {
@@ -161,24 +162,9 @@ class _FeedbackModalState extends State<FeedbackModal> {
 
       if (mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Terima kasih! Masukan Anda telah berhasil dikirim.',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: AppTheme.primary,
-            behavior: SnackBarBehavior.floating,
-            duration: Duration(seconds: 3),
-          ),
+        AppSnackBar.showSuccess(
+          context,
+          'Terima kasih! Masukan Anda telah berhasil dikirim.',
         );
       }
     } catch (e) {
@@ -186,22 +172,9 @@ class _FeedbackModalState extends State<FeedbackModal> {
         setState(() {
           _isSubmitting = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(
-                  Icons.error_outline_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                Expanded(child: Text('Gagal mengirim masukan: $e')),
-              ],
-            ),
-            backgroundColor: AppTheme.error,
-            behavior: SnackBarBehavior.floating,
-          ),
+        AppSnackBar.showError(
+          context,
+          'Gagal mengirim masukan: $e',
         );
       }
     }

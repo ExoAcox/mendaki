@@ -151,7 +151,7 @@ void main() {
       expect(find.byIcon(Icons.offline_pin_rounded), findsOneWidget);
       expect(find.text('3'), findsOneWidget);
 
-      await tester.tap(find.byType(InkWell));
+      await tester.tap(find.byIcon(Icons.offline_pin_rounded));
       expect(tapped, isTrue);
     });
 

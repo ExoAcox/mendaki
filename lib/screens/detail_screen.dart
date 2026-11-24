@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mendaki/core/services/download_service.dart';
 import 'package:mendaki/core/services/offline_map_service.dart';
 import 'package:mendaki/core/services/supabase_service.dart';
+import 'package:mendaki/core/theme/app_snack_bar.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/screens/navigation_screen.dart';
@@ -104,40 +105,21 @@ class _DetailScreenState extends State<DetailScreen> {
           _mountain = _mountain.copyWith(isMapReady: true);
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: const Color(0xFF0F5238),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            content: Row(
-              children: [
-                const Icon(
-                  Icons.offline_pin_rounded,
-                  color: Color(0xFF89EDBA),
-                  size: 22,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Map offline ${_mountain.name} berhasil disimpan!',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        AppSnackBar.showSuccess(
+          context,
+          'Map offline ${_mountain.name} berhasil disimpan!',
+        );
+      } else {
+        AppSnackBar.showError(
+          context,
+          'Gagal mengunduh map ${_mountain.name}',
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: const Color(0xFFBA1A1A),
-            behavior: SnackBarBehavior.floating,
-            content: Text('Gagal mengunduh map offline: $e'),
-          ),
+        AppSnackBar.showError(
+          context,
+          'Gagal mengunduh map: $e',
         );
       }
     }

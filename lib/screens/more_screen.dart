@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mendaki/core/config/app_config.dart';
+import 'package:mendaki/core/theme/app_snack_bar.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/widgets/home/feedback_modal.dart';
 
@@ -19,15 +20,14 @@ class MoreScreen extends StatelessWidget {
         mode: LaunchMode.externalApplication,
       );
       if (!launched && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tidak dapat membuka tautan GitHub')),
+        AppSnackBar.showError(
+          context,
+          'Tidak dapat membuka tautan GitHub',
         );
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppSnackBar.showError(context, 'Error: $e');
       }
     }
   }
