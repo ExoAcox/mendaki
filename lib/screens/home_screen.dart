@@ -16,7 +16,7 @@ import 'package:mendaki/screens/detail_screen.dart';
 import 'package:mendaki/screens/library_screen.dart';
 import 'package:mendaki/screens/navigation_screen.dart';
 import 'package:mendaki/widgets/home/empty_mountain_view.dart';
-import 'package:mendaki/widgets/home/feedback_modal.dart';
+import 'package:mendaki/widgets/home/feedback_prompt.dart';
 import 'package:mendaki/widgets/home/home_app_bar.dart';
 import 'package:mendaki/widgets/home/home_error_view.dart';
 import 'package:mendaki/widgets/home/home_filter_chips.dart';
@@ -377,7 +377,8 @@ class HomeScreenState extends State<HomeScreen> {
                               _loadMountains();
                             },
                           ),
-                          if (selectedCategory == null || selectedCategory!.isEmpty) ...[
+                          if (selectedCategory == null ||
+                              selectedCategory!.isEmpty) ...[
                             const SizedBox(width: 8),
                             Expanded(
                               child: HomeFilterChips(
@@ -419,7 +420,9 @@ class HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         MountainSectionHeader(
-                          count: _totalCount > 0 ? _totalCount : mountains.length,
+                          count: _totalCount > 0
+                              ? _totalCount
+                              : mountains.length,
                           currentSort: _sortOption,
                           onSortChanged: _onSortChanged,
                           currentViewMode: _viewMode,
@@ -447,14 +450,14 @@ class HomeScreenState extends State<HomeScreen> {
                     ),
                   )
                 else if (mountains.isEmpty)
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  const SliverPadding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
                     sliver: SliverToBoxAdapter(
                       child: Column(
                         children: [
-                          const EmptyMountainView(),
-                          const SizedBox(height: 16),
-                          _buildFeedbackPrompt(),
+                          EmptyMountainView(),
+                          SizedBox(height: 16),
+                          FeedbackPrompt(),
                         ],
                       ),
                     ),
@@ -466,8 +469,8 @@ class HomeScreenState extends State<HomeScreen> {
                       itemCount: mountains.length,
                       mainAxisSpacing:
                           _viewMode == ViewPreferenceService.viewModeCompact
-                              ? 10
-                              : 16,
+                          ? 10
+                          : 16,
                       crossAxisSpacing: 16,
                       itemBuilder: (context, index) {
                         final mountain = mountains[index];
@@ -520,75 +523,20 @@ class HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  const SliverPadding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
                     sliver: SliverToBoxAdapter(
                       child: Column(
-                        children: [
-                          const SizedBox(height: 8),
-                          _buildFeedbackPrompt(),
-                        ],
+                        children: [SizedBox(height: 8), FeedbackPrompt()],
                       ),
                     ),
                   ),
                 ],
               ],
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 96),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 108)),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildFeedbackPrompt() {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 8.0),
-      padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: AppTheme.outlineVariant.withValues(alpha: 0.5),
-            width: 1.0,
-          ),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'Data gunung belum tersedia?',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppTheme.onSurfaceVariant.withValues(alpha: 0.8),
-            ),
-          ),
-          const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: () =>
-                FeedbackModal.show(context, initialType: 'request'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.primary,
-              side: BorderSide(
-                color: AppTheme.primary.withValues(alpha: 0.7),
-                width: 1.2,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            icon: const Icon(Icons.edit_note_rounded, size: 18),
-            label: const Text(
-              'Request di sini',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
       ),
     );
   }

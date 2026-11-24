@@ -67,12 +67,10 @@ class DetailQuickStats extends StatelessWidget {
           ),
           _buildDivider(),
           _buildStatItem(
-            label: 'Estimasi',
-            value: mountain.estimatedTime.isNotEmpty
-                ? mountain.estimatedTime
-                : '2D1N',
-            unit: 'Waktu',
-            valueColor: AppTheme.onSurface,
+            label: 'Estimasi Waktu',
+            value: mountain.estimatedTime.replaceFirst(" Jam", ""),
+            unit: 'jam',
+            valueColor: AppTheme.primary,
           ),
         ],
       ),

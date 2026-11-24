@@ -6,11 +6,7 @@ class DetailRouteItem extends StatelessWidget {
   final List<HikingRoute> routes;
   final int? peakElevation;
 
-  const DetailRouteItem({
-    super.key,
-    required this.routes,
-    this.peakElevation,
-  });
+  const DetailRouteItem({super.key, required this.routes, this.peakElevation});
 
   @override
   Widget build(BuildContext context) {
@@ -65,8 +61,8 @@ class DetailRouteItem extends StatelessWidget {
   Widget _buildRouteCard({required HikingRoute route}) {
     final gain =
         peakElevation != null && peakElevation! > route.basecampElevation
-            ? peakElevation! - route.basecampElevation
-            : null;
+        ? peakElevation! - route.basecampElevation
+        : null;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -88,152 +84,143 @@ class DetailRouteItem extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top Row: Route Name & Distance
+          // Top Row: Route Name & City
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.route_rounded,
+                  color: AppTheme.primary,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 8),
               Expanded(
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.route_rounded,
-                        color: AppTheme.primary,
-                        size: 16,
+                    Text(
+                      'Jalur ${route.name}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.onSurface,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    if (route.city != null && route.city!.isNotEmpty) ...[
+                      Row(
                         children: [
-                          Text(
-                            'Jalur ${route.name}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.onSurface,
+                          const Icon(
+                            Icons.location_on_rounded,
+                            size: 11,
+                            color: AppTheme.outline,
+                          ),
+                          const SizedBox(width: 2),
+                          Expanded(
+                            child: Text(
+                              route.city!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
-                          if (route.city != null &&
-                              route.city!.isNotEmpty) ...[
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.location_on_rounded,
-                                    size: 11,
-                                    color: AppTheme.outline,
-                                  ),
-                                  const SizedBox(width: 2),
-                                  Expanded(
-                                    child: Text(
-                                      route.city!,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: AppTheme.onSurfaceVariant,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ],
-                        ),
+                        ],
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.schedule_rounded,
-                      size: 15,
-                      color: AppTheme.primary,
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      route.estimatedDuration.isNotEmpty
-                          ? route.estimatedDuration
-                          : '-',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primary,
-                        height: 1.1,
-                      ),
-                    ),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
 
-            // Row 1: Elevasi Basecamp & Elevasi Gain
-            Row(
-              children: [
-                Expanded(
-                  child: _buildMetricItem(
-                    icon: Icons.terrain_rounded,
-                    iconColor: AppTheme.secondary,
-                    label: 'Elevasi Basecamp',
-                    value: '${route.basecampElevation} mdpl',
-                  ),
+          // Row 1: Elevasi Basecamp & Elevasi Gain
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricItem(
+                  icon: Icons.terrain_rounded,
+                  iconColor: AppTheme.secondary,
+                  label: 'Elevasi Awal',
+                  value: '${route.basecampElevation} mdpl',
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildMetricItem(
-                    icon: Icons.trending_up_rounded,
-                    iconColor: AppTheme.primary,
-                    label: 'Elevasi Gain',
-                    value: gain != null ? '+$gain m' : '-',
-                  ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildMetricItem(
+                  icon: Icons.trending_up_rounded,
+                  iconColor: AppTheme.primary,
+                  label: 'Elevasi Gain',
+                  value: gain != null ? '+$gain m' : '-',
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildMetricItem(
-                    icon: Icons.straighten_rounded,
-                    iconColor: AppTheme.primary,
-                    label: 'Estimasi Jarak',
-                    value:
-                        '${route.distanceKm.toStringAsFixed(route.distanceKm.truncateToDouble() == route.distanceKm ? 0 : 1)} km',
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
 
-                    // route.estimatedDuration.isNotEmpty
-                    //     ? route.estimatedDuration
-                    //     : '-',
-                  ),
+          // Row 2: Estimasi Jarak & Estimasi Waktu
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricItem(
+                  icon: Icons.straighten_rounded,
+                  iconColor: AppTheme.primary,
+                  label: 'Estimasi Jarak',
+                  value:
+                      '${route.distanceKm.toStringAsFixed(route.distanceKm.truncateToDouble() == route.distanceKm ? 0 : 1)} km',
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildMetricItem(
-                    icon: Icons.water_drop_rounded,
-                    iconColor: const Color(0xFF0288D1),
-                    label: 'Sumber Air',
-                    value: route.hasWater ? 'Tersedia' : 'Tidak Tersedia',
-                  ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildMetricItem(
+                  icon: Icons.schedule_rounded,
+                  iconColor: AppTheme.primary,
+                  label: 'Estimasi Waktu',
+                  value: route.estimatedDuration.isNotEmpty
+                      ? route.estimatedDuration
+                      : '-',
                 ),
-              ],
-            ),
-          ],
-        ),
-      );
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Row 3: Tingkat Kesulitan & Sumber Air
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricItem(
+                  icon: Icons.water_drop_rounded,
+                  iconColor: const Color(0xFF0288D1),
+                  label: 'Sumber Air',
+                  value: route.hasWater ? 'Tersedia' : 'Tidak Tersedia',
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildMetricItem(
+                  icon: Icons.speed_rounded,
+                  iconColor: AppTheme.secondary,
+                  label: 'Tingkat Kesulitan',
+                  value: route.difficultyText,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildMetricItem({

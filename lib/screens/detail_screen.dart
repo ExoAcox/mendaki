@@ -9,6 +9,7 @@ import 'package:mendaki/widgets/detail/detail_bottom_bar.dart';
 import 'package:mendaki/widgets/detail/detail_map_header.dart';
 import 'package:mendaki/widgets/detail/detail_quick_stats.dart';
 import 'package:mendaki/widgets/detail/detail_route_item.dart';
+import 'package:mendaki/widgets/home/feedback_prompt.dart';
 
 class DetailScreen extends StatefulWidget {
   final Mountain mountain;
@@ -92,7 +93,9 @@ class _DetailScreenState extends State<DetailScreen> {
     if (_isDownloading) return;
 
     try {
-      final success = await DownloadService.instance.startMapDownload(_mountain);
+      final success = await DownloadService.instance.startMapDownload(
+        _mountain,
+      );
       if (!mounted) return;
 
       if (success) {
@@ -211,6 +214,15 @@ class _DetailScreenState extends State<DetailScreen> {
                 peakElevation: _mountain.elevation,
               ),
               const SizedBox(height: 16),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: FeedbackPrompt(title: 'Jalur belum tersedia?'),
+              ),
+            ] else ...[
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: FeedbackPrompt(title: 'Jalur belum tersedia?'),
+              ),
             ],
             const SizedBox(height: 96),
           ],

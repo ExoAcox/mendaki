@@ -47,6 +47,27 @@ class HikingRoute {
   int get elevation => elevationGainMeters;
   String get estimatedTime => estimatedDuration;
 
+  String get difficultyText {
+    final parsed = int.tryParse(difficulty);
+    if (parsed != null) {
+      switch (parsed) {
+        case 1:
+          return 'Sangat Mudah';
+        case 2:
+          return 'Mudah';
+        case 3:
+          return 'Sedang';
+        case 4:
+          return 'Sulit';
+        case 5:
+          return 'Sangat Sulit';
+        default:
+          return 'Sedang';
+      }
+    }
+    return difficulty.isNotEmpty ? difficulty : 'Sedang';
+  }
+
   const HikingRoute({
     required this.id,
     required this.name,

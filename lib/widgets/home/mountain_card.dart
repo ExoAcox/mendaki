@@ -419,7 +419,7 @@ class _MountainCardState extends State<MountainCard> {
                       value: mountain.difficultyText,
                     ),
                     TelemetryItem(
-                      label: 'ESTIMASI',
+                      label: 'DURASI',
                       value: mountain.estimatedTime,
                     ),
                   ],

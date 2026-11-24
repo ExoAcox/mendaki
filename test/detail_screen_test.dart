@@ -48,8 +48,16 @@ void main() {
       expect(find.text('Gunung Merbabu'), findsWidgets);
       expect(find.text('3145'), findsOneWidget);
       expect(find.textContaining('Selo'), findsWidgets);
+      expect(find.text('Estimasi Waktu'), findsWidgets);
+      expect(find.text('Tingkat Kesulitan'), findsWidgets);
+      expect(find.text('Sedang'), findsWidgets);
+      expect(find.text('Sulit'), findsWidgets);
+      expect(find.text('6-7 Jam'), findsOneWidget);
       // Belum terunduh offline -> Menampilkan tombol Download Map Offline
       expect(find.text('Download Map Offline'), findsOneWidget);
+      // Feedback prompt di bawah card rute
+      expect(find.text('Data jalur belum tersedia?'), findsOneWidget);
+      expect(find.text('Request di sini'), findsOneWidget);
     },
   );
 

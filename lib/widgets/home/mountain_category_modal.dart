@@ -35,8 +35,6 @@ class MountainCategoryModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSelected = selectedCategory != null && selectedCategory!.isNotEmpty;
-
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: Colors.white,
@@ -57,7 +55,7 @@ class MountainCategoryModal extends StatelessWidget {
                   children: [
                     const Expanded(
                       child: Text(
-                        'Kategori Gunung',
+                        'Kategori',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
