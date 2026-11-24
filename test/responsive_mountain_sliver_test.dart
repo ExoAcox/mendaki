@@ -163,7 +163,7 @@ void main() {
         elevation: 3265,
         location: 'Karanganyar & Magetan',
         province: 'Jawa Tengah',
-        difficulty: 'Sedang',
+        difficulty: 3,
         estimatedTime: '6-8 Jam',
         rawRoutes: [
           'Candi Cetho',
@@ -183,7 +183,7 @@ void main() {
         elevation: 2930,
         location: 'Boyolali',
         province: 'Jawa Tengah',
-        difficulty: 'Sedang',
+        difficulty: 3,
         estimatedTime: '4-6 Jam',
         rawRoutes: ['New Selo'],
       );

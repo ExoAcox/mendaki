@@ -201,7 +201,7 @@ void main() {
         elevation: 3145,
         location: 'Boyolali',
         province: 'Jawa Tengah',
-        difficulty: 'Sedang',
+        difficulty: 3,
         estimatedTime: '2D1N',
       );
 
@@ -251,7 +251,7 @@ void main() {
           elevation: 3145,
           location: 'Boyolali',
           province: 'Jawa Tengah',
-          difficulty: 'Sedang',
+          difficulty: 3,
           estimatedTime: '2D1N',
         );
 

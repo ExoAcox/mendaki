@@ -289,7 +289,7 @@ class SupabaseService {
           distanceKm: distanceVal,
           estimatedDuration: estimatedDuration,
           elevationGainMeters: eleGain,
-          difficulty: eleGain > 1500 ? 'Sulit' : 'Sedang',
+          difficulty: routeMap['difficulty']?.toString() ?? (eleGain > 1500 ? 'Sulit' : 'Sedang'),
           hasWater: hasWater,
           city: cityVal,
           waypoints: const [],
@@ -337,29 +337,16 @@ class SupabaseService {
       estimatedTimeStr = rawEstimatedTime;
     }
 
-    // Tingkat Kesulitan: hanya easy, medium, hard, very_hard
-    final rawDiff = (json['difficulty']?.toString() ?? 'medium').toLowerCase().trim();
-    String difficultyStr;
-    switch (rawDiff) {
-      case 'easy':
-      case 'mudah':
-        difficultyStr = 'Mudah';
-        break;
-      case 'hard':
-      case 'sulit':
-        difficultyStr = 'Sulit';
-        break;
-      case 'very_hard':
-      case 'very hard':
-      case 'sangat sulit':
-      case 'sangat_sulit':
-        difficultyStr = 'Sangat Sulit';
-        break;
-      case 'medium':
-      case 'sedang':
-      default:
-        difficultyStr = 'Sedang';
-        break;
+    // Tingkat Kesulitan: int dari Supabase
+    int difficultyVal = 3;
+    final rawDiff = json['difficulty'];
+    if (rawDiff is num) {
+      difficultyVal = rawDiff.toInt();
+    } else if (rawDiff is List && rawDiff.isNotEmpty) {
+      final first = rawDiff.first;
+      difficultyVal = (first is num) ? first.toInt() : (int.tryParse(first.toString()) ?? 3);
+    } else if (rawDiff is String) {
+      difficultyVal = int.tryParse(rawDiff.trim()) ?? 3;
     }
 
     // Status
@@ -422,7 +409,7 @@ class SupabaseService {
       elevation: (json['elevation'] as num?)?.toInt() ?? 0,
       location: locationStr,
       province: provinceStr,
-      difficulty: difficultyStr,
+      difficulty: difficultyVal,
       estimatedTime: estimatedTimeStr,
       routes: routesList,
       rawRoutes: rawRoutes,

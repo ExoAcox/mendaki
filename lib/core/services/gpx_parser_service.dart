@@ -34,7 +34,7 @@ class GpxData {
     String? name,
     String location = '',
     String province = '',
-    String difficulty = '',
+    int difficulty = 3,
     String estimatedTime = '',
     String status = '',
     String? gpxAssetPath,

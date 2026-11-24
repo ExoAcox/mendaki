@@ -13,7 +13,7 @@ void main() {
       elevation: 3145,
       location: 'Boyolali',
       province: 'Jawa Tengah',
-      difficulty: 'Sedang',
+      difficulty: 2,
       estimatedTime: '5 - 9 Jam',
     ),
     const Mountain(
@@ -22,7 +22,7 @@ void main() {
       elevation: 2590,
       location: 'Wonosobo',
       province: 'Jawa Tengah',
-      difficulty: 'Mudah',
+      difficulty: 1,
       estimatedTime: '3 - 5 Jam',
     ),
     const Mountain(
@@ -31,7 +31,7 @@ void main() {
       elevation: 3428,
       location: 'Purbalingga',
       province: 'Jawa Tengah',
-      difficulty: 'Sulit',
+      difficulty: 3,
       estimatedTime: '8 - 12 Jam',
     ),
     const Mountain(
@@ -40,7 +40,7 @@ void main() {
       elevation: 3088,
       location: 'Probolinggo',
       province: 'Jawa Timur',
-      difficulty: 'Sangat Sulit',
+      difficulty: 4,
       estimatedTime: '24 - 36 Jam',
     ),
   ];

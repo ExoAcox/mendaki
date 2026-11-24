@@ -133,22 +133,29 @@ class MountainSortService {
     return defaultSort;
   }
 
-  /// Mengonversi teks kesulitan ke ranking numerik:
-  /// 1: Mudah (easy)
-  /// 2: Sedang (medium)
-  /// 3: Sulit (hard)
-  /// 4: Sangat Sulit (very_hard)
-  static int getDifficultyRank(String difficulty) {
-    final d = difficulty.toLowerCase().trim();
-    if (d.contains('mudah') || d == 'easy') return 1;
-    if (d.contains('sedang') || d == 'medium') return 2;
-    if (d.contains('sangat sulit') ||
-        d.contains('sangat_sulit') ||
-        d.contains('very_hard') ||
-        d.contains('very hard')) {
-      return 4;
+  /// Mengonversi tingkat kesulitan ke ranking numerik:
+  /// Mendukung int, `List<int>`, num, atau teks kesulitan
+  static int getDifficultyRank(dynamic difficulty) {
+    if (difficulty is int) return difficulty;
+    if (difficulty is num) return difficulty.toInt();
+    if (difficulty is List<int>) {
+      if (difficulty.isEmpty) return 0;
+      return difficulty.first;
     }
-    if (d.contains('sulit') || d == 'hard') return 3;
+    if (difficulty is String) {
+      final parsed = int.tryParse(difficulty);
+      if (parsed != null) return parsed;
+      final d = difficulty.toLowerCase().trim();
+      if (d.contains('mudah') || d == 'easy') return 1;
+      if (d.contains('sedang') || d == 'medium') return 2;
+      if (d.contains('sangat sulit') ||
+          d.contains('sangat_sulit') ||
+          d.contains('very_hard') ||
+          d.contains('very hard')) {
+        return 4;
+      }
+      if (d.contains('sulit') || d == 'hard') return 3;
+    }
     return 2;
   }
 

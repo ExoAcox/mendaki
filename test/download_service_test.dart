@@ -10,7 +10,7 @@ void main() {
       elevation: 2000,
       location: 'Kabupaten Uji',
       province: 'Jawa Tengah',
-      difficulty: 'Mudah',
+      difficulty: 2,
       estimatedTime: '1D',
     );
 

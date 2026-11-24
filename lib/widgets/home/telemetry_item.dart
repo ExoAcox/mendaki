@@ -5,12 +5,14 @@ class TelemetryItem extends StatelessWidget {
   final String label;
   final String value;
   final Color? color;
+  final Widget? trailing;
 
   const TelemetryItem({
     super.key,
     required this.label,
     required this.value,
     this.color,
+    this.trailing,
   });
 
   @override
@@ -29,15 +31,25 @@ class TelemetryItem extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 2),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: color ?? AppTheme.onSurface,
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: color ?? AppTheme.onSurface,
+              ),
+            ),
+            if (trailing != null) ...[
+              const SizedBox(width: 4),
+              trailing!,
+            ],
+          ],
         ),
       ],
     );

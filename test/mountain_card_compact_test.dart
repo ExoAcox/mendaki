@@ -10,7 +10,7 @@ void main() {
     elevation: 3145,
     location: 'Boyolali & Magelang',
     province: 'Jawa Tengah',
-    difficulty: 'Sedang',
+    difficulty: 3,
     estimatedTime: '6-8 Jam',
   );
 

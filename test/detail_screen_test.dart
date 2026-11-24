@@ -15,7 +15,7 @@ void main() {
         elevation: 3145,
         location: 'Boyolali & Magelang',
         province: 'Jawa Tengah',
-        difficulty: 'Sedang',
+        difficulty: 3,
         estimatedTime: '2D1N',
         routes: [
           HikingRoute(

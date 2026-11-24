@@ -280,7 +280,7 @@ class GpxStorageService {
                 elevation: 0,
                 location: '',
                 province: '',
-                difficulty: 'Sedang',
+                difficulty: 3,
                 estimatedTime: '',
                 isGpxReady: true,
                 isMapReady: isMap,

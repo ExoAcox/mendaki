@@ -85,7 +85,7 @@ class HikingRoute {
       distanceKm: (json['distanceKm'] as num?)?.toDouble() ?? 0.0,
       estimatedDuration: json['estimatedDuration'] as String? ?? '',
       elevationGainMeters: (json['elevationGainMeters'] as num?)?.toInt() ?? 0,
-      difficulty: json['difficulty'] as String? ?? 'Sedang',
+      difficulty: json['difficulty']?.toString() ?? 'Sedang',
       hasWater: json['hasWater'] as bool? ?? false,
       city: json['city'] as String?,
       waypoints: (json['waypoints'] as List<dynamic>?)

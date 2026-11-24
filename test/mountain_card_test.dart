@@ -10,11 +10,45 @@ void main() {
     elevation: 3145,
     location: 'Boyolali & Magelang',
     province: 'Jawa Tengah',
-    difficulty: 'Sedang',
+    difficulty: 3,
     estimatedTime: '6-8 Jam',
   );
 
   group('MountainCard Badge Tests', () {
+    testWidgets('Renders difficulty text in telemetry', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MountainCard(mountain: testMountain, onDetailTap: () {}),
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      expect(find.text('TINGKAT KESULITAN'), findsOneWidget);
+      expect(find.text('SEDANG'), findsOneWidget);
+    });
+
+    testWidgets('Renders different difficulty text in telemetry', (
+      tester,
+    ) async {
+      final mountain = testMountain.copyWith(difficulty: 4);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MountainCard(mountain: mountain, onDetailTap: () {}),
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      expect(find.text('TINGKAT KESULITAN'), findsOneWidget);
+      expect(find.text('SULIT'), findsOneWidget);
+    });
+
     testWidgets(
       'Renders both GPX Tersimpan and Peta Tersimpan badges when both ready',
       (tester) async {

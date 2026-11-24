@@ -7,7 +7,7 @@ class Mountain {
   final int elevation;
   final String location;
   final String province;
-  final String difficulty;
+  final int difficulty;
   final String estimatedTime;
   final String? assetUrl;
   final String? imageUrl;
@@ -26,6 +26,25 @@ class Mountain {
   // Backward-compatible getters
   int get elevationMdpl => elevation;
   List<String> get category => categories;
+
+  static String formatDifficulty(int level) {
+    switch (level) {
+      case 1:
+        return 'Sangat Mudah';
+      case 2:
+        return 'Mudah';
+      case 3:
+        return 'Sedang';
+      case 4:
+        return 'Sulit';
+      case 5:
+        return 'Sangat Sulit';
+      default:
+        return 'Sedang';
+    }
+  }
+
+  String get difficultyText => formatDifficulty(difficulty).toUpperCase();
 
   /// Daftar rute terurut sesuai dengan urutan array rawRoutes dari API
   List<HikingRoute> get routes {
@@ -98,7 +117,7 @@ class Mountain {
     required this.elevation,
     required this.location,
     required this.province,
-    required this.difficulty,
+    this.difficulty = 3,
     required this.estimatedTime,
     List<HikingRoute> routes = const [],
     this.rawRoutes = const [],
@@ -121,7 +140,7 @@ class Mountain {
     int? elevation,
     String? location,
     String? province,
-    String? difficulty,
+    int? difficulty,
     String? estimatedTime,
     List<HikingRoute>? routes,
     List<String>? rawRoutes,
@@ -186,6 +205,31 @@ class Mountain {
     };
   }
 
+  static int _parseDifficulty(dynamic raw) {
+    if (raw == null) return 3;
+    if (raw is num) return raw.toInt();
+    if (raw is List) {
+      if (raw.isNotEmpty) {
+        final first = raw.first;
+        if (first is num) return first.toInt();
+        final parsed = int.tryParse(first.toString());
+        if (parsed != null) return parsed;
+      }
+      return 3;
+    }
+    if (raw is String) {
+      final parsed = int.tryParse(raw.trim());
+      if (parsed != null) return parsed;
+      final lower = raw.toLowerCase().trim();
+      if (lower.contains('sangat mudah')) return 1;
+      if (lower.contains('mudah') || lower == 'easy') return 2;
+      if (lower.contains('sangat sulit') || lower.contains('very_hard')) return 5;
+      if (lower.contains('sulit') || lower == 'hard') return 4;
+      if (lower.contains('sedang') || lower == 'medium') return 3;
+    }
+    return 3;
+  }
+
   factory Mountain.fromJson(Map<String, dynamic> json) {
     return Mountain(
       id: json['id'] as String? ?? '',
@@ -193,7 +237,7 @@ class Mountain {
       elevation: (json['elevation'] as num?)?.toInt() ?? 0,
       location: json['location'] as String? ?? '',
       province: json['province'] as String? ?? '',
-      difficulty: json['difficulty'] as String? ?? '',
+      difficulty: _parseDifficulty(json['difficulty']),
       estimatedTime: json['estimatedTime'] as String? ?? '',
       assetUrl: json['assetUrl'] as String?,
       imageUrl: json['imageUrl'] as String?,

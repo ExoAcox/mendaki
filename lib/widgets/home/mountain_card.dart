@@ -416,7 +416,7 @@ class _MountainCardState extends State<MountainCard> {
                     ),
                     TelemetryItem(
                       label: 'TINGKAT KESULITAN',
-                      value: mountain.difficulty.toUpperCase(),
+                      value: mountain.difficultyText,
                     ),
                     TelemetryItem(
                       label: 'ESTIMASI',

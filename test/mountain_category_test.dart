@@ -68,7 +68,7 @@ void main() {
         elevation: 3371,
         location: 'Magelang',
         province: 'Jawa Tengah',
-        difficulty: 'Sedang',
+        difficulty: 3,
         estimatedTime: '7 - 9 Jam',
         categories: ['3s_jateng'],
       );
