@@ -265,6 +265,11 @@ class SupabaseService {
       final eleGain = (routeMap['elevation'] as num?)?.toInt() ?? 0;
       final hasWater = routeMap['has_water'] as bool? ?? false;
       final cityVal = routeMap['city'] as String?;
+      final igLinks = (routeMap['ig_link'] as List<dynamic>?)
+              ?.map((e) => e.toString().trim().replaceFirst(RegExp(r'^@'), ''))
+              .where((e) => e.isNotEmpty)
+              .toList() ??
+          const <String>[];
 
       // Estimasi waktu spesifik per rute dari Supabase (dukung estimated_time & estimatedTime)
       String estimatedDuration = '';
@@ -292,6 +297,7 @@ class SupabaseService {
           difficulty: routeMap['difficulty']?.toString() ?? (eleGain > 1500 ? 'Sulit' : 'Sedang'),
           hasWater: hasWater,
           city: cityVal,
+          igLinks: igLinks,
           waypoints: const [],
         ),
       );

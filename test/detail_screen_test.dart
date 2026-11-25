@@ -4,6 +4,7 @@ import 'package:mendaki/models/mountain.dart';
 import 'package:mendaki/models/route.dart';
 import 'package:mendaki/screens/detail_screen.dart';
 import 'package:mendaki/widgets/detail/detail_bottom_bar.dart';
+import 'package:mendaki/widgets/detail/detail_route_item.dart';
 
 void main() {
   testWidgets(
@@ -114,5 +115,63 @@ void main() {
       Mountain.formatRouteName('argopuro.baderan_-_bremi', mountainId: 'argopuro'),
       'Baderan - Bremi',
     );
+  });
+
+  testWidgets('DetailRouteItem displays Instagram basecamp handles when present', (
+    tester,
+  ) async {
+    const routes = [
+      HikingRoute(
+        id: 'slamet.bambangan',
+        name: 'Bambangan',
+        basecampName: 'Basecamp Bambangan',
+        distanceKm: 10.5,
+        estimatedDuration: '7 - 9 Jam',
+        elevationGainMeters: 1500,
+        difficulty: '4',
+        igLinks: ['slametviabambangan', 'slametviabambangan_official'],
+      ),
+      HikingRoute(
+        id: 'slamet.kaliwadas',
+        name: 'Kaliwadas',
+        basecampName: 'Basecamp Kaliwadas',
+        distanceKm: 14.0,
+        estimatedDuration: '9 - 11 Jam',
+        elevationGainMeters: 1200,
+        difficulty: '4',
+      ),
+    ];
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: DetailRouteItem(routes: routes, peakElevation: 3428),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('@slametviabambangan'), findsOneWidget);
+    expect(find.text('@slametviabambangan_official'), findsOneWidget);
+    expect(find.byType(Image), findsNWidgets(2));
+  });
+
+  test('HikingRoute serializes and deserializes igLinks cleanly', () {
+    final fromSupabase = HikingRoute.fromJson({
+      'id': 'prau.patakbanteng',
+      'name': 'Patakbanteng',
+      'basecampName': 'Basecamp Patakbanteng',
+      'distanceKm': 4.5,
+      'estimatedDuration': '3 - 4 Jam',
+      'elevationGainMeters': 1800,
+      'difficulty': '2',
+      'ig_link': ['basecamppatakbanteng', 'patakbanteng'],
+    });
+
+    expect(fromSupabase.igLinks, ['basecamppatakbanteng', 'patakbanteng']);
+
+    final roundTrip = HikingRoute.fromJson(fromSupabase.toJson());
+    expect(roundTrip.igLinks, ['basecamppatakbanteng', 'patakbanteng']);
   });
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mendaki/core/theme/app_snack_bar.dart';
 import 'package:mendaki/core/theme/app_theme.dart';
 import 'package:mendaki/models/route.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DetailRouteItem extends StatelessWidget {
   final List<HikingRoute> routes;
@@ -48,7 +50,7 @@ class DetailRouteItem extends StatelessWidget {
           Column(
             children: [
               for (int i = 0; i < routes.length; i++) ...[
-                _buildRouteCard(route: routes[i]),
+                _buildRouteCard(context: context, route: routes[i]),
                 if (i < routes.length - 1) const SizedBox(height: 10),
               ],
             ],
@@ -58,7 +60,10 @@ class DetailRouteItem extends StatelessWidget {
     );
   }
 
-  Widget _buildRouteCard({required HikingRoute route}) {
+  Widget _buildRouteCard({
+    required BuildContext context,
+    required HikingRoute route,
+  }) {
     final gain =
         peakElevation != null && peakElevation! > route.basecampElevation
         ? peakElevation! - route.basecampElevation
@@ -218,7 +223,104 @@ class DetailRouteItem extends StatelessWidget {
               ),
             ],
           ),
+
+          if (route.igLinks.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: route.igLinks
+                  .map((ig) => _buildInstagramChip(context, ig))
+                  .toList(),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  Future<void> _openInstagram(BuildContext context, String rawLink) async {
+    final clean = rawLink.trim().replaceFirst(RegExp(r'^@'), '');
+    final urlString = clean.startsWith('http')
+        ? clean
+        : 'https://www.instagram.com/$clean/';
+    final uri = Uri.parse(urlString);
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched && context.mounted) {
+        AppSnackBar.showError(
+          context,
+          'Tidak dapat membuka akun Instagram',
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        AppSnackBar.showError(
+          context,
+          'Tidak dapat membuka akun Instagram',
+        );
+      }
+    }
+  }
+
+  Widget _buildInstagramChip(BuildContext context, String rawLink) {
+    final clean = rawLink.trim().replaceFirst(RegExp(r'^@'), '');
+    final displayHandle = clean.startsWith('http')
+        ? (Uri.tryParse(clean)
+                ?.pathSegments
+                .where((s) => s.isNotEmpty)
+                .firstOrNull ??
+            clean)
+        : clean;
+
+    return Material(
+      color: AppTheme.primary.withValues(alpha: 0.06),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: () => _openInstagram(context, rawLink),
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: AppTheme.primary.withValues(alpha: 0.25),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Image.asset(
+                  'assets/instagram_logo.png',
+                  width: 15,
+                  height: 15,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '@$displayHandle',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.primary,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.arrow_outward_rounded,
+                size: 13,
+                color: AppTheme.primary,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

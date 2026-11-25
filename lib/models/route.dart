@@ -38,6 +38,7 @@ class HikingRoute {
   final String difficulty;
   final bool hasWater;
   final String? city;
+  final List<String> igLinks;
   final List<Waypoint> waypoints;
   final List<LatLngPoint> trackPoints;
 
@@ -78,6 +79,7 @@ class HikingRoute {
     required this.difficulty,
     this.hasWater = false,
     this.city,
+    this.igLinks = const [],
     this.waypoints = const [],
     this.trackPoints = const [],
   });
@@ -93,6 +95,7 @@ class HikingRoute {
       'difficulty': difficulty,
       'hasWater': hasWater,
       'city': city,
+      'igLinks': igLinks,
       'waypoints': waypoints.map((w) => w.toJson()).toList(),
       'trackPoints': trackPoints.map((tp) => tp.toJson()).toList(),
     };
@@ -109,6 +112,11 @@ class HikingRoute {
       difficulty: json['difficulty']?.toString() ?? 'Sedang',
       hasWater: json['hasWater'] as bool? ?? false,
       city: json['city'] as String?,
+      igLinks: ((json['igLinks'] ?? json['ig_link']) as List<dynamic>?)
+              ?.map((e) => e.toString().trim())
+              .where((e) => e.isNotEmpty)
+              .toList() ??
+          const [],
       waypoints: (json['waypoints'] as List<dynamic>?)
               ?.map((w) => Waypoint.fromJson(w as Map<String, dynamic>))
               .toList() ??
